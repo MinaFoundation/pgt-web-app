@@ -201,7 +201,7 @@ function PhaseTimeline({ data }: { data: StartedFundingRoundWithPhases }) {
 				const isCompleted =
 					data.phase === 'COMPLETED' ||
 					(previousOrCurrentActivePhase &&
-						index < STARTED_PHASES.indexOf(previousOrCurrentActivePhase))
+						index <= STARTED_PHASES.indexOf(previousOrCurrentActivePhase))
 
 				return (
 					<div key={phase as string} className="relative">
@@ -353,10 +353,9 @@ const getPreviousAndNextForBetweenPhase = (
 		({ startDate }) => new Date(startDate) > now,
 	)
 
-	const previousPhase =
-		nextPhase && nextPhase.index > 0
-			? destructuredPhases[nextPhase.index - 1]
-			: null
+	const previousPhase = destructuredPhases.find(
+		({ endDate }) => new Date(endDate) < now,
+	)
 
 	return {
 		nextPhase: nextPhase
