@@ -1,12 +1,12 @@
 {
 	"name": "pgt-web-app",
-	"version": "0.1.89",
+	"version": "0.1.90",
 	"private": true,
 	"type": "module",
 	"scripts": {
 		"dev": "npm run build:workers && (next dev & npm run bree:cron:dev & wait)",
 		"dev:https": "NODE_TLS_REJECT_UNAUTHORIZED=0 next dev --experimental-https --experimental-https-key ./localhost-key.pem --experimental-https-cert ./localhost.pem",
-		"build": "next build && npm run internal:copy-public && npm run build:workers && npm run internal:copy-dist",
+		"build": "next build --no-lint && npm run internal:copy-public && npm run build:workers && npm run internal:copy-dist",
 		"build:workers": "npx tsx src/scripts/build-workers.ts",
 		"start": "npx prisma migrate deploy && next start",
 		"start:prod": "prisma migrate deploy && npm run migrate:proposal-data && (node server.js & npm run bree:cron:prod & wait)",
@@ -20,8 +20,7 @@
 		"lint:types": "tsc --noEmit",
 		"migrate:proposal-data": "npx tsx src/scripts/migrateProposalData.ts",
 		"lint:all": "npm run lint:full && npm run lint:types",
-		"admin:status": "npx tsx src/scripts/toggle-admin-status.ts",
-		"migrate:prod": "npx prisma migrate deploy && npm run migrate:proposal-data"
+		"admin:status": "npx tsx src/scripts/toggle-admin-status.ts"
 	},
 	"dependencies": {
 		"@ladjs/graceful": "^4.1.0",
