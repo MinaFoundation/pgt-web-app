@@ -108,56 +108,7 @@ export async function GET(
 		})
 
 		// Transform the proposals to include user information
-		const formattedProposals = await Promise.all(
-			proposals.map(
-				async (proposal: RawProposal): Promise<SumbmittedProposalsJSON> => {
-					const linkedAccounts = await userService.getLinkedAccounts(
-						proposal.user.id,
-					)
-					const linkedAccountsMetadata = linkedAccounts.map(account => ({
-						id: account.id,
-						authSource: (account.metadata as UserMetadata)?.authSource || {
-							type: '',
-							id: '',
-							username: '',
-						},
-					}))
-
-					return {
-						id: proposal.id,
-						proposalName: proposal.proposalName,
-						abstract: proposal.abstract,
-						budgetRequest: proposal.budgetRequest.toNumber(),
-						createdAt: proposal.createdAt,
-						status: proposal.status,
-						submitter: hasUsername(proposal.user.metadata)
-							? proposal.user.metadata.username
-							: 'Unknown',
-						motivation: proposal.motivation,
-						rationale: proposal.rationale,
-						deliveryRequirements: proposal.deliveryRequirements,
-						securityAndPerformance: proposal.securityAndPerformance,
-						email: proposal.email || '',
-						submitterMetadata: {
-							authSource: {
-								type:
-									(proposal.user.metadata as UserMetadata)?.authSource?.type ||
-									'',
-								id:
-									(proposal.user.metadata as UserMetadata)?.authSource?.id ||
-									'',
-								username:
-									(proposal.user.metadata as UserMetadata)?.authSource
-										?.username || '',
-							},
-							linkedAccounts: linkedAccountsMetadata,
-						},
-					}
-				},
-			),
-		)
-
-		return NextResponse.json(formattedProposals)
+		const formattedProposals = {}
 	} catch (error) {
 		logger.error('Failed to fetch proposals:', error)
 		return NextResponse.json(
