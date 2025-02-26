@@ -51,9 +51,9 @@ export async function GET(request: NextRequest) {
 
 			results = proposals.map(proposal => ({
 				proposalId: proposal.id,
-				proposalName: `${proposal.id}. ${proposal.proposalName}`,
+				title: `${proposal.id}. ${proposal.title}`,
 				proposalAuthor: proposal.email || undefined,
-				proposalDescription: proposal.abstract || undefined,
+				proposalDescription: proposal.proposalSummary || undefined,
 				endTime: deliberationPhase.endDate,
 				status: proposal.GptSurveySummarizerProposal ? 'created' : 'exists',
 				submittedAt: proposal.GptSurveySummarizerProposal?.createdAt,

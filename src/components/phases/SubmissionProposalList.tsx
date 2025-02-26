@@ -92,7 +92,7 @@ export function SubmissionProposalList({ fundingRoundId }: Props) {
 									<div className="flex items-start justify-between">
 										<div>
 											<CardTitle className="text-2xl">
-												{proposal.proposalName}
+												{proposal.title}
 											</CardTitle>
 											<CardDescription className="break-all">
 												👤 Submitted by {proposal.submitter}
@@ -101,7 +101,8 @@ export function SubmissionProposalList({ fundingRoundId }: Props) {
 												<div className="flex items-center gap-2 text-sm text-muted-foreground">
 													<span>💰 Requested Budget:</span>
 													<Badge variant="outline" className="text-primary">
-														{proposal.budgetRequest.toLocaleString()} $MINA
+														{proposal.totalFundingRequired.toLocaleString()}{' '}
+														$MINA
 													</Badge>
 												</div>
 											</div>
@@ -117,7 +118,7 @@ export function SubmissionProposalList({ fundingRoundId }: Props) {
 										{expanded[proposal.id] ? (
 											<>
 												<p className="mb-4 text-muted-foreground">
-													{proposal.abstract}
+													{proposal.proposalSummary}
 												</p>
 												<div className="space-y-4">
 													<div>
@@ -125,15 +126,15 @@ export function SubmissionProposalList({ fundingRoundId }: Props) {
 															Motivation
 														</h3>
 														<p className="text-muted-foreground">
-															{proposal.motivation}
+															{proposal.problemImportance}
 														</p>
 													</div>
 													<div>
 														<h3 className="mb-2 text-xl font-semibold">
-															Rationale
+															Problem Statement
 														</h3>
 														<p className="text-muted-foreground">
-															{proposal.rationale}
+															{proposal.problemStatement}
 														</p>
 													</div>
 													<div>
@@ -141,7 +142,7 @@ export function SubmissionProposalList({ fundingRoundId }: Props) {
 															Delivery Requirements
 														</h3>
 														<p className="text-muted-foreground">
-															{proposal.deliveryRequirements}
+															{proposal.implementationDetails}
 														</p>
 													</div>
 													<div>
@@ -149,7 +150,7 @@ export function SubmissionProposalList({ fundingRoundId }: Props) {
 															Security & Performance
 														</h3>
 														<p className="text-muted-foreground">
-															{proposal.securityAndPerformance}
+															{proposal.problemStatement}
 														</p>
 													</div>
 													<div>
@@ -157,7 +158,8 @@ export function SubmissionProposalList({ fundingRoundId }: Props) {
 															Budget Request
 														</h3>
 														<p className="text-muted-foreground">
-															{proposal.budgetRequest.toLocaleString()} MINA
+															{proposal.totalFundingRequired.toLocaleString()}{' '}
+															MINA
 														</p>
 													</div>
 													<div>
@@ -204,7 +206,7 @@ export function SubmissionProposalList({ fundingRoundId }: Props) {
 											</>
 										) : (
 											<p className="line-clamp-3 text-muted-foreground">
-												{proposal.abstract}
+												{proposal.proposalSummary}
 											</p>
 										)}
 									</div>

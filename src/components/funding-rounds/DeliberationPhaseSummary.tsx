@@ -429,7 +429,7 @@ export const DeliberationPhaseSummary: FC<DeliberationPhaseSummaryProps> = ({
 																				{getEmojiRank(actualRank)}
 																			</span>
 																			<h3 className="font-medium transition-colors group-hover:text-primary">
-																				{proposal.proposalName}
+																				{proposal.title}
 																			</h3>
 																			<Badge
 																				variant="outline"
@@ -466,7 +466,8 @@ export const DeliberationPhaseSummary: FC<DeliberationPhaseSummaryProps> = ({
 																	<div className="flex items-center gap-1">
 																		<CoinsIcon className="h-3 w-3" />
 																		<span>
-																			{proposal.budgetRequest.toNumber()} MINA
+																			{proposal.totalFundingRequired.toNumber()}{' '}
+																			MINA
 																		</span>
 																	</div>
 																</div>
@@ -518,7 +519,7 @@ export const DeliberationPhaseSummary: FC<DeliberationPhaseSummaryProps> = ({
 																				{getEmojiRank(actualRank)}
 																			</span>
 																			<h3 className="font-medium transition-colors group-hover:text-primary">
-																				{proposal.proposalName}
+																				{proposal.title}
 																			</h3>
 																			<Badge
 																				variant="outline"
@@ -555,7 +556,8 @@ export const DeliberationPhaseSummary: FC<DeliberationPhaseSummaryProps> = ({
 																	<div className="flex items-center gap-1">
 																		<CoinsIcon className="h-3 w-3" />
 																		<span>
-																			{proposal.budgetRequest.toNumber()} MINA
+																			{proposal.totalFundingRequired.toNumber()}{' '}
+																			MINA
 																		</span>
 																	</div>
 																</div>

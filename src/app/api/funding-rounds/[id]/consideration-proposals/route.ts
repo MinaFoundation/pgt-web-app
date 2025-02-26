@@ -8,6 +8,9 @@ import { OCVVotesService } from '@/services/OCVVotesService'
 import { ProposalStatusMoveService } from '@/services/ProposalStatusMoveService'
 import type { OCVVoteData, OCVVote } from '@/types/consideration'
 import { UserService } from '@/services'
+import { ConsiderationDecision, ProposalStatus } from '@prisma/client'
+import { CoreProposalData } from '@/types/proposals'
+import { Decimal } from 'decimal.js'
 
 // Add this helper function to safely parse OCV vote data
 function parseOCVVoteData(data: JsonValue | null | undefined): OCVVoteData {
@@ -47,6 +50,149 @@ function parseOCVVoteData(data: JsonValue | null | undefined): OCVVoteData {
 					hash: String(vote.hash || ''),
 				}))
 			: [],
+	}
+}
+
+// Type for the community votes statistics
+export interface CommunityVoteStats {
+	total: number
+	positive: number
+	positiveStakeWeight: string
+	isEligible: boolean
+	voters: Array<{
+		address: string
+		timestamp: number
+		hash: string
+	}>
+}
+
+// Type for vote statistics
+export interface VoteStats {
+	approved: number
+	rejected: number
+	total: number
+	communityVotes: CommunityVoteStats
+	reviewerEligible: boolean
+	requiredReviewerApprovals: number
+}
+
+// Type for user vote information
+export interface UserVote {
+	decision: ConsiderationDecision
+	feedback: string
+}
+
+// Type for submitter metadata
+export interface SubmitterMetadata {
+	authSource: {
+		type: string
+		id: string
+		username: string
+	}
+	linkedAccounts: {
+		id: string
+		authSource: {
+			type: string
+			id: string
+			username: string
+		}
+	}[]
+}
+
+// Main response type for consideration proposals
+export interface ConsiderationProposalResponse
+	extends Pick<
+		CoreProposalData,
+		| 'id'
+		| 'fundingRoundId'
+		| 'title'
+		| 'proposalSummary'
+		| 'problemStatement'
+		| 'problemImportance'
+		| 'proposedSolution'
+		| 'implementationDetails'
+		| 'totalFundingRequired'
+		| 'keyObjectives'
+		| 'communityBenefits'
+		| 'keyPerformanceIndicators'
+		| 'budgetBreakdown'
+		| 'estimatedCompletionDate'
+		| 'milestones'
+		| 'teamMembers'
+		| 'relevantExperience'
+		| 'potentialRisks'
+		| 'mitigationPlans'
+		| 'discordHandle'
+		| 'email'
+		| 'website'
+		| 'githubProfile'
+		| 'otherLinks'
+		| 'createdAt'
+		| 'updatedAt'
+	> {
+	submitter: string
+	status: string
+	userVote?: UserVote
+	isReviewerEligible: boolean
+	voteStats: VoteStats
+	currentPhase: ProposalStatus
+	submitterMetadata: SubmitterMetadata
+	totalFundingRequired: Decimal // Using different name from CoreProposalData
+}
+
+type JsonResponse<T> = {
+	[P in keyof T]: T[P] extends Decimal
+		? string
+		: T[P] extends Date
+			? string
+			: T[P] extends object
+				? JsonResponse<T[P]>
+				: T[P]
+}
+
+export type ConsiderationProposalResponseJson =
+	JsonResponse<ConsiderationProposalResponse>
+
+export type GET_RESPONSE_TYPE = ConsiderationProposalResponse[]
+export type GET_JSON_RESPONSE = ConsiderationProposalResponseJson[]
+
+export class VoteStatsEmpty {
+	/**
+	 * Returns default vote statistics when actual data is not available
+	 * @param minReviewerApprovals The minimum required reviewer approvals
+	 * @param actualStats The actual vote statistics if available
+	 * @param proposalId Optional ID for logging purposes
+	 * @returns VoteStats object with default or actual values
+	 */
+	static getVoteStats(
+		minReviewerApprovals: number,
+		actualStats?: VoteStats,
+		proposalId?: number,
+	): VoteStats {
+		if (actualStats) {
+			return actualStats
+		}
+
+		logger.debug(
+			proposalId
+				? `Using default vote stats for proposal #${proposalId}`
+				: 'Using default vote stats for a proposal',
+		)
+
+		return {
+			approved: 0,
+			rejected: 0,
+			total: 0,
+			communityVotes: {
+				total: 0,
+				positive: 0,
+				positiveStakeWeight: '0',
+				isEligible: false,
+				voters: [],
+			},
+			reviewerEligible: false,
+			requiredReviewerApprovals: minReviewerApprovals,
+		}
 	}
 }
 
@@ -193,39 +339,48 @@ export async function GET(
 					},
 				}))
 
-				return {
+				const consdierationProposal: ConsiderationProposalResponse = {
 					id: p.id,
-					proposalName: p.proposalName,
+					fundingRoundId: p.fundingRoundId,
+					title: p.title,
 					submitter: (p.user.metadata as unknown as UserMetadata).username,
-					abstract: p.abstract,
+					proposalSummary: p.proposalSummary,
 					status: p.considerationVotes[0]?.decision?.toLowerCase() || 'pending',
-					motivation: p.motivation,
-					rationale: p.rationale,
-					deliveryRequirements: p.deliveryRequirements,
-					securityAndPerformance: p.securityAndPerformance,
-					budgetRequest: p.budgetRequest,
+					problemImportance: p.problemImportance,
+					problemStatement: p.problemStatement,
+					proposedSolution: p.proposedSolution,
+					implementationDetails: p.implementationDetails,
+					totalFundingRequired: p.totalFundingRequired,
+					keyObjectives: p.keyObjectives,
+					communityBenefits: p.communityBenefits,
+					keyPerformanceIndicators: p.keyPerformanceIndicators,
+					budgetBreakdown: p.budgetBreakdown,
+					estimatedCompletionDate: p.estimatedCompletionDate,
+					milestones: p.milestones,
+					teamMembers: p.teamMembers,
+					relevantExperience: p.relevantExperience,
+					potentialRisks: p.potentialRisks,
+					mitigationPlans: p.mitigationPlans,
+					discordHandle: p.discordHandle,
+					email: p.email || '',
+					website: p.website || '',
+					githubProfile: p.githubProfile || '',
+					otherLinks: p.otherLinks || '',
+					createdAt: p.createdAt,
+					updatedAt: p.updatedAt,
 					userVote: p.considerationVotes[0]
 						? {
 								decision: p.considerationVotes[0].decision,
 								feedback: p.considerationVotes[0].feedback,
 							}
 						: undefined,
-					createdAt: p.createdAt,
 					isReviewerEligible: isReviewer,
-					voteStats: voteCounts || {
-						approved: 0,
-						rejected: 0,
-						total: 0,
-						communityVotes: {
-							total: 0,
-							positive: 0,
-							positiveStakeWeight: '0',
-							isEligible: false,
-						},
-						reviewerEligible: false,
-					},
+					voteStats: VoteStatsEmpty.getVoteStats(
+						minReviewerApprovals,
+						voteCounts,
+						p.id,
+					),
 					currentPhase: p.status,
-					email: p.email || '',
 					submitterMetadata: {
 						authSource: {
 							type:
@@ -241,6 +396,8 @@ export async function GET(
 						linkedAccounts: linkedAccountsMetadata,
 					},
 				}
+
+				return consdierationProposal
 			}),
 		)
 

@@ -9,7 +9,7 @@ export interface GptSurveyClientConfig {
 
 export interface CreateProposalParams {
 	proposalId: string
-	proposalName: string
+	title: string
 	proposalDescription: string
 	proposalAuthor: string
 	endTime: Date
@@ -53,7 +53,7 @@ export class GptSurveyClient {
 			endpoint: '/api/govbot/proposals',
 			body: {
 				proposalId: params.proposalId,
-				proposalName: params.proposalName,
+				title: params.title,
 				proposalDescription: params.proposalDescription,
 				proposalAuthor: params.proposalAuthor,
 				endTime: params.endTime.toISOString(),

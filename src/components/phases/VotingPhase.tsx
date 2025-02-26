@@ -283,8 +283,8 @@ export function VotingPhase({ fundingRoundId }: VotingPhaseProps) {
 				isVotingActive={isVotingActive()}
 				proposals={proposals.proposals.map(p => ({
 					id: p.id,
-					proposalName: p.proposalName,
-					budgetRequest: Number(p.budgetRequest),
+					title: p.title,
+					totalFundingRequired: Number(p.totalFundingRequired),
 					author: {
 						username: p.author.username,
 						authType: p.author.authType,

@@ -61,7 +61,7 @@ async function notifyReviewersOfProposalSubmission() {
 				where: { id: parseInt(proposalId) },
 				select: {
 					id: true,
-					proposalName: true, // This is the title field in our schema
+					title: true, // This is the title field in our schema
 					user: {
 						select: {
 							id: true,
@@ -101,7 +101,7 @@ async function notifyReviewersOfProposalSubmission() {
 		// Create embed once
 		const embed = createProposalEmbed({
 			id: proposalForNotification.id,
-			title: proposalForNotification.proposalName,
+			title: proposalForNotification.title,
 			user: proposalForNotification.user,
 			fundingRound: proposalForNotification.fundingRound,
 		})

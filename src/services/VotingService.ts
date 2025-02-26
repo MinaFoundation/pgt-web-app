@@ -1,7 +1,9 @@
 import { PrismaClient } from '@prisma/client'
 import { OCVApiService } from './OCVApiService'
 import {
+	RankedVotingProposalVote,
 	VoteStatus,
+	VotingProposalVote,
 	type VotingPhaseFundsDistributionSummary,
 	type VotingPhaseRankedSummary,
 } from '@/types/phase-summary'
@@ -48,7 +50,7 @@ export class VotingService {
 		// Calculate funding distribution
 		const totalBudget = fundingRound.totalBudget.toNumber()
 		let remainingBudget = totalBudget
-		const proposalVotes = []
+		const proposalVotes: VotingProposalVote[] = []
 		let fundedProposals = 0
 		let notFundedProposals = 0
 
@@ -65,7 +67,7 @@ export class VotingService {
 			}
 			processedProposals.add(idStr)
 
-			const budgetRequest = proposal.budgetRequest.toNumber()
+			const budgetRequest = proposal.totalFundingRequired.toNumber()
 			const isFunded = budgetRequest <= remainingBudget
 
 			if (isFunded) {
@@ -77,12 +79,12 @@ export class VotingService {
 
 			proposalVotes.push({
 				id: proposal.id,
-				proposalName: proposal.proposalName,
+				title: proposal.title,
 				proposer: this.getUserDisplayName(
 					proposal.user.metadata as UserMetadata,
 				),
 				status: proposal.status,
-				budgetRequest: proposal.budgetRequest,
+				totalFundingRequired: proposal.totalFundingRequired.toNumber(),
 				isFunded,
 				missingAmount: isFunded ? undefined : budgetRequest - remainingBudget,
 			})
@@ -96,14 +98,14 @@ export class VotingService {
 				notFundedProposals++
 				proposalVotes.push({
 					id: proposal.id,
-					proposalName: proposal.proposalName,
+					title: proposal.title,
 					proposer: this.getUserDisplayName(
 						proposal.user.metadata as UserMetadata,
 					),
 					status: proposal.status,
-					budgetRequest: proposal.budgetRequest,
+					totalFundingRequired: proposal.totalFundingRequired.toNumber(),
 					isFunded: false,
-					missingAmount: proposal.budgetRequest.toNumber(),
+					missingAmount: proposal.totalFundingRequired.toNumber(),
 				})
 			}
 		}
@@ -111,7 +113,7 @@ export class VotingService {
 		// Calculate budget breakdown
 		const budgetBreakdown = fundingRound.proposals.reduce(
 			(acc, proposal) => {
-				const budget = proposal.budgetRequest.toNumber()
+				const budget = proposal.totalFundingRequired.toNumber()
 				if (budget <= 500) acc.small++
 				else if (budget <= 1000) acc.medium++
 				else acc.large++
@@ -180,7 +182,7 @@ export class VotingService {
 		// Calculate budget breakdown
 		const budgetBreakdown = fundingRound.proposals.reduce(
 			(acc, proposal) => {
-				const budget = proposal.budgetRequest.toNumber()
+				const budget = proposal.totalFundingRequired.toNumber()
 				if (budget <= 500) acc.small++
 				else if (budget <= 1000) acc.medium++
 				else acc.large++
@@ -191,7 +193,7 @@ export class VotingService {
 
 		// Process proposals with votes first
 		const processedProposals = new Set<string>()
-		const proposalVotes = []
+		const proposalVotes: RankedVotingProposalVote[] = []
 
 		// Process proposals from OCV in the order provided (these are already ranked)
 		for (const winnerId of voteData.winners) {
@@ -206,20 +208,13 @@ export class VotingService {
 
 			proposalVotes.push({
 				id: proposal.id,
-				proposalName: proposal.proposalName,
+				title: proposal.title,
 				proposer: this.getUserDisplayName(
 					proposal.user.metadata as UserMetadata,
 				),
 				status: 'VOTING' as const,
-				budgetRequest: proposal.budgetRequest,
+				totalFundingRequired: proposal.totalFundingRequired.toNumber(),
 				hasVotes: true,
-				reviewerVotes: {
-					yesVotes: 0,
-					noVotes: 0,
-					total: 0,
-					requiredReviewerApprovals: 0,
-					reviewerEligible: true,
-				},
 			})
 		}
 
@@ -230,20 +225,13 @@ export class VotingService {
 				processedProposals.add(idStr)
 				proposalVotes.push({
 					id: proposal.id,
-					proposalName: proposal.proposalName,
+					title: proposal.title,
 					proposer: this.getUserDisplayName(
 						proposal.user.metadata as UserMetadata,
 					),
 					status: 'NO_VOTES' as const,
-					budgetRequest: proposal.budgetRequest,
+					totalFundingRequired: proposal.totalFundingRequired.toNumber(),
 					hasVotes: false,
-					reviewerVotes: {
-						yesVotes: 0,
-						noVotes: 0,
-						total: 0,
-						requiredReviewerApprovals: 0,
-						reviewerEligible: true,
-					},
 				})
 			}
 		}

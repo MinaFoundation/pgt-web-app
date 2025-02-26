@@ -1,4 +1,3 @@
-import { Decimal } from '@prisma/client/runtime/library'
 import { ProposalStatus as BaseProposalStatus } from '@prisma/client'
 
 export type ProposalStatus = BaseProposalStatus | 'NO_VOTES'
@@ -20,10 +19,10 @@ export interface CommunityVoteStats {
 
 export interface ProposalVoteBase {
 	id: number
-	proposalName: string
+	title: string
 	proposer: string
 	status: ProposalStatus
-	budgetRequest: Decimal
+	totalFundingRequired: number
 }
 
 export interface ReviewerVoteStats {
@@ -81,6 +80,8 @@ export interface SubmissionPhaseSummary extends BasePhaseSummary {
 export interface VotingProposalVote extends ProposalVoteBase {
 	isFunded: boolean
 	missingAmount?: number
+	hasVotes?: boolean
+	reviewerVotes?: ReviewerVoteStats
 }
 
 export interface VotingPhaseFundsDistributionSummary extends BasePhaseSummary {
@@ -93,13 +94,6 @@ export interface VotingPhaseFundsDistributionSummary extends BasePhaseSummary {
 }
 
 export type RankedVotingProposalVote = ProposalVoteBase & {
-	reviewerVotes: {
-		yesVotes: number
-		noVotes: number
-		total: number
-		requiredReviewerApprovals: number
-		reviewerEligible: boolean
-	}
 	hasVotes: boolean
 }
 export type VoteStatus = 'Pending' | 'Canonical' | 'Orphaned'

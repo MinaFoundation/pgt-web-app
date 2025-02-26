@@ -138,7 +138,7 @@ export function ProcessingResultsTable({ results }: Props) {
 								<TableCell>{result.proposalId}</TableCell>
 								<TableCell>
 									<div>
-										<div>{result.proposalName}</div>
+										<div>{result.title}</div>
 										<div className="text-sm text-muted-foreground">
 											Author: {result.proposalAuthor}
 										</div>

@@ -56,44 +56,33 @@ model Proposal {
   fundingRoundId         String?        @db.Uuid // Optional because proposal starts as DRAFT
   status                 ProposalStatus @default(DRAFT)
   
-  // Old fields (kept for migration)
-  proposalName           String?        @db.VarChar(100)
-  abstract               String?        @db.Text
-  motivation             String?        @db.Text
-  rationale              String?        @db.Text
-  deliveryRequirements   String?        @db.Text
-  securityAndPerformance String?        @db.Text
-  budgetRequest          Decimal?       @db.Decimal(16, 2)
-  
-  // New fields (optional during migration)
-  title                  String?        @db.VarChar(100) 
-  proposalSummary        String?        @db.Text
-  problemStatement       String?        @db.Text
-  problemImportance      String?        @db.Text
-  proposedSolution       String?        @db.Text
-  implementationDetails  String?        @db.Text
-  totalFundingRequired   Decimal?       @db.Decimal(16, 2)
-  
-  // Existing fields
+  // Core
+  title                  String         @db.VarChar(100) 
+  proposalSummary        String         @db.Text
+  problemStatement       String         @db.Text
+  problemImportance      String         @db.Text
+  proposedSolution       String         @db.Text
+  implementationDetails  String         @db.Text
+  totalFundingRequired   Decimal        @db.Decimal(16, 2)
+  keyObjectives          String         @db.Text
+  communityBenefits      String         @db.Text
+  keyPerformanceIndicators String        @db.Text
+  budgetBreakdown        String         @db.Text
+  estimatedCompletionDate DateTime      @db.Timestamptz(6)
+  milestones             String         @db.Text
+  teamMembers            String         @db.Text
+  relevantExperience     String         @db.Text
+  potentialRisks         String         @db.Text
+  mitigationPlans        String         @db.Text
+  discordHandle          String         @db.VarChar(100)
   email                  String         @db.VarChar(254)
-  createdAt              DateTime       @default(now()) @db.Timestamptz(6)
-  updatedAt              DateTime       @updatedAt @db.Timestamptz(6)
-  
-  // New fields (optional during migration)
-  keyObjectives          String?        @db.Text
-  communityBenefits      String?        @db.Text
-  keyPerformanceIndicators String?      @db.Text
-  budgetBreakdown        String?        @db.Text
-  estimatedCompletionDate DateTime?     @db.Timestamptz(6)
-  milestones             String?        @db.Text
-  teamMembers            String?        @db.Text
-  relevantExperience     String?        @db.Text
-  potentialRisks         String?        @db.Text
-  mitigationPlans        String?        @db.Text
-  discordHandle          String?        @db.VarChar(100)
-  website                String?        @db.VarChar(255)
+  website                String?        @db.VarChar(2048)
   githubProfile          String?        @db.VarChar(255)
   otherLinks             String?        @db.VarChar(1000)
+  
+  // Timestamps
+  createdAt              DateTime       @default(now()) @db.Timestamptz(6)
+  updatedAt              DateTime       @updatedAt @db.Timestamptz(6)
 
   // Relations
   user         User          @relation(fields: [userId], references: [id], onDelete: Restrict)
@@ -108,7 +97,6 @@ model Proposal {
   // Indexes
   @@index([userId])
   @@index([status])
-  @@index([proposalName])
   @@index([title])
   @@index([createdAt])
   @@index([fundingRoundId])

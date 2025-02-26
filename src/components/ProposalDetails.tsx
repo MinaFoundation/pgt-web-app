@@ -83,7 +83,8 @@ export function ProposalDetails({ proposalId }: Props) {
 	const [loadingComments, setLoadingComments] = useState(true)
 	const [selectFundingRoundOpen, setSelectFundingRoundOpen] = useState(false)
 	const [viewFundingRoundOpen, setViewFundingRoundOpen] = useState(false)
-	const { loading: checkingRounds, hasAvailableRounds } = useAvailableFundingRounds()
+	const { loading: checkingRounds, hasAvailableRounds } =
+		useAvailableFundingRounds()
 
 	const { handleAction } = useActionFeedback({
 		successMessage: 'Action will be implemented soon',
@@ -250,7 +251,7 @@ export function ProposalDetails({ proposalId }: Props) {
 
 			<div className="space-y-6 rounded-lg border p-6">
 				<div className="space-y-4">
-					<h2 className="mb-4 text-2xl font-bold">{proposal.proposalName}</h2>
+					<h2 className="mb-4 text-2xl font-bold">{proposal.title}</h2>
 					<p className="text-muted-foreground">
 						by {proposal.user.metadata?.username}
 					</p>
@@ -275,19 +276,23 @@ export function ProposalDetails({ proposalId }: Props) {
 				<div className="space-y-6">
 					<div>
 						<h3 className="mb-2 text-xl font-semibold">Abstract</h3>
-						<p className="text-muted-foreground">{proposal.abstract}</p>
+						<p className="text-muted-foreground">{proposal.proposalSummary}</p>
 					</div>
 
 					{isExpanded && (
 						<>
 							<div>
 								<h3 className="mb-2 text-xl font-semibold">Motivation</h3>
-								<p className="text-muted-foreground">{proposal.motivation}</p>
+								<p className="text-muted-foreground">
+									{proposal.problemImportance}
+								</p>
 							</div>
 
 							<div>
 								<h3 className="mb-2 text-xl font-semibold">Rationale</h3>
-								<p className="text-muted-foreground">{proposal.rationale}</p>
+								<p className="text-muted-foreground">
+									{proposal.keyObjectives}
+								</p>
 							</div>
 
 							<div>
@@ -295,7 +300,7 @@ export function ProposalDetails({ proposalId }: Props) {
 									Delivery Requirements
 								</h3>
 								<p className="text-muted-foreground">
-									{proposal.deliveryRequirements}
+									{proposal.problemStatement}
 								</p>
 							</div>
 
@@ -304,14 +309,14 @@ export function ProposalDetails({ proposalId }: Props) {
 									Security and Performance Considerations
 								</h3>
 								<p className="text-muted-foreground">
-									{proposal.securityAndPerformance}
+									{proposal.implementationDetails}
 								</p>
 							</div>
 
 							<div>
 								<h3 className="mb-2 text-xl font-semibold">Budget Request</h3>
 								<p className="text-muted-foreground">
-									{proposal.budgetRequest.toString()} MINA
+									{proposal.totalFundingRequired.toString()} MINA
 								</p>
 							</div>
 
@@ -426,7 +431,7 @@ export function ProposalDetails({ proposalId }: Props) {
 				open={selectFundingRoundOpen}
 				onOpenChange={setSelectFundingRoundOpen}
 				onSubmit={handleSubmitToFunding}
-				proposalTitle={proposal.proposalName}
+				proposalTitle={proposal.title}
 			/>
 
 			{proposal.fundingRound && (
@@ -434,7 +439,7 @@ export function ProposalDetails({ proposalId }: Props) {
 					open={viewFundingRoundOpen}
 					onOpenChange={setViewFundingRoundOpen}
 					fundingRound={proposal.fundingRound}
-					proposalTitle={proposal.proposalName}
+					proposalTitle={proposal.title}
 					onWithdraw={handleWithdrawFromFunding}
 					canWithdraw={proposal.isOwner}
 				/>

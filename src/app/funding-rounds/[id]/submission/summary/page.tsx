@@ -44,7 +44,7 @@ const getSubmissionPhaseSummary = async (
 	// Calculate budget breakdown
 	const budgetBreakdown = fundingRound.proposals.reduce(
 		(acc, proposal) => {
-			const budget = proposal.budgetRequest.toNumber()
+			const budget = proposal.totalFundingRequired.toNumber()
 			if (budget <= 500) acc.small++
 			else if (budget <= 1000) acc.medium++
 			else acc.large++
@@ -80,10 +80,10 @@ const getSubmissionPhaseSummary = async (
 		budgetBreakdown,
 		proposalVotes: submittedProposals.map(proposal => ({
 			id: proposal.id,
-			proposalName: proposal.proposalName,
+			title: proposal.title,
 			proposer: getUserDisplayName(proposal.user.metadata as UserMetadata),
 			status: proposal.status,
-			budgetRequest: proposal.budgetRequest,
+			totalFundingRequired: proposal.totalFundingRequired.toNumber(),
 			submissionDate: proposal.createdAt,
 		})),
 	}

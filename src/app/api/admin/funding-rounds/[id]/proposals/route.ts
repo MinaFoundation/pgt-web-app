@@ -60,9 +60,9 @@ export async function GET(
 		// Transform the data for the frontend
 		const transformedProposals = proposals.map(proposal => ({
 			id: proposal.id,
-			proposalName: proposal.proposalName,
+			title: proposal.title,
 			status: proposal.status,
-			budgetRequest: proposal.budgetRequest,
+			totalFundingRequired: proposal.totalFundingRequired,
 			createdAt: proposal.createdAt,
 			submitter:
 				(proposal.user?.metadata as UserMetadata)?.username || 'Unknown',

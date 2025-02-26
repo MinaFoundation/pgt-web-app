@@ -26,20 +26,23 @@ export interface ConsiderationUserVote {
 }
 
 export interface ConsiderationProposal {
+	// Core Proposal Fields
 	id: number
-	proposalName: string
-	submitter: string
+	title: string
 	abstract: string
 	motivation: string
 	rationale: string
 	deliveryRequirements: string
 	securityAndPerformance: string
-	budgetRequest: Decimal
+	totalFundingRequired: Decimal
+	createdAt: Date
+
+	submitter: string
+
 	status: 'pending' | 'approved' | 'rejected'
 	userVote?: ConsiderationUserVote
 	isReviewerEligible?: boolean
 	voteStats: ConsiderationVoteStats
-	createdAt: Date
 	currentPhase: ProposalStatus
 	email: string
 	submitterMetadata: {

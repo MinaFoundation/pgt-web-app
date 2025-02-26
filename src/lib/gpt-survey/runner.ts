@@ -5,7 +5,7 @@ import { AppError } from '../errors'
 
 export interface ProcessingResult {
 	proposalId: number
-	proposalName: string
+	title: string
 	proposalAuthor?: string
 	proposalDescription?: string
 	endTime?: Date
@@ -80,9 +80,9 @@ export class GptSurveyRunner {
 
 				const result: ProcessingResult = {
 					proposalId: proposal.id,
-					proposalName: `${proposal.id}. ${proposal.proposalName}`,
+					title: `${proposal.id}. ${proposal.title}`,
 					proposalAuthor: metadata?.username || 'anonymous',
-					proposalDescription: proposal.abstract || '',
+					proposalDescription: proposal.proposalSummary || '',
 					endTime: fundingRound.deliberationPhase.endDate,
 					status: 'exists',
 					feedbacks: [],
@@ -98,9 +98,9 @@ export class GptSurveyRunner {
 						// Create proposal in GPT Survey
 						const createProposalParams = {
 							proposalId: proposal.id.toString(),
-							proposalName: `${proposal.id}. ${proposal.proposalName}`,
+							title: `${proposal.id}. ${proposal.title}`,
 							proposalAuthor: metadata?.username || 'anonymous',
-							proposalDescription: proposal.abstract || '',
+							proposalDescription: proposal.proposalSummary || '',
 							endTime: fundingRound.deliberationPhase.endDate,
 							fundingRoundId: fundingRound.mefId,
 						}

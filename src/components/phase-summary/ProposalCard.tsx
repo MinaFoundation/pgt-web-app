@@ -167,11 +167,11 @@ export const ProposalCard: FC<Props> = ({
 							<Tooltip>
 								<TooltipTrigger asChild>
 									<h3 className="truncate text-sm font-medium transition-colors group-hover:text-primary">
-										{proposal.proposalName}
+										{proposal.title}
 									</h3>
 								</TooltipTrigger>
 								<TooltipContent side="top" className="max-w-[300px]">
-									<p className="whitespace-normal">{proposal.proposalName}</p>
+									<p className="whitespace-normal">{proposal.title}</p>
 								</TooltipContent>
 							</Tooltip>
 							<Tooltip>
@@ -223,7 +223,7 @@ export const ProposalCard: FC<Props> = ({
 											value={
 												(1 -
 													(proposal as VotingProposalVote).missingAmount! /
-														proposal.budgetRequest.toNumber()) *
+														proposal.totalFundingRequired) *
 												100
 											}
 											className={cn(
@@ -280,7 +280,7 @@ export const ProposalCard: FC<Props> = ({
 						</div>
 						<div className="flex items-center gap-1">
 							<CoinsIcon className="h-3 w-3" />
-							<span>{proposal.budgetRequest.toNumber()} MINA</span>
+							<span>{proposal.totalFundingRequired} MINA</span>
 						</div>
 					</div>
 				</div>

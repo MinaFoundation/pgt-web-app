@@ -17,7 +17,6 @@ import {
 	TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { ProposalStatus } from '@prisma/client'
 import { useToast } from '@/components/ui/use-toast'
 import { Loader2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
@@ -25,9 +24,9 @@ import { ApiResponse } from '@/lib/api-response'
 
 interface Proposal {
 	id: number
-	proposalName: string
+	title: string
 	status: ProposalStatus
-	budgetRequest: number
+	totalFundingRequired: number
 	createdAt: Date
 	submitter: string
 	fundingRound?: string
@@ -41,10 +40,10 @@ interface FundingRound {
 
 type SortField =
 	| 'id'
-	| 'proposalName'
+	| 'title'
 	| 'submitter'
 	| 'status'
-	| 'budgetRequest'
+	| 'totalFundingRequired'
 	| 'createdAt'
 type SortOrder = 'asc' | 'desc'
 
@@ -195,8 +194,8 @@ export function ManageProposalsComponent() {
 				case 'id':
 					comparison = a.id - b.id
 					break
-				case 'proposalName':
-					comparison = a.proposalName.localeCompare(b.proposalName)
+				case 'title':
+					comparison = a.title.localeCompare(b.title)
 					break
 				case 'submitter':
 					comparison = a.submitter.localeCompare(b.submitter)
@@ -204,8 +203,9 @@ export function ManageProposalsComponent() {
 				case 'status':
 					comparison = a.status.localeCompare(b.status)
 					break
-				case 'budgetRequest':
-					comparison = Number(a.budgetRequest) - Number(b.budgetRequest)
+				case 'totalFundingRequired':
+					comparison =
+						Number(a.totalFundingRequired) - Number(b.totalFundingRequired)
 					break
 				case 'createdAt':
 					comparison =
@@ -269,10 +269,10 @@ export function ManageProposalsComponent() {
 									ID {getSortIcon('id')}
 								</TableHead>
 								<TableHead
-									onClick={() => handleSort('proposalName')}
+									onClick={() => handleSort('title')}
 									className="cursor-pointer"
 								>
-									Name {getSortIcon('proposalName')}
+									Name {getSortIcon('title')}
 								</TableHead>
 								<TableHead
 									onClick={() => handleSort('submitter')}
@@ -287,10 +287,10 @@ export function ManageProposalsComponent() {
 									Status {getSortIcon('status')}
 								</TableHead>
 								<TableHead
-									onClick={() => handleSort('budgetRequest')}
+									onClick={() => handleSort('totalFundingRequired')}
 									className="cursor-pointer"
 								>
-									Budget ($MINA) {getSortIcon('budgetRequest')}
+									Budget ($MINA) {getSortIcon('totalFundingRequired')}
 								</TableHead>
 								<TableHead
 									onClick={() => handleSort('createdAt')}
@@ -305,7 +305,7 @@ export function ManageProposalsComponent() {
 							{sortedProposals.map(proposal => (
 								<TableRow key={proposal.id}>
 									<TableCell>{proposal.id}</TableCell>
-									<TableCell>{proposal.proposalName}</TableCell>
+									<TableCell>{proposal.title}</TableCell>
 									<TableCell>{proposal.submitter}</TableCell>
 									<TableCell>
 										<Badge className={getStatusBadgeColor(proposal.status)}>
@@ -313,7 +313,7 @@ export function ManageProposalsComponent() {
 										</Badge>
 									</TableCell>
 									<TableCell>
-										{proposal.budgetRequest.toLocaleString()}
+										{proposal.totalFundingRequired.toLocaleString()}
 									</TableCell>
 									<TableCell>
 										{new Date(proposal.createdAt).toLocaleDateString()}

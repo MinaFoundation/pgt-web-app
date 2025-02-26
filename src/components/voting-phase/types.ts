@@ -1,9 +1,9 @@
 export interface Proposal {
 	id: number
-	proposalName: string
+	title: string
 	reviewerVoteCount: number
 	status: string
-	budgetRequest: number
+	totalFundingRequired: number
 	abstract: string
 	author: {
 		username: string

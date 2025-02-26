@@ -286,9 +286,7 @@ export function DeliberationPhase({ fundingRoundId }: Props) {
 							<CardHeader>
 								<div className="flex items-start justify-between">
 									<div>
-										<CardTitle className="text-2xl">
-											{proposal.proposalName}
-										</CardTitle>
+										<CardTitle className="text-2xl">{proposal.title}</CardTitle>
 										<CardDescription className="break-all">
 											👤 Submitted by {proposal.submitter}
 										</CardDescription>
@@ -343,7 +341,8 @@ export function DeliberationPhase({ fundingRoundId }: Props) {
 														Budget Request
 													</h3>
 													<p className="text-muted-foreground">
-														{proposal.budgetRequest.toLocaleString()} MINA
+														{proposal.totalFundingRequired.toLocaleString()}{' '}
+														MINA
 													</p>
 												</div>
 												<div>

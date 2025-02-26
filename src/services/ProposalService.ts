@@ -9,27 +9,61 @@ import { UserMetadata } from './UserService'
 
 // Validation schema (reuse from CreateProposal component)
 export const proposalSchema = z.object({
-	proposalName: z
+	title: z.string().min(PV.TITLE.min).max(PV.TITLE.max),
+	proposalSummary: z
 		.string()
-		.min(PV.NAME.MIN)
-		.max(PV.NAME.MAX)
-		.regex(PV.NAME.PATTERN),
-	abstract: z.string().min(PV.ABSTRACT.MIN).max(PV.ABSTRACT.MAX),
-	motivation: z.string().min(PV.MOTIVATION.MIN).max(PV.MOTIVATION.MAX),
-	rationale: z.string().min(PV.RATIONALE.MIN).max(PV.RATIONALE.MAX),
-	deliveryRequirements: z
+		.min(PV.PROPOSAL_SUMMARY.min)
+		.max(PV.PROPOSAL_SUMMARY.max),
+	keyObjectives: z
 		.string()
-		.min(PV.DELIVERY_REQUIREMENTS.MIN)
-		.max(PV.DELIVERY_REQUIREMENTS.MAX),
-	securityAndPerformance: z
+		.min(PV.KEY_OBJECTIVES.min)
+		.max(PV.KEY_OBJECTIVES.max),
+	problemStatement: z
 		.string()
-		.min(PV.SECURITY_AND_PERFORMANCE.MIN)
-		.max(PV.SECURITY_AND_PERFORMANCE.MAX),
-	budgetRequest: z
+		.min(PV.PROBLEM_STATEMENT.min)
+		.max(PV.PROBLEM_STATEMENT.max),
+	problemImportance: z
 		.string()
-		.regex(PV.BUDGET_REQUEST.PATTERN)
-		.transform(val => parseFloat(val)),
-	email: z.string().email().max(PV.EMAIL.MAX),
+		.min(PV.PROBLEM_IMPORTANCE.min)
+		.max(PV.PROBLEM_IMPORTANCE.max),
+	proposedSolution: z
+		.string()
+		.min(PV.PROPOSED_SOLUTION.min)
+		.max(PV.PROPOSED_SOLUTION.max),
+	implementationDetails: z
+		.string()
+		.min(PV.IMPLEMENTATION_DETAILS.min)
+		.max(PV.IMPLEMENTATION_DETAILS.max),
+	communityBenefits: z
+		.string()
+		.min(PV.COMMUNITY_BENEFITS.min)
+		.max(PV.COMMUNITY_BENEFITS.max),
+	keyPerformanceIndicators: z.string().min(PV.KPI.min).max(PV.KPI.max),
+	totalFundingRequired: z.string().transform(val => parseFloat(val)),
+	budgetBreakdown: z
+		.string()
+		.min(PV.BUDGET_BREAKDOWN.min)
+		.max(PV.BUDGET_BREAKDOWN.max),
+	estimatedCompletionDate: z.date(),
+	milestones: z.string().min(PV.MILESTONES.min).max(PV.MILESTONES.max),
+	teamMembers: z.string().min(PV.TEAM_MEMBERS.min).max(PV.TEAM_MEMBERS.max),
+	relevantExperience: z
+		.string()
+		.min(PV.RELEVANT_EXPERIENCE.min)
+		.max(PV.RELEVANT_EXPERIENCE.max),
+	potentialRisks: z
+		.string()
+		.min(PV.POTENTIAL_RISKS.min)
+		.max(PV.POTENTIAL_RISKS.max),
+	mitigationPlans: z
+		.string()
+		.min(PV.MITIGATION_PLANS.min)
+		.max(PV.MITIGATION_PLANS.max),
+	discordHandle: z.string().min(PV.DISCORD.min).max(PV.DISCORD.max),
+	email: z.string().email().max(PV.EMAIL.max),
+	website: z.string().url().max(PV.WEBSITE.max).optional(),
+	githubProfile: z.string().url().max(PV.GITHUB_PROFILE.max).optional(),
+	otherLinks: z.string().max(PV.OTHER_LINKS.max).optional(),
 })
 
 export type CreateProposalInput = z.infer<typeof proposalSchema>
@@ -55,13 +89,35 @@ export class ProposalService {
 			// Validate input
 			const validatedData = proposalSchema.parse(data)
 
-			// Create proposal
+			// Create proposal with new field names
 			return await this.prisma.proposal.create({
 				data: {
 					userId,
-					status: 'DRAFT', // Use string literal instead of enum
-					...validatedData,
-					budgetRequest: new Decimal(validatedData.budgetRequest.toString()),
+					status: 'DRAFT',
+					title: validatedData.title,
+					proposalSummary: validatedData.proposalSummary,
+					keyObjectives: validatedData.keyObjectives,
+					problemStatement: validatedData.problemStatement,
+					problemImportance: validatedData.problemImportance,
+					proposedSolution: validatedData.proposedSolution,
+					implementationDetails: validatedData.implementationDetails,
+					communityBenefits: validatedData.communityBenefits,
+					keyPerformanceIndicators: validatedData.keyPerformanceIndicators,
+					totalFundingRequired: new Decimal(
+						validatedData.totalFundingRequired.toString(),
+					),
+					budgetBreakdown: validatedData.budgetBreakdown,
+					estimatedCompletionDate: validatedData.estimatedCompletionDate,
+					milestones: validatedData.milestones,
+					teamMembers: validatedData.teamMembers,
+					relevantExperience: validatedData.relevantExperience,
+					potentialRisks: validatedData.potentialRisks,
+					mitigationPlans: validatedData.mitigationPlans,
+					discordHandle: validatedData.discordHandle,
+					email: validatedData.email,
+					website: validatedData.website,
+					githubProfile: validatedData.githubProfile,
+					otherLinks: validatedData.otherLinks,
 				},
 			})
 		} catch (error) {
@@ -87,7 +143,7 @@ export class ProposalService {
 	async searchProposals(searchTerm: string): Promise<Proposal[]> {
 		return await this.prisma.proposal.findMany({
 			where: {
-				proposalName: {
+				title: {
 					contains: searchTerm,
 					mode: 'insensitive',
 				},
@@ -217,21 +273,42 @@ export class ProposalService {
 		id: number,
 		data: CreateProposalInput,
 	): Promise<Proposal> {
-		try {
-			// Validate input
-			const validatedData = proposalSchema.parse(data)
+		// Validate input
+		const validatedData = proposalSchema.parse(data)
 
-			// Update proposal
+		try {
 			return await this.prisma.proposal.update({
 				where: { id },
 				data: {
-					...validatedData,
-					budgetRequest: new Decimal(validatedData.budgetRequest.toString()),
+					title: validatedData.title,
+					proposalSummary: validatedData.proposalSummary,
+					keyObjectives: validatedData.keyObjectives,
+					problemStatement: validatedData.problemStatement,
+					problemImportance: validatedData.problemImportance,
+					proposedSolution: validatedData.proposedSolution,
+					implementationDetails: validatedData.implementationDetails,
+					communityBenefits: validatedData.communityBenefits,
+					keyPerformanceIndicators: validatedData.keyPerformanceIndicators,
+					totalFundingRequired: new Decimal(
+						validatedData.totalFundingRequired.toString(),
+					),
+					budgetBreakdown: validatedData.budgetBreakdown,
+					estimatedCompletionDate: validatedData.estimatedCompletionDate,
+					milestones: validatedData.milestones,
+					teamMembers: validatedData.teamMembers,
+					relevantExperience: validatedData.relevantExperience,
+					potentialRisks: validatedData.potentialRisks,
+					mitigationPlans: validatedData.mitigationPlans,
+					discordHandle: validatedData.discordHandle,
+					email: validatedData.email,
+					website: validatedData.website,
+					githubProfile: validatedData.githubProfile,
+					otherLinks: validatedData.otherLinks,
 				},
 			})
 		} catch (error) {
 			console.error('Error updating proposal:', error)
-			throw error
+			throw error // Re-throw to handle in the API route
 		}
 	}
 
