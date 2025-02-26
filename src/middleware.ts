@@ -40,9 +40,9 @@ function isAuthPath(path: string): path is AuthPath {
 type RouteType = 'api' | 'web' | 'admin' | 'admin-api'
 
 function getRouteType(path: string): RouteType {
-	if (path.startsWith('/api')) return 'api'
 	if (path.startsWith('/api/admin')) return 'admin-api'
 	if (path.startsWith('/admin')) return 'admin'
+	if (path.startsWith('/api')) return 'api'
 	return 'web'
 }
 
