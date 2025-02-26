@@ -205,7 +205,8 @@ async function processProposals() {
 			},
 			include: {
 				fundingRound: {
-					include: {
+					select: {
+						mefId: true,
 						considerationPhase: true,
 					},
 				},
@@ -234,6 +235,7 @@ async function processProposals() {
 				// Fetch OCV votes
 				const ocvData = await ocvService.getConsiderationVotes(
 					proposal.id,
+					proposal.fundingRound.mefId,
 					startTime,
 					endTime,
 				)

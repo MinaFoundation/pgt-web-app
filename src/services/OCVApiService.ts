@@ -1,5 +1,4 @@
 import logger from '@/logging'
-import { ProposalService } from './ProposalService'
 import prisma from '@/lib/prisma'
 
 interface OCVVote {
@@ -51,11 +50,9 @@ export class OCVApiService {
 	private static readonly FALLBACK_OCV_API_BASE_URL =
 		'https://on-chain-voting-staging-devnet.minaprotocol.network/'
 	private baseUrl: string | undefined
-	private proposalService: ProposalService
 	constructor() {
 		const envUrl = process.env.NEXT_PUBLIC_OCV_API_BASE_URL
 		this.baseUrl = envUrl ?? OCVApiService.FALLBACK_OCV_API_BASE_URL
-		this.proposalService = new ProposalService(prisma)
 
 		if (!envUrl) {
 			logger.warn(
@@ -67,12 +64,11 @@ export class OCVApiService {
 
 	async getConsiderationVotes(
 		proposalId: number,
+		mefId: number,
 		startTime: number,
 		endTime: number,
 	): Promise<OCVVoteResponse> {
-		const fundingRoundId =
-			await this.proposalService.getFundingRoundId(proposalId)
-		const url = `${this.baseUrl}/api/mef_proposal_consideration/${fundingRoundId}/${proposalId}/${startTime}/${endTime}?ledger_hash`
+		const url = `${this.baseUrl}/api/mef_proposal_consideration/${mefId}/${proposalId}/${startTime}/${endTime}?ledger_hash`
 
 		try {
 			const response = await fetch(url, {
