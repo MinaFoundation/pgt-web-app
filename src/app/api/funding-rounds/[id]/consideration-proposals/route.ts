@@ -12,7 +12,6 @@ import { ConsiderationDecision, ProposalStatus } from '@prisma/client'
 import { CoreProposalData } from '@/types/proposals'
 import { Decimal } from 'decimal.js'
 
-// Add this helper function to safely parse OCV vote data
 function parseOCVVoteData(data: JsonValue | null | undefined): OCVVoteData {
 	const defaultData: OCVVoteData = {
 		total_community_votes: 0,
@@ -26,7 +25,6 @@ function parseOCVVoteData(data: JsonValue | null | undefined): OCVVoteData {
 		return defaultData
 	}
 
-	// Type assertion after runtime check
 	const voteData = data as Record<string, unknown>
 
 	return {
@@ -137,7 +135,7 @@ export interface ConsiderationProposalResponse
 	voteStats: VoteStats
 	currentPhase: ProposalStatus
 	submitterMetadata: SubmitterMetadata
-	totalFundingRequired: Decimal // Using different name from CoreProposalData
+	totalFundingRequired: Decimal
 }
 
 type JsonResponse<T> = {
@@ -156,7 +154,7 @@ export type ConsiderationProposalResponseJson =
 export type GET_RESPONSE_TYPE = ConsiderationProposalResponse[]
 export type GET_JSON_RESPONSE = ConsiderationProposalResponseJson[]
 
-export class VoteStatsEmpty {
+class VoteStatsEmpty {
 	/**
 	 * Returns default vote statistics when actual data is not available
 	 * @param minReviewerApprovals The minimum required reviewer approvals
