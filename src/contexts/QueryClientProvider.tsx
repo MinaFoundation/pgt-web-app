@@ -2,6 +2,7 @@
 
 import { ReactNode } from 'react'
 import {
+	MutationCache,
 	QueryCache,
 	QueryClient,
 	QueryClientProvider as TanStackQueryClientProvider,
@@ -10,6 +11,14 @@ import { toast } from '@/hooks'
 
 const queryClient = new QueryClient({
 	queryCache: new QueryCache({
+		onError: error =>
+			toast({
+				title: 'Error',
+				description: error.message,
+				variant: 'destructive',
+			}),
+	}),
+	mutationCache: new MutationCache({
 		onError: error =>
 			toast({
 				title: 'Error',
