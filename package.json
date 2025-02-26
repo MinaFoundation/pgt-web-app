@@ -6,7 +6,7 @@
 	"scripts": {
 		"dev": "npm run build:workers && (next dev & npm run bree:cron:dev & wait)",
 		"dev:https": "NODE_TLS_REJECT_UNAUTHORIZED=0 next dev --experimental-https --experimental-https-key ./localhost-key.pem --experimental-https-cert ./localhost.pem",
-		"build": "next build --no-lint && npm run internal:copy-public && npm run build:workers && npm run internal:copy-dist",
+		"build": "next build && npm run internal:copy-public && npm run build:workers && npm run internal:copy-dist",
 		"build:workers": "npx tsx src/scripts/build-workers.ts",
 		"start": "npx prisma migrate deploy && next start",
 		"start:prod": "prisma migrate deploy && npm run migrate:proposal-data && (node server.js & npm run bree:cron:prod & wait)",
