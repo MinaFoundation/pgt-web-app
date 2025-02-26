@@ -29,7 +29,7 @@ export function HowItWorksPhasesContent() {
 						Milestones and Timeline: Key Milestones / Estimated completion date.
 					</li>
 					<li>Team Information: Team members and Relevant experience.</li>
-					<li>Risks and Mitigation: Potentatial risks and mitiation plans.</li>
+					<li>Risks and Mitigation: Potential risks and mitigation plans. </li>
 					<li>
 						About the Submitter: Contact info and relevant links about previous
 						projects.
