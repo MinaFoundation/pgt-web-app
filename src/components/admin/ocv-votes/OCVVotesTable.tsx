@@ -17,7 +17,13 @@ import {
 } from '@/components/ui/hover-card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { CopyIcon, InfoIcon, ArrowUpDown, AlertCircle } from 'lucide-react'
+import {
+	CopyIcon,
+	InfoIcon,
+	ArrowUpDown,
+	AlertCircle,
+	RefreshCwIcon,
+} from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import {
 	Pagination,
@@ -31,6 +37,7 @@ import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import Link from 'next/link'
+import { useProcessProposals } from '@/hooks/use-process-proposals'
 
 interface OCVVote {
 	id: number
@@ -173,6 +180,9 @@ export function OCVVotesTable() {
 		}))
 	}
 
+	const { mutate: processProposals, isPending: isProcessingProposals } =
+		useProcessProposals()
+
 	if (isLoading) {
 		return (
 			<div className="flex items-center justify-center p-8">
@@ -194,21 +204,30 @@ export function OCVVotesTable() {
 
 	return (
 		<div className="space-y-4">
-			<Alert>
-				<InfoIcon className="h-4 w-4" />
-				<AlertDescription className="ml-2 flex items-center gap-2">
-					<span>
-						Vote data updates may take up to 10 minutes to reflect. Check{' '}
-						<Link
-							href="/admin/worker-heartbeats"
-							className="font-medium underline underline-offset-4 hover:text-primary"
-						>
-							Worker Heartbeats
-						</Link>{' '}
-						for information on running jobs.
-					</span>
-				</AlertDescription>
-			</Alert>
+			<div className="flex flex-col items-end gap-4 lg:flex-row lg:items-center lg:justify-between">
+				<Alert>
+					<AlertDescription className="ml-2 flex items-center gap-2">
+						<InfoIcon className="h-4 w-4" />
+						<span>
+							Vote data updates may take up to 10 minutes to reflect. Check{' '}
+							<Link
+								href="/admin/worker-heartbeats"
+								className="font-medium underline underline-offset-4 hover:text-primary"
+							>
+								Worker Heartbeats
+							</Link>{' '}
+							for information on running jobs.
+						</span>
+					</AlertDescription>
+				</Alert>
+				<Button
+					onClick={() => processProposals()}
+					loading={isProcessingProposals}
+				>
+					<RefreshCwIcon className="mr-1 h-4 w-4" />
+					Process Proposals
+				</Button>
+			</div>
 
 			<div className="rounded-md border">
 				<Table>
