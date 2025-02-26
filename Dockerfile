@@ -14,6 +14,7 @@ COPY prisma ./prisma/
 COPY public ./public
 
 RUN npx prisma generate
+RUN npm run migrate:prod
 
 RUN npm run build && \
     npm prune --production && \

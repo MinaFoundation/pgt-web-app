@@ -1,6 +1,6 @@
 {
 	"name": "pgt-web-app",
-	"version": "0.1.88",
+	"version": "0.1.89",
 	"private": true,
 	"type": "module",
 	"scripts": {
@@ -20,7 +20,8 @@
 		"lint:types": "tsc --noEmit",
 		"migrate:proposal-data": "npx tsx src/scripts/migrateProposalData.ts",
 		"lint:all": "npm run lint:full && npm run lint:types",
-		"admin:status": "npx tsx src/scripts/toggle-admin-status.ts"
+		"admin:status": "npx tsx src/scripts/toggle-admin-status.ts",
+		"migrate:prod": "npx prisma migrate deploy && npm run migrate:proposal-data"
 	},
 	"dependencies": {
 		"@ladjs/graceful": "^4.1.0",
