@@ -51,7 +51,7 @@ async function releaseLock(): Promise<void> {
   `
 }
 
-async function updateHeartbeat(
+export async function updateHeartbeat(
 	id: string,
 	name: string,
 	status: WorkerStatus,
@@ -78,7 +78,7 @@ async function updateHeartbeat(
 	})
 }
 
-async function cleanupStaleJobs(): Promise<void> {
+export async function cleanupStaleJobs(): Promise<void> {
 	const cleanupId = randomUUID()
 
 	try {
@@ -151,7 +151,7 @@ async function cleanupStaleJobs(): Promise<void> {
 	}
 }
 
-async function processProposals() {
+export async function processProposals() {
 	const jobId = randomUUID()
 	const ocvService = new OCVApiService()
 	const statusMoveService = new ProposalStatusMoveService(prisma)
