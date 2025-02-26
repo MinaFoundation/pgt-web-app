@@ -99,6 +99,16 @@ export const faqData: FAQSection[] = [
 					"Proposals are considered based on [innovation, feasibility, impact, sustainability, and alignment with organizational goals- TBD]. Each proposal is considered by the selected Reviewers or community members (in case the community members are not satisfied with the Reviewer's recommendation).",
 			},
 			{
+				question: 'Is there a submission deadline?',
+				answer:
+					'Yes, please check the announced dates and the information during the funding round. After that date pass, the submission phase will be automatically closed, and the process will move to the next phase.',
+			},
+			{
+				question: 'What is the maximum funding amount I can request?',
+				answer:
+					"Funding amounts vary per project, the maximum available budget for each round will be informed by the Mina Foundation, and can also be viewed in the funding round details. Ensure your budget request aligns with the project's scope and the funding limits.",
+			},
+			{
 				question: 'How long does the consideration process take?',
 				answer:
 					'The review process typically takes 2 weeks, with all applicants notified via Discord of the status once the proposal is reviewed.',
