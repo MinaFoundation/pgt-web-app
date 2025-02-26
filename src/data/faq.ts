@@ -1,18 +1,4 @@
-import type {
-	FAQSection,
-	FundingRoundWithPhases,
-} from '@/components/how-it-works/FAQ'
-
-const formatDate = (date: Date): string => {
-	return new Intl.DateTimeFormat('en-US', {
-		hour: 'numeric',
-		minute: 'numeric',
-		hour12: true,
-		month: 'long',
-		day: 'numeric',
-		year: 'numeric',
-	}).format(new Date(date))
-}
+import type { FAQSection } from '@/components/how-it-works/FAQ'
 
 export const faqData: FAQSection[] = [
 	{
@@ -81,18 +67,6 @@ export const faqData: FAQSection[] = [
 				question: 'How long does the proposal Submission Phase take?',
 				answer:
 					'The Phase typically takes 2 weeks. All applicant are invited to submit their proposals on time.',
-			},
-			{
-				question: 'Is there a submission deadline?',
-				answer: (fundingRound: FundingRoundWithPhases) => {
-					return `Yes, the deadline for this funding round is ${formatDate(fundingRound.submissionPhase.endDate)}. After that, the submission phase will be automatically closed, and the process will move to the next phase.`
-				},
-			},
-			{
-				question: 'What is the maximum funding amount I can request?',
-				answer: (fundingRound: FundingRoundWithPhases) => {
-					return `Funding amounts vary per project, but the maximum available budget for this round is ${Number(fundingRound.totalBudget).toLocaleString()} MINA. Ensure your budget request aligns with the project's scope and the funding limits.`
-				},
 			},
 			{
 				question: 'Can I request funding for multiple project phases?',

@@ -1,48 +1,13 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import type { FundingRound } from '@prisma/client'
 
-interface Props {
-	currentPhase: string
-	fundingRound: FundingRound & {
-		submissionPhase: {
-			startDate: Date
-			endDate: Date
-		}
-		considerationPhase: {
-			startDate: Date
-			endDate: Date
-		}
-		deliberationPhase: {
-			startDate: Date
-			endDate: Date
-		}
-		votingPhase: {
-			startDate: Date
-			endDate: Date
-		}
-	}
-}
-
-export function ProcessVisualization({ currentPhase, fundingRound }: Props) {
+export function ProcessVisualization() {
+	//TODO: Remove it
+	const currentPhase = 'voting' as unknown
 	const getPhaseStyle = (phase: string) => {
-		const isActive = currentPhase === phase
-		const isPast = (() => {
-			const now = new Date()
-			switch (phase) {
-				case 'submission':
-					return now > new Date(fundingRound.submissionPhase.endDate)
-				case 'consideration':
-					return now > new Date(fundingRound.considerationPhase.endDate)
-				case 'deliberation':
-					return now > new Date(fundingRound.deliberationPhase.endDate)
-				case 'voting':
-					return now > new Date(fundingRound.votingPhase.endDate)
-				default:
-					return false
-			}
-		})()
+		const isActive = false
+		const isPast = false
 
 		return {
 			container: cn(
