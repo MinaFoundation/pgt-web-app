@@ -58,7 +58,7 @@ interface OCVVote {
 	createdAt: string
 	updatedAt: string
 	proposal: {
-		proposalName: string
+		title: string
 		reviewerCount: number
 		fundingRoundName: string
 		status: ProposalStatus
@@ -281,7 +281,7 @@ export function OCVVotesTable() {
 									</Button>
 								</TableCell>
 								<TableCell className="font-medium">
-									{vote.proposal.proposalName}
+									{vote.proposal.title}
 								</TableCell>
 								<TableCell>{vote.proposal.fundingRoundName}</TableCell>
 								<TableCell>

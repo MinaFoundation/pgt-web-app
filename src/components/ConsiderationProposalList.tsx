@@ -17,7 +17,6 @@ import { useConsiderationPhase } from '@/hooks/use-consideration-phase'
 import { useConsiderationVote } from '@/hooks/use-consideration-vote'
 import { cn } from '@/lib/utils'
 import { Label } from '@/components/ui/label'
-import type { ConsiderationProposal } from '@/types/consideration'
 import { OCVVoteButton } from '@/components/web3/OCVVoteButton'
 import { ProposalStatus } from '@prisma/client'
 import {
@@ -25,6 +24,7 @@ import {
 	HoverCardContent,
 	HoverCardTrigger,
 } from '@/components/ui/hover-card'
+import { ConsiderationProposalResponseJson } from '@/app/api/funding-rounds/[id]/consideration-proposals/route'
 
 interface Props {
 	fundingRoundId: string
@@ -38,7 +38,7 @@ interface ExpandedState {
 }
 
 function calculateVoteStats(
-	proposal: ConsiderationProposal,
+	proposal: ConsiderationProposalResponseJson,
 	newVote?: { decision: 'APPROVED' | 'REJECTED' },
 ) {
 	const stats = { ...proposal.voteStats }
@@ -222,7 +222,7 @@ export function ConsiderationProposalList({
 	})
 
 	useEffect(() => {
-		proposals.forEach((proposal: ConsiderationProposal) => {
+		proposals.forEach((proposal: ConsiderationProposalResponseJson) => {
 			if (proposal.userVote) {
 				setReviewStates(prev => ({ ...prev, [proposal.id]: 'decided' }))
 				setDecisions(prev => ({
@@ -251,12 +251,12 @@ export function ConsiderationProposalList({
 
 		const result = await submitVote(proposalId, decision, decisions[proposalId])
 		if (result) {
-			setProposals((prev: ConsiderationProposal[]) => {
+			setProposals((prev: ConsiderationProposalResponseJson[]) => {
 				const updatedProposals = prev.filter(
-					(p: ConsiderationProposal) => p.id !== proposalId,
+					(p: ConsiderationProposalResponseJson) => p.id !== proposalId,
 				)
 				const votedProposal = prev.find(
-					(p: ConsiderationProposal) => p.id === proposalId,
+					(p: ConsiderationProposalResponseJson) => p.id === proposalId,
 				)
 				if (votedProposal) {
 					const newVoteStats = calculateVoteStats(votedProposal, { decision })
@@ -310,8 +310,8 @@ export function ConsiderationProposalList({
 			newDecision[proposalId],
 		)
 		if (result) {
-			setProposals((prev: ConsiderationProposal[]) =>
-				prev.map((p: ConsiderationProposal) => {
+			setProposals((prev: ConsiderationProposalResponseJson[]) =>
+				prev.map((p: ConsiderationProposalResponseJson) => {
 					if (p.id === proposalId) {
 						const newVoteStats = calculateVoteStats(p, { decision })
 						return {
@@ -338,7 +338,7 @@ export function ConsiderationProposalList({
 		}
 	}
 
-	const renderVoteButtons = (proposal: ConsiderationProposal) => {
+	const renderVoteButtons = (proposal: ConsiderationProposalResponseJson) => {
 		if (!proposal.isReviewerEligible) {
 			return (
 				<div className="flex flex-col gap-2 md:flex-row">
@@ -377,7 +377,7 @@ export function ConsiderationProposalList({
 		)
 	}
 
-	const renderEditButtons = (proposal: ConsiderationProposal) => {
+	const renderEditButtons = (proposal: ConsiderationProposalResponseJson) => {
 		if (!proposal.isReviewerEligible) {
 			return (
 				<div className="flex gap-2">
@@ -418,7 +418,9 @@ export function ConsiderationProposalList({
 		)
 	}
 
-	const renderFeedbackSection = (proposal: ConsiderationProposal) => {
+	const renderFeedbackSection = (
+		proposal: ConsiderationProposalResponseJson,
+	) => {
 		if (!proposal.isReviewerEligible) {
 			if (proposal.status !== 'pending') {
 				return (
@@ -543,7 +545,8 @@ export function ConsiderationProposalList({
 							({proposals.length} proposals,{' '}
 							{
 								proposals.filter(
-									(p: ConsiderationProposal) => p.status === 'pending',
+									(p: ConsiderationProposalResponseJson) =>
+										p.status === 'pending',
 								).length
 							}{' '}
 							pending review)
@@ -580,7 +583,7 @@ export function ConsiderationProposalList({
 										<div className="flex items-start justify-between">
 											<div>
 												<CardTitle className="text-2xl">
-													{proposal.proposalName}
+													{proposal.title}
 												</CardTitle>
 												<CardDescription className="break-all">
 													👤 Submitted by {proposal.submitter}
@@ -748,7 +751,7 @@ export function ConsiderationProposalList({
 											{expanded[proposal.id] ? (
 												<>
 													<p className="mb-4 text-muted-foreground">
-														{proposal.abstract}
+														{proposal.proposalSummary}
 													</p>
 													<div className="space-y-4">
 														<div>
@@ -756,7 +759,7 @@ export function ConsiderationProposalList({
 																Motivation
 															</h3>
 															<p className="text-muted-foreground">
-																{proposal.motivation}
+																{proposal.problemImportance}
 															</p>
 														</div>
 														<div>
@@ -764,7 +767,7 @@ export function ConsiderationProposalList({
 																Rationale
 															</h3>
 															<p className="text-muted-foreground">
-																{proposal.rationale}
+																{proposal.keyObjectives}
 															</p>
 														</div>
 														<div>
@@ -772,7 +775,7 @@ export function ConsiderationProposalList({
 																Delivery Requirements
 															</h3>
 															<p className="text-muted-foreground">
-																{proposal.deliveryRequirements}
+																{proposal.milestones}
 															</p>
 														</div>
 														<div>
@@ -780,7 +783,7 @@ export function ConsiderationProposalList({
 																Security & Performance
 															</h3>
 															<p className="text-muted-foreground">
-																{proposal.securityAndPerformance}
+																{proposal.mitigationPlans}
 															</p>
 														</div>
 														<div>
@@ -788,7 +791,8 @@ export function ConsiderationProposalList({
 																Budget Request
 															</h3>
 															<p className="text-muted-foreground">
-																{proposal.budgetRequest.toLocaleString()} MINA
+																{proposal.totalFundingRequired.toLocaleString()}{' '}
+																MINA
 															</p>
 														</div>
 														<div>
@@ -835,7 +839,7 @@ export function ConsiderationProposalList({
 												</>
 											) : (
 												<p className="line-clamp-3 text-muted-foreground">
-													{proposal.abstract}
+													{proposal.proposalSummary}
 												</p>
 											)}
 										</div>
@@ -946,7 +950,7 @@ export function ConsiderationProposalList({
 											<div className="flex items-start justify-between">
 												<div>
 													<CardTitle className="text-2xl">
-														{proposal.proposalName}
+														{proposal.title}
 													</CardTitle>
 													<CardDescription>
 														👤 Submitted by {proposal.submitter}
@@ -1114,7 +1118,7 @@ export function ConsiderationProposalList({
 												{expanded[proposal.id] ? (
 													<>
 														<p className="mb-4 text-muted-foreground">
-															{proposal.abstract}
+															{proposal.proposalSummary}
 														</p>
 														<div className="space-y-4">
 															<div>
@@ -1122,7 +1126,7 @@ export function ConsiderationProposalList({
 																	Motivation
 																</h3>
 																<p className="text-muted-foreground">
-																	{proposal.motivation}
+																	{proposal.problemImportance}
 																</p>
 															</div>
 															<div>
@@ -1130,7 +1134,7 @@ export function ConsiderationProposalList({
 																	Rationale
 																</h3>
 																<p className="text-muted-foreground">
-																	{proposal.rationale}
+																	{proposal.keyObjectives}
 																</p>
 															</div>
 															<div>
@@ -1138,7 +1142,7 @@ export function ConsiderationProposalList({
 																	Delivery Requirements
 																</h3>
 																<p className="text-muted-foreground">
-																	{proposal.deliveryRequirements}
+																	{proposal.problemStatement}
 																</p>
 															</div>
 															<div>
@@ -1146,7 +1150,7 @@ export function ConsiderationProposalList({
 																	Security & Performance
 																</h3>
 																<p className="text-muted-foreground">
-																	{proposal.securityAndPerformance}
+																	{proposal.implementationDetails}
 																</p>
 															</div>
 															<div>
@@ -1154,7 +1158,8 @@ export function ConsiderationProposalList({
 																	Budget Request
 																</h3>
 																<p className="text-muted-foreground">
-																	{proposal.budgetRequest.toLocaleString()} MINA
+																	{proposal.totalFundingRequired.toLocaleString()}{' '}
+																	MINA
 																</p>
 															</div>
 															<div>
@@ -1202,7 +1207,7 @@ export function ConsiderationProposalList({
 													</>
 												) : (
 													<p className="line-clamp-3 text-muted-foreground">
-														{proposal.abstract}
+														{proposal.proposalSummary}
 													</p>
 												)}
 											</div>

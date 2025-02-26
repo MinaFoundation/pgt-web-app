@@ -4,10 +4,10 @@ import { OCVVoteData, OCVVote } from '@/types/consideration'
 
 export interface RankedProposalAPIResponse {
 	id: number
-	proposalName: string
+	title: string
 	reviewerVoteCount: number
 	status: ProposalStatus
-	budgetRequest: number
+	totalFundingRequired: number
 	abstract: string
 	mefId: number
 	author: {
@@ -101,10 +101,10 @@ export class RankedVotingService {
 					where: { status: 'DELIBERATION' },
 					select: {
 						id: true,
-						proposalName: true,
+						title: true,
 						status: true,
-						abstract: true,
-						budgetRequest: true,
+						proposalSummary: true,
+						totalFundingRequired: true,
 						user: {
 							select: {
 								metadata: true,
@@ -156,11 +156,11 @@ export class RankedVotingService {
 
 			return {
 				id: p.id,
-				proposalName: p.proposalName,
-				abstract: p.abstract,
+				title: p.title,
+				abstract: p.proposalSummary,
 				reviewerVoteCount: p.deliberationReviewerVotes.length,
 				status: p.status,
-				budgetRequest: p.budgetRequest.toNumber(),
+				totalFundingRequired: p.totalFundingRequired.toNumber(),
 				mefId: result.mefId + index + 1,
 				author: {
 					username: metadata.username,

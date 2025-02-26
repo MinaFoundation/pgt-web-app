@@ -9,7 +9,7 @@ interface OCVVoteWithDetails {
 	createdAt: Date
 	updatedAt: Date
 	proposal: {
-		proposalName: string
+		title: string
 		reviewerCount: number
 		fundingRoundName: string
 		status: string
@@ -56,7 +56,7 @@ export class OCVVotesService {
 				include: {
 					proposal: {
 						select: {
-							proposalName: true,
+							title: true,
 							fundingRound: {
 								select: {
 									name: true,
@@ -76,7 +76,7 @@ export class OCVVotesService {
 			...vote,
 			voteData: vote.voteData as unknown as OCVVoteResponse,
 			proposal: {
-				proposalName: vote.proposal.proposalName,
+				title: vote.proposal.title,
 				reviewerCount: this.statusMoveService.minReviewerApprovals,
 				fundingRoundName: vote.proposal.fundingRound?.name ?? 'N/A',
 				status: vote.proposal.status,

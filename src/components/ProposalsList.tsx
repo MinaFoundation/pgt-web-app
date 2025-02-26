@@ -33,13 +33,13 @@ interface ProposalWithUser {
 	userId: string
 	fundingRoundId: string | null
 	status: string
-	proposalName: string
+	title: string
 	abstract: string
 	motivation: string
 	rationale: string
 	deliveryRequirements: string
 	securityAndPerformance: string
-	budgetRequest: string
+	totalFundingRequired: string
 	discord: string
 	email: string
 	createdAt: string
@@ -89,7 +89,8 @@ export function ProposalsList() {
 	)
 	const [viewFundingRoundOpen, setViewFundingRoundOpen] = useState(false)
 	const [selectFundingRoundOpen, setSelectFundingRoundOpen] = useState(false)
-	const { loading: checkingRounds, hasAvailableRounds } = useAvailableFundingRounds()
+	const { loading: checkingRounds, hasAvailableRounds } =
+		useAvailableFundingRounds()
 
 	const { handleAction, loading: deleteLoading } = useActionFeedback({
 		successMessage: 'Proposal deleted successfully',
@@ -246,7 +247,7 @@ export function ProposalsList() {
 								href={`/proposals/${proposal.id}`}
 								className="text-lg font-medium hover:underline"
 							>
-								{proposal.proposalName}
+								{proposal.title}
 							</Link>
 							<div className="flex items-center gap-2 text-sm text-muted-foreground">
 								<span>by {proposal.user.metadata.username}</span>
@@ -366,7 +367,7 @@ export function ProposalsList() {
 				open={selectFundingRoundOpen}
 				onOpenChange={setSelectFundingRoundOpen}
 				onSubmit={handleSubmitToFunding}
-				proposalTitle={selectedProposal?.proposalName || ''}
+				proposalTitle={selectedProposal?.title || ''}
 			/>
 
 			{selectedProposal?.fundingRound && (
@@ -374,7 +375,7 @@ export function ProposalsList() {
 					open={viewFundingRoundOpen}
 					onOpenChange={setViewFundingRoundOpen}
 					fundingRound={selectedProposal.fundingRound}
-					proposalTitle={selectedProposal.proposalName}
+					proposalTitle={selectedProposal.title}
 					canWithdraw={true}
 					mode="withdraw"
 					onWithdraw={() => handleWithdrawFromFunding(selectedProposal.id)}

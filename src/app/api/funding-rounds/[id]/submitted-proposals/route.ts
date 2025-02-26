@@ -6,18 +6,18 @@ import logger from '@/logging'
 import { UserMetadata } from '@/services/UserService'
 import { UserService } from '@/services'
 
-export interface SumbmittedProposalsJSON {
+export interface SubmittedProposalsJSON {
 	id: number
-	proposalName: string
-	abstract: string
-	budgetRequest: number
+	title: string
+	proposalSummary: string
+	totalFundingRequired: Prisma.Decimal
 	createdAt: Date
 	status: ProposalStatus
 	submitter: string
-	motivation: string
-	rationale: string
-	deliveryRequirements: string
-	securityAndPerformance: string
+	problemImportance: string
+	problemStatement: string
+	implementationDetails: string
+	potentialRisks: string
 	email: string
 	submitterMetadata: {
 		authSource: {
@@ -39,15 +39,15 @@ export interface SumbmittedProposalsJSON {
 // Type for the raw proposal from database
 interface RawProposal {
 	id: number
-	proposalName: string
-	abstract: string
-	budgetRequest: Prisma.Decimal
+	title: string
+	proposalSummary: string
+	totalFundingRequired: Prisma.Decimal
 	createdAt: Date
 	status: ProposalStatus
-	motivation: string
-	rationale: string
-	deliveryRequirements: string
-	securityAndPerformance: string
+	problemImportance: string
+	problemStatement: string
+	implementationDetails: string
+	potentialRisks: string
 	email: string
 	user: {
 		id: string
@@ -65,14 +65,6 @@ function hasUsername(
 		'username' in metadata &&
 		typeof (metadata as { username: string }).username === 'string'
 	)
-}
-
-// Helper function to safely get username from metadata
-function getUsernameFromMetadata(metadata: Prisma.JsonValue): string {
-	if (hasUsername(metadata)) {
-		return metadata.username
-	}
-	return 'Anonymous'
 }
 
 export async function GET(
@@ -108,7 +100,56 @@ export async function GET(
 		})
 
 		// Transform the proposals to include user information
-		const formattedProposals = {}
+		const formattedProposals = await Promise.all(
+			proposals.map(
+				async (proposal: RawProposal): Promise<SubmittedProposalsJSON> => {
+					const linkedAccounts = await userService.getLinkedAccounts(
+						proposal.user.id,
+					)
+					const linkedAccountsMetadata = linkedAccounts.map(account => ({
+						id: account.id,
+						authSource: (account.metadata as UserMetadata)?.authSource || {
+							type: '',
+							id: '',
+							username: '',
+						},
+					}))
+
+					return {
+						id: proposal.id,
+						title: proposal.title,
+						proposalSummary: proposal.proposalSummary,
+						totalFundingRequired: proposal.totalFundingRequired,
+						createdAt: proposal.createdAt,
+						status: proposal.status,
+						submitter: hasUsername(proposal.user.metadata)
+							? proposal.user.metadata.username
+							: 'Unknown',
+						problemStatement: proposal.problemStatement,
+						problemImportance: proposal.problemImportance,
+						implementationDetails: proposal.implementationDetails,
+						potentialRisks: proposal.potentialRisks,
+						email: proposal.email,
+						submitterMetadata: {
+							authSource: {
+								type:
+									(proposal.user.metadata as UserMetadata)?.authSource?.type ||
+									'',
+								id:
+									(proposal.user.metadata as UserMetadata)?.authSource?.id ||
+									'',
+								username:
+									(proposal.user.metadata as UserMetadata)?.authSource
+										?.username || '',
+							},
+							linkedAccounts: linkedAccountsMetadata,
+						},
+					}
+				},
+			),
+		)
+
+		return NextResponse.json(formattedProposals)
 	} catch (error) {
 		logger.error('Failed to fetch proposals:', error)
 		return NextResponse.json(

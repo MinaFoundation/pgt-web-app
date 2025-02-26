@@ -70,7 +70,7 @@ async function promptForAction(): Promise<
 // Handler to create a proposal
 async function handleCreateProposal(client: GptSurveyClient): Promise<void> {
 	const proposalId = await question('Enter Proposal ID: ')
-	const proposalName = await question('Enter Proposal Name: ')
+	const title = await question('Enter Proposal Name: ')
 	const proposalDescription = await question('Enter Proposal Description: ')
 	const proposalAuthor = await question('Enter Proposal Author: ')
 	const endTimeInput = await question('Enter End Time (YYYY-MM-DDTHH:MM:SSZ): ')
@@ -91,7 +91,7 @@ async function handleCreateProposal(client: GptSurveyClient): Promise<void> {
 
 	const params: CreateProposalParams = {
 		proposalId: proposalId.trim(),
-		proposalName: proposalName.trim(),
+		title: title.trim(),
 		proposalDescription: proposalDescription.trim(),
 		proposalAuthor: proposalAuthor.trim(),
 		endTime,

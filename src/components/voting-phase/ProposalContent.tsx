@@ -69,7 +69,7 @@ export const ProposalContent: React.FC<{
 					</div>
 				)}
 				<div className="flex-1 truncate">
-					<span>{proposal.proposalName}</span>
+					<span>{proposal.title}</span>
 				</div>
 				{isRanked ? (
 					<ArrowLeft className="h-4 w-4 text-purple-500 opacity-50 group-hover:opacity-100" />
@@ -140,7 +140,7 @@ export const ProposalContent: React.FC<{
 					<Tooltip>
 						<TooltipTrigger className="flex items-center gap-1">
 							<Coins className="h-3 w-3" />
-							<span>{proposal.budgetRequest} MINA</span>
+							<span>{proposal.totalFundingRequired} MINA</span>
 						</TooltipTrigger>
 						<TooltipContent>Requested Budget</TooltipContent>
 					</Tooltip>

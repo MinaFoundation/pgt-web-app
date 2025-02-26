@@ -7,6 +7,7 @@ import {
 	type CommunityVoteStats,
 	type SubmissionProposalVote,
 	type VotingProposalVote,
+	RankedVotingProposalVote,
 } from '@/types/phase-summary'
 import { ProposalCard } from './ProposalCard'
 
@@ -17,6 +18,7 @@ type ProposalVote =
 	  })
 	| SubmissionProposalVote
 	| VotingProposalVote
+	| RankedVotingProposalVote
 
 interface Props {
 	title: string
@@ -36,7 +38,7 @@ export const ProposalList: FC<Props> = ({
 			return b.submissionDate.getTime() - a.submissionDate.getTime()
 		}
 		if ('reviewerVotes' in a && 'reviewerVotes' in b) {
-			return b.reviewerVotes.yesVotes - a.reviewerVotes.yesVotes
+			return (b.reviewerVotes?.yesVotes ?? 0) - (a.reviewerVotes?.yesVotes ?? 0)
 		}
 		return 0
 	})

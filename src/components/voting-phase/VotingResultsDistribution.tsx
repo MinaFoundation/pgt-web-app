@@ -23,8 +23,8 @@ import { formatMINA } from '@/lib/format'
 
 interface ProposalFundingStatus {
 	id: number
-	proposalName: string
-	budgetRequest: number
+	title: string
+	totalFundingRequired: number
 	isFunded: boolean
 	missingAmount?: number
 	author: {
@@ -38,8 +38,8 @@ interface VotingResultsDistributionProps {
 	isVotingActive: boolean
 	proposals: Array<{
 		id: number
-		proposalName: string
-		budgetRequest: number
+		title: string
+		totalFundingRequired: number
 		author: {
 			username: string
 			authType: 'discord' | 'wallet'
@@ -65,24 +65,24 @@ export const VotingResultsDistribution: FC<VotingResultsDistributionProps> = ({
 			const proposal = proposals.find(p => p.id == winnerId)
 			if (!proposal) continue
 
-			if (proposal.budgetRequest <= remainingBudget) {
+			if (proposal.totalFundingRequired <= remainingBudget) {
 				// Proposal can be fully funded
 				fundingStatuses.push({
 					id: proposal.id,
-					proposalName: proposal.proposalName,
-					budgetRequest: proposal.budgetRequest,
+					title: proposal.title,
+					totalFundingRequired: proposal.totalFundingRequired,
 					isFunded: true,
 					author: proposal.author,
 				})
-				remainingBudget -= proposal.budgetRequest
+				remainingBudget -= proposal.totalFundingRequired
 			} else {
 				// Proposal cannot be funded
 				fundingStatuses.push({
 					id: proposal.id,
-					proposalName: proposal.proposalName,
-					budgetRequest: proposal.budgetRequest,
+					title: proposal.title,
+					totalFundingRequired: proposal.totalFundingRequired,
 					isFunded: false,
-					missingAmount: proposal.budgetRequest - remainingBudget,
+					missingAmount: proposal.totalFundingRequired - remainingBudget,
 					author: proposal.author,
 				})
 			}
@@ -197,7 +197,7 @@ export const VotingResultsDistribution: FC<VotingResultsDistributionProps> = ({
 															#{index + 1}
 														</span>
 														<h3 className="inline-flex items-center gap-2 text-lg font-medium hover:underline">
-															{result.proposalName}
+															{result.title}
 															<ExternalLinkIcon className="h-4 w-4" />
 														</h3>
 													</div>
@@ -230,7 +230,8 @@ export const VotingResultsDistribution: FC<VotingResultsDistributionProps> = ({
 													{result.isFunded ? '✓ Funded' : '✗ Not Funded'}
 												</Badge>
 												<span className="text-sm font-medium">
-													Requested: {formatMINA(result.budgetRequest)} MINA
+													Requested: {formatMINA(result.totalFundingRequired)}{' '}
+													MINA
 												</span>
 											</div>
 										</div>
@@ -242,7 +243,8 @@ export const VotingResultsDistribution: FC<VotingResultsDistributionProps> = ({
 													<span className="text-emerald-600">
 														Available:{' '}
 														{formatMINA(
-															result.budgetRequest - result.missingAmount,
+															result.totalFundingRequired -
+																result.missingAmount,
 														)}{' '}
 														MINA
 													</span>
@@ -252,7 +254,9 @@ export const VotingResultsDistribution: FC<VotingResultsDistributionProps> = ({
 												</div>
 												<Progress
 													value={
-														(1 - result.missingAmount / result.budgetRequest) *
+														(1 -
+															result.missingAmount /
+																result.totalFundingRequired) *
 														100
 													}
 													className={cn(

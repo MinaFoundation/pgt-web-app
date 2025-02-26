@@ -56,9 +56,9 @@ export async function PATCH(
 
 		return ApiResponse.success({
 			id: updatedProposal.id,
-			proposalName: updatedProposal.proposalName,
+			title: updatedProposal.title,
 			status: updatedProposal.status,
-			budgetRequest: updatedProposal.budgetRequest,
+			totalFundingRequired: updatedProposal.totalFundingRequired,
 			createdAt: updatedProposal.createdAt,
 			submitter:
 				(updatedProposal.user?.metadata as UserMetadata)?.username || 'Unknown',

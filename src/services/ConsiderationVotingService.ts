@@ -28,8 +28,8 @@ interface VoteQueryResult {
 	proposal: {
 		id: number
 		status: ProposalStatus
-		proposalName: string
-		abstract: string
+		title: string
+		proposalSummary: string
 		createdAt: Date
 		user: {
 			metadata: UserMetadata
@@ -57,9 +57,9 @@ interface ConsiderationPhaseSummaryResult {
 	notMovedForwardProposals: number
 	proposalVotes: Array<{
 		id: number
-		proposalName: string
+		title: string
 		proposer: string
-		budgetRequest: Prisma.Decimal
+		totalFundingRequired: number
 		status: ProposalStatus
 		reviewerVotes: {
 			yesVotes: number
@@ -79,9 +79,9 @@ interface ConsiderationPhaseSummaryResult {
 
 interface ProposalWithVotes {
 	id: number
-	proposalName: string
+	title: string
 	status: ProposalStatus
-	budgetRequest: Prisma.Decimal
+	totalFundingRequired: Prisma.Decimal
 	user: {
 		metadata: UserMetadata
 	}
@@ -103,8 +103,8 @@ const voteIncludeQuery = {
 		select: {
 			id: true,
 			status: true,
-			proposalName: true,
-			abstract: true,
+			title: true,
+			proposalSummary: true,
 			createdAt: true,
 			user: {
 				select: {
@@ -362,9 +362,9 @@ export class ConsiderationVotingService {
 				proposals: {
 					select: {
 						id: true,
-						proposalName: true,
+						title: true,
 						status: true,
-						budgetRequest: true,
+						totalFundingRequired: true,
 						user: {
 							select: {
 								metadata: true,
@@ -399,9 +399,9 @@ export class ConsiderationVotingService {
 		const proposals = (
 			fundingRound.proposals as unknown as Array<{
 				id: number
-				proposalName: string
+				title: string
 				status: ProposalStatus
-				budgetRequest: Prisma.Decimal
+				totalFundingRequired: Prisma.Decimal
 				user: {
 					metadata: UserMetadata
 				}
@@ -435,9 +435,9 @@ export class ConsiderationVotingService {
 
 			return {
 				id: proposal.id,
-				proposalName: proposal.proposalName,
+				title: proposal.title,
 				proposer,
-				budgetRequest: proposal.budgetRequest,
+				totalFundingRequired: proposal.totalFundingRequired.toNumber(),
 				status: proposal.status,
 				reviewerVotes: {
 					yesVotes,
@@ -464,7 +464,7 @@ export class ConsiderationVotingService {
 
 		const budgetBreakdown = proposals.reduce(
 			(acc: { small: number; medium: number; large: number }, proposal) => {
-				const budgetAmount = proposal.budgetRequest.toNumber()
+				const budgetAmount = proposal.totalFundingRequired
 				if (budgetAmount <= 500) {
 					acc.small++
 				} else if (budgetAmount <= 1000) {

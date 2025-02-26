@@ -1,6 +1,6 @@
 {
 	"name": "pgt-web-app",
-	"version": "0.1.90",
+	"version": "0.1.91",
 	"private": true,
 	"type": "module",
 	"scripts": {
@@ -9,7 +9,7 @@
 		"build": "next build && npm run internal:copy-public && npm run build:workers && npm run internal:copy-dist",
 		"build:workers": "npx tsx src/scripts/build-workers.ts",
 		"start": "npx prisma migrate deploy && next start",
-		"start:prod": "prisma migrate deploy && npm run migrate:proposal-data && (node server.js & npm run bree:cron:prod & wait)",
+		"start:prod": "prisma migrate deploy && (node server.js & npm run bree:cron:prod & wait)",
 		"bree:cron:dev": "npx tsx src/scripts/bree-runner.ts",
 		"bree:cron:prod": "node dist/scripts/bree-runner.js",
 		"internal:copy-public": "cp -r public .next/standalone/",
@@ -18,7 +18,6 @@
 		"lint": "next lint",
 		"lint:full": "next lint --max-warnings=0",
 		"lint:types": "tsc --noEmit",
-		"migrate:proposal-data": "npx tsx src/scripts/migrateProposalData.ts",
 		"lint:all": "npm run lint:full && npm run lint:types",
 		"admin:status": "npx tsx src/scripts/toggle-admin-status.ts"
 	},

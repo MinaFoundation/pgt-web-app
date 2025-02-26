@@ -1,19 +1,19 @@
 import { useState, useEffect } from 'react'
 import { useToast } from '@/hooks/use-toast'
 import type { Dispatch, SetStateAction } from 'react'
-import { SumbmittedProposalsJSON } from '@/app/api/funding-rounds/[id]/submitted-proposals/route'
+import { SubmittedProposalsJSON } from '@/app/api/funding-rounds/[id]/submitted-proposals/route'
 
 interface UseSubmissionPhaseResult {
-	proposals: SumbmittedProposalsJSON[]
+	proposals: SubmittedProposalsJSON[]
 	loading: boolean
 	error: string | null
-	setProposals: Dispatch<SetStateAction<SumbmittedProposalsJSON[]>>
+	setProposals: Dispatch<SetStateAction<SubmittedProposalsJSON[]>>
 }
 
 export function useSubmissionPhase(
 	fundingRoundId: string,
 ): UseSubmissionPhaseResult {
-	const [proposals, setProposals] = useState<SumbmittedProposalsJSON[]>([])
+	const [proposals, setProposals] = useState<SubmittedProposalsJSON[]>([])
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState<string | null>(null)
 	const { toast } = useToast()
@@ -32,7 +32,7 @@ export function useSubmissionPhase(
 				const data = await response.json()
 
 				const transformedData = data.map(
-					(proposal: SumbmittedProposalsJSON) => ({
+					(proposal: SubmittedProposalsJSON) => ({
 						...proposal,
 					}),
 				)

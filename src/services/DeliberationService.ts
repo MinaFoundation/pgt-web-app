@@ -3,48 +3,29 @@ import { AppError } from '@/lib/errors'
 import { UserMetadata } from './UserService'
 import { Decimal } from '@prisma/client/runtime/library'
 import { UserService } from '@/services'
+import { CoreProposalData } from '@/types/proposals'
+import {
+	ReviewerDeliberationVote,
+	CommunityDeliberationVote,
+} from '@prisma/client'
 
-// Define types for the votes
-interface ReviewerDeliberationVote {
-	id: string
-	feedback: string
-	recommendation: boolean
-	createdAt: Date
-	userId: string
+type ReviewerDeliberationVoteWithUser = ReviewerDeliberationVote & {
 	user: {
 		metadata: UserMetadata
 	}
 }
 
-interface CommunityDeliberationVote {
-	id: string
-	feedback: string
-	createdAt: Date
-	userId: string
+type CommunityDeliberationVoteWithUser = CommunityDeliberationVote & {
 	user: {
 		metadata: UserMetadata
 	}
 }
 
-// Define the proposal type with included relations
-interface ProposalWithVotes {
-	id: number
-	status: ProposalStatus
-	proposalName: string
-	abstract: string
-	motivation: string
-	rationale: string
-	deliveryRequirements: string
-	securityAndPerformance: string
-	budgetRequest: Decimal
-	email: string
-	createdAt: Date
-	user: {
-		id: string
-		metadata: UserMetadata
-	}
-	deliberationReviewerVotes: ReviewerDeliberationVote[]
-	deliberationCommunityVotes: CommunityDeliberationVote[]
+interface ProposalWithVotes extends CoreProposalData {
+	deliberationReviewerVotes: ReviewerDeliberationVoteWithUser[]
+	deliberationCommunityVotes: CommunityDeliberationVoteWithUser[]
+
+	// Add funding round relation with nested topic and reviewer groups
 	fundingRound: {
 		topic: {
 			reviewerGroups: {
@@ -70,13 +51,13 @@ export interface DeliberationPhaseSummary {
 	}
 	proposalVotes: Array<{
 		id: number
-		proposalName: string
+		title: string
 		proposer: string
 		yesVotes: number
 		noVotes: number
 		status: ProposalStatus
 		isRecommended: boolean
-		budgetRequest: Decimal
+		totalFundingRequired: Decimal
 	}>
 }
 
@@ -225,13 +206,13 @@ export class DeliberationService {
 
 				return {
 					id: proposal.id,
-					proposalName: proposal.proposalName,
-					abstract: proposal.abstract,
-					motivation: proposal.motivation,
-					rationale: proposal.rationale,
-					deliveryRequirements: proposal.deliveryRequirements,
-					securityAndPerformance: proposal.securityAndPerformance,
-					budgetRequest: proposal.budgetRequest,
+					title: proposal.title,
+					abstract: proposal.proposalSummary,
+					motivation: proposal.problemImportance,
+					rationale: proposal.proposedSolution,
+					deliveryRequirements: proposal.implementationDetails,
+					securityAndPerformance: proposal.keyPerformanceIndicators,
+					totalFundingRequired: proposal.totalFundingRequired,
 					submitter:
 						(proposal.user?.metadata as UserMetadata)?.username || 'Unknown',
 					isReviewerEligible: fundingRound.topic.reviewerGroups.some(
@@ -408,7 +389,7 @@ export class DeliberationService {
 		}
 
 		proposals.forEach(proposal => {
-			const budget = proposal.budgetRequest as unknown as Decimal
+			const budget = proposal.totalFundingRequired
 			const budgetNumber = budget.toNumber()
 
 			if (budgetNumber <= 500) {
@@ -428,14 +409,14 @@ export class DeliberationService {
 
 			return {
 				id: proposal.id,
-				proposalName: proposal.proposalName,
+				title: proposal.title,
 				proposer:
 					(proposal.user.metadata as UserMetadata).username || 'Unknown',
 				yesVotes,
 				noVotes,
 				status: proposal.status,
 				isRecommended: yesVotes > noVotes,
-				budgetRequest: proposal.budgetRequest,
+				totalFundingRequired: proposal.totalFundingRequired,
 			}
 		})
 
