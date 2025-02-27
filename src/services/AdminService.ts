@@ -47,6 +47,7 @@ export class AdminService {
 		name: string,
 		description: string,
 		createdById: string,
+		membersIds: string[],
 	): Promise<ReviewerGroup> {
 		return this.prisma.reviewerGroup.create({
 			data: {
@@ -54,6 +55,13 @@ export class AdminService {
 				description,
 				createdBy: {
 					connect: { id: createdById },
+				},
+				members: {
+					create: membersIds.map(memberId => ({
+						user: {
+							connect: { id: memberId },
+						},
+					})),
 				},
 			},
 			include: {

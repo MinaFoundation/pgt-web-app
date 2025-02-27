@@ -41,11 +41,12 @@ export async function POST(req: Request) {
 			return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 		}
 
-		const { name, description } = await req.json()
+		const { name, description, memberIds = [] } = await req.json()
 		const group = await adminService.createReviewerGroup(
 			name,
 			description,
 			user.id,
+			memberIds,
 		)
 		return NextResponse.json(group)
 	} catch (error) {
