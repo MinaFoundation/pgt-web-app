@@ -16,8 +16,6 @@ import {
 import { Button } from '@/components/ui/button'
 import { ChevronDownIcon, ChevronUpIcon, ChartBarIcon } from 'lucide-react'
 import { InfoCircledIcon } from '@radix-ui/react-icons'
-import type { OCVRankedVoteResponse } from '@/services/OCVApiService'
-import { LocalStorageCache } from '@/lib/local-storage-cache'
 import { cn } from '@/lib/utils'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { useFundingRound } from '@/hooks/use-funding-round'
@@ -33,6 +31,8 @@ interface SelectedProposalId {
 	id: number
 }
 
+type VotingStep = 'select' | 'rank' | 'confirm'
+
 export function VotingPhase({ fundingRoundId }: VotingPhaseProps) {
 	const { state } = useWallet()
 	const { toast } = useToast()
@@ -41,6 +41,7 @@ export function VotingPhase({ fundingRoundId }: VotingPhaseProps) {
 	const [selectedProposals, setSelectedProposals] =
 		useState<SelectedProposalId[]>()
 	const [showFundingDistribution, setShowFundingDistribution] = useState(false)
+	const [currentStep, setCurrentStep] = useState<VotingStep>('select')
 
 	const { data: fundingRound, isLoading } = useFundingRound(fundingRoundId)
 
@@ -177,11 +178,13 @@ export function VotingPhase({ fundingRoundId }: VotingPhaseProps) {
 	return (
 		<div className="space-y-4 px-2 md:px-6">
 			<div>
-				<h2 className="text-2xl font-bold">🗳️ Voting Phase</h2>
+				<h2 className="text-2xl font-bold">Voting Phase</h2>
 				<p>
 					Cast your votes to determine which proposals will receive funding.
 				</p>
 			</div>
+
+			<VotingPhaseSteps currentStep={currentStep} />
 
 			<RankedVoteList
 				proposals={proposals}
@@ -289,5 +292,84 @@ export function VotingPhase({ fundingRoundId }: VotingPhaseProps) {
 				fundingRoundMEFId={parseInt(fundingRoundId)}
 			/>
 		</div>
+	)
+}
+
+function VotingPhaseSteps({ currentStep }: { currentStep: VotingStep }) {
+	const steps = [
+		{
+			title: 'Select Proposals',
+			description: 'Select up to 10 proposals you want to vote for.',
+		},
+		{
+			title: 'Rank Proposals',
+			description:
+				'Drag and drop proposals to arrange them in order of preference.',
+		},
+		{
+			title: 'Confirm your vote',
+			description: 'Review your ranked choices and submit your vote.',
+		},
+	]
+
+	return (
+		<div className="mb-8 flex justify-between">
+			{steps.map((step, index) => {
+				const isActive =
+					(currentStep === 'select' && index === 0) ||
+					(currentStep === 'rank' && index <= 1) ||
+					(currentStep === 'confirm' && index <= 2)
+
+				const isLastStep = index === steps.length - 1
+
+				return (
+					<div className="flex items-center">
+						<div key={step.title} className="flex-1">
+							<h3
+								className={`mb-1 text-lg font-bold ${
+									isActive ? 'text-secondary-dark' : 'text-gray-400'
+								}`}
+							>
+								{step.title}
+							</h3>
+							<p
+								className={`text-sm ${
+									isActive ? 'text-gray-600' : 'text-gray-400'
+								}`}
+							>
+								{step.description}
+							</p>
+						</div>
+						{!isLastStep && <StepArrowIcon className="text-muted" />}
+					</div>
+				)
+			})}
+		</div>
+	)
+}
+
+function StepArrowIcon({
+	className,
+	...props
+}: Omit<
+	React.SVGProps<SVGSVGElement>,
+	'width' | 'height' | 'viewBox' | 'fill'
+>) {
+	return (
+		<svg
+			width="7"
+			height="14"
+			viewBox="0 0 7 14"
+			fill="none"
+			className={cn('mx-4 h-7 w-3.5', className)}
+			{...props}
+		>
+			<path
+				d="M1 13L6 7L1 1"
+				stroke="currentColor"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			/>
+		</svg>
 	)
 }
