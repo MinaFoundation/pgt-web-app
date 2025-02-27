@@ -58,6 +58,7 @@ export function OCVVotesTable() {
 			totalPages: 1,
 		},
 		isLoading,
+		refetch,
 	} = useOCVVotes(currentPage)
 
 	const sortedVotes = useMemo(() => {
@@ -112,7 +113,9 @@ export function OCVVotesTable() {
 	}
 
 	const { mutate: processProposals, isPending: isProcessingProposals } =
-		useProcessProposals()
+		useProcessProposals({
+			onSuccess: () => refetch(),
+		})
 
 	if (isLoading) {
 		return (
