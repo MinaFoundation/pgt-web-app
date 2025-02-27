@@ -12,16 +12,17 @@ import {
 	CardHeader,
 	CardTitle,
 	CardDescription,
-	CardContent,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ChevronDownIcon, ChevronUpIcon, ChartBarIcon } from 'lucide-react'
 import { InfoCircledIcon } from '@radix-ui/react-icons'
-import { GetRankedEligibleProposalsAPIResponse } from '@/services/RankedVotingService'
 import type { OCVRankedVoteResponse } from '@/services/OCVApiService'
 import { LocalStorageCache } from '@/lib/local-storage-cache'
 import { cn } from '@/lib/utils'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { useFundingRound } from '@/hooks/use-funding-round'
+import { useEligibleProposals } from '@/hooks/use-eligible-proposals'
+import { GetRankedEligibleProposalsAPIResponse } from '@/services'
 
 const VOTE_DATA_CACHE_PREFIX = 'ocv_vote_data'
 
@@ -33,101 +34,19 @@ interface SelectedProposalId {
 	id: number
 }
 
-interface FundingRoundDetails {
-	totalBudget: number
-}
-
 export function VotingPhase({ fundingRoundId }: VotingPhaseProps) {
 	const { state } = useWallet()
 	const { toast } = useToast()
-	const [proposals, setProposals] =
-		useState<GetRankedEligibleProposalsAPIResponse>()
 	const [voteData, setVoteData] = useState<OCVRankedVoteResponse>()
-	const [fundingRound, setFundingRound] = useState<FundingRoundDetails>()
-	const [isLoading, setIsLoading] = useState(true)
 	const [showWalletDialog, setShowWalletDialog] = useState(false)
 	const [showTransactionDialog, setShowTransactionDialog] = useState(false)
 	const [selectedProposals, setSelectedProposals] =
 		useState<SelectedProposalId[]>()
 	const [showFundingDistribution, setShowFundingDistribution] = useState(false)
 
-	// Fetch funding round details
-	useEffect(() => {
-		let ignore = false
+	const { data: fundingRound, isLoading } = useFundingRound(fundingRoundId)
 
-		const fetchFundingRound = async () => {
-			try {
-				// TODO: check by conflicts
-				const response = await fetch(`/api/funding-rounds/${fundingRoundId}`)
-				if (!response.ok) {
-					throw new Error('Failed to fetch funding round details')
-				}
-				const data = await response.json()
-
-				if (!ignore) {
-					setFundingRound(data)
-				}
-			} catch (error) {
-				if (!ignore) {
-					toast({
-						title: 'Error',
-						description: 'Failed to load funding round details',
-						variant: 'destructive',
-					})
-				}
-			}
-		}
-
-		fetchFundingRound()
-
-		return () => {
-			ignore = true
-		}
-	}, [fundingRoundId, toast])
-
-	// Fetch proposals
-	useEffect(() => {
-		let ignore = false
-
-		const fetchProposals = async () => {
-			try {
-				const response = await fetch(
-					`/api/voting/ranked?fundingRoundId=${fundingRoundId}`,
-				)
-				if (!response.ok) {
-					throw new Error('Failed to fetch proposals')
-				}
-				const data: GetRankedEligibleProposalsAPIResponse =
-					await response.json()
-
-				if (!ignore) {
-					setProposals(data)
-					// Reset vote data when switching funding rounds
-					setVoteData(undefined)
-					setSelectedProposals(undefined)
-				}
-			} catch (error) {
-				if (!ignore) {
-					toast({
-						title: 'Error',
-						description: 'Failed to load proposals',
-						variant: 'destructive',
-					})
-				}
-			} finally {
-				if (!ignore) {
-					setIsLoading(false)
-				}
-			}
-		}
-
-		setIsLoading(true)
-		fetchProposals()
-
-		return () => {
-			ignore = true
-		}
-	}, [fundingRoundId, toast])
+	const { data: proposals } = useEligibleProposals(fundingRoundId)
 
 	// Fetch vote data regardless of wallet connection
 	useEffect(() => {
@@ -279,7 +198,7 @@ export function VotingPhase({ fundingRoundId }: VotingPhaseProps) {
 
 		return (
 			<VotingResultsDistribution
-				totalBudget={fundingRound.totalBudget}
+				totalBudget={Number(fundingRound!.totalBudget)}
 				isVotingActive={isVotingActive()}
 				proposals={proposals.proposals.map(p => ({
 					id: p.id,
