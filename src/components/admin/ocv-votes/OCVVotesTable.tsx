@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
-import { ProposalStatus } from '@prisma/client'
+import { useState, useMemo } from 'react'
 import {
 	Table,
 	TableBody,
@@ -17,13 +16,7 @@ import {
 } from '@/components/ui/hover-card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import {
-	CopyIcon,
-	InfoIcon,
-	ArrowUpDown,
-	AlertCircle,
-	RefreshCwIcon,
-} from 'lucide-react'
+import { CopyIcon, InfoIcon, ArrowUpDown, RefreshCwIcon } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import {
 	Pagination,
@@ -38,53 +31,7 @@ import { cn } from '@/lib/utils'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import Link from 'next/link'
 import { useProcessProposals } from '@/hooks/use-process-proposals'
-
-interface OCVVote {
-	id: number
-	proposalId: number
-	voteData: {
-		votes: Array<{
-			hash: string
-			memo: string
-			nonce: number
-			height: number
-			status: string
-			account: string
-			timestamp: number
-		}>
-		elegible: boolean
-		proposal_id: number
-		vote_status: string
-		total_stake_weight: string
-		negative_stake_weight: string
-		positive_stake_weight: string
-		total_community_votes: number
-		total_negative_community_votes: number
-		total_positive_community_votes: number
-	}
-	createdAt: string
-	updatedAt: string
-	proposal: {
-		title: string
-		reviewerCount: number
-		fundingRoundName: string
-		status: ProposalStatus
-	}
-}
-
-interface PaginatedResponse {
-	data: OCVVote[]
-	pagination: {
-		currentPage: number
-		totalPages: number
-		pageSize: number
-		totalCount: number
-	}
-	sort: {
-		field: string
-		order: 'asc' | 'desc'
-	}
-}
+import { useOCVVotes } from '@/hooks/use-ocv-votes'
 
 type SortField =
 	| 'proposalId'
@@ -96,11 +43,7 @@ type SortField =
 type SortOrder = 'asc' | 'desc'
 
 export function OCVVotesTable() {
-	const [votes, setVotes] = useState<OCVVote[]>([])
 	const [currentPage, setCurrentPage] = useState(1)
-	const [totalPages, setTotalPages] = useState(1)
-	const [isLoading, setIsLoading] = useState(true)
-	const [error, setError] = useState<string | null>(null)
 	const [sortConfig, setSortConfig] = useState<{
 		field: SortField
 		order: SortOrder
@@ -109,25 +52,13 @@ export function OCVVotesTable() {
 		order: 'asc',
 	})
 
-	useEffect(() => {
-		const fetchVotes = async () => {
-			try {
-				setIsLoading(true)
-				const response = await fetch(`/api/admin/ocv-votes?page=${currentPage}`)
-				if (!response.ok) throw new Error('Failed to fetch votes')
-
-				const data: PaginatedResponse = await response.json()
-				setVotes(data.data)
-				setTotalPages(data.pagination.totalPages)
-			} catch (err) {
-				setError(err instanceof Error ? err.message : 'An error occurred')
-			} finally {
-				setIsLoading(false)
-			}
-		}
-
-		fetchVotes()
-	}, [currentPage])
+	const {
+		data: { votes, totalPages } = {
+			votes: [],
+			totalPages: 1,
+		},
+		isLoading,
+	} = useOCVVotes(currentPage)
 
 	const sortedVotes = useMemo(() => {
 		const sortedData = [...votes]
@@ -187,17 +118,6 @@ export function OCVVotesTable() {
 		return (
 			<div className="flex items-center justify-center p-8">
 				<div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
-			</div>
-		)
-	}
-
-	if (error) {
-		return (
-			<div className="flex items-center justify-center p-8">
-				<div className="flex items-center gap-2 text-destructive">
-					<AlertCircle className="h-4 w-4" />
-					<span>{error}</span>
-				</div>
 			</div>
 		)
 	}
