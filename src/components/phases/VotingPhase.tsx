@@ -23,8 +23,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { useFundingRound } from '@/hooks/use-funding-round'
 import { useEligibleProposals } from '@/hooks/use-eligible-proposals'
 import { GetRankedEligibleProposalsAPIResponse } from '@/services'
-
-const VOTE_DATA_CACHE_PREFIX = 'ocv_vote_data'
+import { useOCVVotes } from '@/hooks/use-ocv-votes'
 
 interface VotingPhaseProps {
 	fundingRoundId: string
@@ -37,7 +36,6 @@ interface SelectedProposalId {
 export function VotingPhase({ fundingRoundId }: VotingPhaseProps) {
 	const { state } = useWallet()
 	const { toast } = useToast()
-	const [voteData, setVoteData] = useState<OCVRankedVoteResponse>()
 	const [showWalletDialog, setShowWalletDialog] = useState(false)
 	const [showTransactionDialog, setShowTransactionDialog] = useState(false)
 	const [selectedProposals, setSelectedProposals] =
@@ -48,70 +46,14 @@ export function VotingPhase({ fundingRoundId }: VotingPhaseProps) {
 
 	const { data: proposals } = useEligibleProposals(fundingRoundId)
 
-	// Fetch vote data regardless of wallet connection
-	useEffect(() => {
-		let ignore = false
-
-		const fetchVoteData = async () => {
-			if (!proposals?.fundingRound.mefId || !proposals.fundingRound.votingPhase)
-				return
-
-			try {
-				const startTimeDate = new Date(
-					proposals.fundingRound.votingPhase.startDate,
-				)
-				const endTimeDate = new Date(proposals.fundingRound.votingPhase.endDate)
-
-				const startTime = startTimeDate.getTime()
-				const endTime = endTimeDate.getTime()
-
-				const response = await fetch(
-					`/api/voting/ranked-votes?roundId=${proposals.fundingRound.mefId}&startTime=${startTime}&endTime=${endTime}`,
-				)
-
-				if (!response.ok) {
-					throw new Error('Failed to fetch vote data')
-				}
-
-				const data = await response.json()
-
-				if (!ignore) {
-					setVoteData(data)
-					// Cache the fresh data
-					const cacheKey = LocalStorageCache.getKey(
-						VOTE_DATA_CACHE_PREFIX,
-						proposals.fundingRound.mefId,
-					)
-					LocalStorageCache.set(cacheKey, data)
-				}
-			} catch (error) {
-				if (!ignore) {
-					toast({
-						title: 'Warning',
-						description: 'Failed to load vote data. Please try again later.',
-						variant: 'default',
-					})
-				}
-			}
-		}
-
-		fetchVoteData()
-
-		return () => {
-			ignore = true
-		}
-	}, [
-		proposals?.fundingRound.mefId,
-		proposals?.fundingRound.votingPhase,
-		toast,
-	])
+	const { data: votesData } = useOCVVotes(fundingRoundId)
 
 	// Handle user-specific vote data when wallet is connected
 	useEffect(() => {
-		if (!state.wallet?.address || !voteData || !proposals) return
+		if (!state.wallet?.address || !votesData || !proposals) return
 
 		const updateSelectedProposals = () => {
-			const userVote = voteData.votes.find(
+			const userVote = votesData.votes.find(
 				vote =>
 					vote.account.toLowerCase() === state.wallet!.address.toLowerCase(),
 			)
@@ -131,7 +73,7 @@ export function VotingPhase({ fundingRoundId }: VotingPhaseProps) {
 		}
 
 		updateSelectedProposals()
-	}, [state.wallet, voteData, proposals])
+	}, [state.wallet, votesData, proposals])
 
 	const handleSubmit = (
 		selectedProposals: GetRankedEligibleProposalsAPIResponse,
@@ -194,7 +136,7 @@ export function VotingPhase({ fundingRoundId }: VotingPhaseProps) {
 	}
 
 	const renderFundingDistribution = () => {
-		if (!proposals || !voteData || !fundingRound) return null
+		if (!proposals || !votesData || !fundingRound) return null
 
 		return (
 			<VotingResultsDistribution
@@ -209,7 +151,7 @@ export function VotingPhase({ fundingRoundId }: VotingPhaseProps) {
 						authType: p.author.authType,
 					},
 				}))}
-				winnerIds={voteData.winners}
+				winnerIds={votesData.winners}
 			/>
 		)
 	}
@@ -243,7 +185,7 @@ export function VotingPhase({ fundingRoundId }: VotingPhaseProps) {
 
 			<RankedVoteList
 				proposals={proposals}
-				existingVote={voteData?.votes.find(
+				existingVote={votesData?.votes.find(
 					vote =>
 						vote.account.toLowerCase() === state.wallet?.address?.toLowerCase(),
 				)}
