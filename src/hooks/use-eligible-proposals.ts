@@ -10,8 +10,8 @@ export function useEligibleProposals(fundingRoundId: string) {
 		queryFn: async () => {
 			const response = await fetch(url)
 			if (!response.ok) {
-				logger.error('Failed to fetch ranked votes', response)
-				throw new Error('Failed to fetch ranked votes')
+				logger.error('Failed to fetch eligible proposals', response)
+				throw new Error('Failed to fetch eligible proposals')
 			}
 			return response.json()
 		},
