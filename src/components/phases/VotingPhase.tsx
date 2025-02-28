@@ -20,10 +20,13 @@ import { cn } from '@/lib/utils'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { useFundingRound } from '@/hooks/use-funding-round'
 import { useEligibleProposals } from '@/hooks/use-eligible-proposals'
-import { GetRankedEligibleProposalsAPIResponse } from '@/services'
+import {
+	GetRankedEligibleProposalsAPIResponse,
+	RankedProposalAPIResponse,
+} from '@/services'
 import { useOCVVotes } from '@/hooks/use-ocv-votes'
 
-interface VotingPhaseProps {
+interface currentStepProps {
 	fundingRoundId: string
 }
 
@@ -33,13 +36,14 @@ interface SelectedProposalId {
 
 type VotingStep = 'select' | 'rank' | 'confirm'
 
-export function VotingPhase({ fundingRoundId }: VotingPhaseProps) {
+export function VotingPhase({ fundingRoundId }: currentStepProps) {
 	const { state } = useWallet()
 	const { toast } = useToast()
 	const [showWalletDialog, setShowWalletDialog] = useState(false)
 	const [showTransactionDialog, setShowTransactionDialog] = useState(false)
-	const [selectedProposals, setSelectedProposals] =
-		useState<SelectedProposalId[]>()
+	const [selectedProposals, setSelectedProposals] = useState<
+		SelectedProposalId[]
+	>([])
 	const [showFundingDistribution, setShowFundingDistribution] = useState(false)
 	const [currentStep, setCurrentStep] = useState<VotingStep>('select')
 
@@ -75,6 +79,31 @@ export function VotingPhase({ fundingRoundId }: VotingPhaseProps) {
 
 		updateSelectedProposals()
 	}, [state.wallet, votesData, proposals])
+
+	const handleNext = () => {
+		if (currentStep === 'select') {
+			if (selectedProposals.length === 0) {
+				toast({
+					title: 'No proposals selected',
+					description:
+						'Please select at least one proposal to vote for before proceeding.',
+				})
+				return
+			}
+			// setRankedProposals([...selectedProposals]);
+			setCurrentStep('rank')
+		} else if (currentStep === 'rank') {
+			setCurrentStep('confirm')
+		}
+	}
+
+	const handleBack = () => {
+		if (currentStep === 'rank') {
+			setCurrentStep('select')
+		} else if (currentStep === 'confirm') {
+			setCurrentStep('rank')
+		}
+	}
 
 	const handleSubmit = (
 		selectedProposals: GetRankedEligibleProposalsAPIResponse,
@@ -185,6 +214,18 @@ export function VotingPhase({ fundingRoundId }: VotingPhaseProps) {
 			</div>
 
 			<VotingPhaseSteps currentStep={currentStep} />
+
+			{proposals && (
+				<VotingStepRender
+					{...{
+						currentStep,
+						proposals,
+						selectedProposals,
+						setSelectedProposals,
+						handleNext,
+					}}
+				/>
+			)}
 
 			<RankedVoteList
 				proposals={proposals}
@@ -298,16 +339,16 @@ export function VotingPhase({ fundingRoundId }: VotingPhaseProps) {
 function VotingPhaseSteps({ currentStep }: { currentStep: VotingStep }) {
 	const steps = [
 		{
-			title: 'Select Proposals',
+			title: '1. Select Proposals',
 			description: 'Select up to 10 proposals you want to vote for.',
 		},
 		{
-			title: 'Rank Proposals',
+			title: '2. Rank Proposals',
 			description:
 				'Drag and drop proposals to arrange them in order of preference.',
 		},
 		{
-			title: 'Confirm your vote',
+			title: '3. Confirm your vote',
 			description: 'Review your ranked choices and submit your vote.',
 		},
 	]
@@ -372,4 +413,130 @@ function StepArrowIcon({
 			/>
 		</svg>
 	)
+}
+
+function ProposalCard({
+	id,
+	title,
+	totalFundingRequired,
+	communityVotes,
+	isDragging = false,
+	isSelected = false,
+}: RankedProposalAPIResponse & {
+	isDragging?: boolean
+	isSelected?: boolean
+}) {
+	return (
+		<div
+			className={`flex-1 rounded-lg border p-4 transition-all ${isDragging ? 'border-secondary shadow-lg' : 'border-gray-200'} ${isSelected ? '!border-secondary bg-secondary/5' : 'bg-primary-grey/40'} hover:shadow-md`}
+			data-proposal-id={id}
+		>
+			<div className="flex items-start justify-between">
+				<div className="flex-1">
+					<h3 className="font-medium text-[#2D2D2D]">{title}</h3>
+				</div>
+				<div className="text-secondary-dark ml-4 text-sm font-medium">
+					{totalFundingRequired} MINA
+				</div>
+			</div>
+			<div className="mt-2 text-sm text-gray-500">
+				{communityVotes.totalVotes} votes
+			</div>
+		</div>
+	)
+}
+
+function VotingSelectStep({
+	availableProposals,
+	selectedProposals,
+	onProposalSelect,
+	onNext,
+}: {
+	availableProposals: RankedProposalAPIResponse[]
+	selectedProposals: SelectedProposalId[]
+	onProposalSelect: (proposal: RankedProposalAPIResponse) => void
+	onNext: () => void
+}) {
+	return (
+		<div className="space-y-6">
+			<div>
+				<div className="mb-2 flex justify-between text-sm text-gray-600">
+					<span>Selected Proposals</span>
+					<span>{selectedProposals.length} / 10</span>
+				</div>
+				<div className="h-2 rounded-full bg-gray-100">
+					<div
+						className="h-full rounded-full bg-secondary transition-all"
+						style={{
+							width: `${(selectedProposals.length / 10) * 100}%`,
+						}}
+					/>
+				</div>
+			</div>
+			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+				{availableProposals.map(proposal => (
+					<div
+						key={proposal.id}
+						onClick={() => onProposalSelect(proposal)}
+						className="cursor-pointer"
+					>
+						<ProposalCard
+							{...proposal}
+							isSelected={!!selectedProposals.find(p => p.id === proposal.id)}
+						/>
+					</div>
+				))}
+			</div>
+			<div className="flex justify-end">
+				<Button
+					onClick={onNext}
+					className="button-3d ml-auto bg-[#FF603B] text-white hover:bg-[#FF603B]/90"
+				>
+					Next
+				</Button>
+			</div>
+		</div>
+	)
+}
+
+function VotingStepRender({
+	currentStep,
+	proposals,
+	selectedProposals,
+	setSelectedProposals,
+	handleNext,
+}: {
+	currentStep: VotingStep
+	proposals: GetRankedEligibleProposalsAPIResponse
+	selectedProposals: SelectedProposalId[]
+	setSelectedProposals: (proposals: SelectedProposalId[]) => void
+	handleNext: () => void
+}) {
+	switch (currentStep) {
+		case 'select':
+			return (
+				<VotingSelectStep
+					availableProposals={proposals?.proposals || []}
+					selectedProposals={selectedProposals || []}
+					onProposalSelect={proposal => {
+						const isSelected = selectedProposals?.some(
+							p => p.id === proposal.id,
+						)
+						if (isSelected) {
+							setSelectedProposals(
+								selectedProposals?.filter(p => p.id !== proposal.id),
+							)
+						} else {
+							setSelectedProposals([
+								...(selectedProposals || []),
+								{ id: proposal.id },
+							])
+						}
+					}}
+					onNext={handleNext}
+				/>
+			)
+		default:
+			return null
+	}
 }
