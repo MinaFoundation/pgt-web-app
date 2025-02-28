@@ -832,7 +832,7 @@ function VotingConfirmationDialog({
 	)
 
 	const voteButtonTooltip = existingVote
-		? `Your last vote was ${formatDistanceToNow((existingVote as any).timestamp)} ago`
+		? `Your last vote was ${formatDistanceToNow(existingVote.timestamp)} ago`
 		: undefined
 
 	const handleSaveToMemo = () => {
