@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useWallet } from '@/contexts/WalletContext'
 import { useToast } from '@/hooks/use-toast'
 import RankedVoteList from '@/components/voting-phase/RankedVoteList'
@@ -14,9 +14,14 @@ import {
 	CardDescription,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ChevronDownIcon, ChevronUpIcon, ChartBarIcon } from 'lucide-react'
+import {
+	ChevronDownIcon,
+	ChevronUpIcon,
+	ChartBarIcon,
+	GripVerticalIcon,
+} from 'lucide-react'
 import { InfoCircledIcon } from '@radix-ui/react-icons'
-import { cn } from '@/lib/utils'
+import { cn, isTouchDevice } from '@/lib/utils'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { useFundingRound } from '@/hooks/use-funding-round'
 import { useEligibleProposals } from '@/hooks/use-eligible-proposals'
@@ -25,27 +30,28 @@ import {
 	RankedProposalAPIResponse,
 } from '@/services'
 import { useOCVVotes } from '@/hooks/use-ocv-votes'
+import { DndProvider, useDrag, useDrop } from 'react-dnd'
+import { TouchBackend } from 'react-dnd-touch-backend'
+import { HTML5Backend } from 'react-dnd-html5-backend'
 
-interface currentStepProps {
-	fundingRoundId: string
-}
+type ProposalId = RankedProposalAPIResponse['id']
 
-interface SelectedProposalId {
-	id: number
-}
+type VotingStep = 'select' | 'ranking' | 'confirm'
 
-type VotingStep = 'select' | 'rank' | 'confirm'
-
-export function VotingPhase({ fundingRoundId }: currentStepProps) {
+export function VotingPhase({ fundingRoundId }: { fundingRoundId: string }) {
 	const { state } = useWallet()
 	const { toast } = useToast()
+
 	const [showWalletDialog, setShowWalletDialog] = useState(false)
 	const [showTransactionDialog, setShowTransactionDialog] = useState(false)
-	const [selectedProposals, setSelectedProposals] = useState<
-		SelectedProposalId[]
-	>([])
 	const [showFundingDistribution, setShowFundingDistribution] = useState(false)
+
+	// Steps state
 	const [currentStep, setCurrentStep] = useState<VotingStep>('select')
+	const [selectedProposalsIds, setSelectedProposalsIds] = useState<
+		ProposalId[]
+	>([])
+	const [rankedProposalsIds, setRankedProposalsIds] = useState<ProposalId[]>([])
 
 	const { data: fundingRound, isLoading } = useFundingRound(fundingRoundId)
 
@@ -73,7 +79,7 @@ export function VotingPhase({ fundingRoundId }: currentStepProps) {
 					})
 					.map(p => ({ id: p.id }))
 
-				setSelectedProposals(votedProposals)
+				setSelectedProposalsIds(votedProposals.map(p => p.id))
 			}
 		}
 
@@ -82,7 +88,7 @@ export function VotingPhase({ fundingRoundId }: currentStepProps) {
 
 	const handleNext = () => {
 		if (currentStep === 'select') {
-			if (selectedProposals.length === 0) {
+			if (selectedProposalsIds.length === 0) {
 				toast({
 					title: 'No proposals selected',
 					description:
@@ -90,29 +96,24 @@ export function VotingPhase({ fundingRoundId }: currentStepProps) {
 				})
 				return
 			}
-			// setRankedProposals([...selectedProposals]);
-			setCurrentStep('rank')
-		} else if (currentStep === 'rank') {
+			setRankedProposalsIds([...selectedProposalsIds])
+			setCurrentStep('ranking')
+		} else if (currentStep === 'ranking') {
 			setCurrentStep('confirm')
 		}
 	}
 
 	const handleBack = () => {
-		if (currentStep === 'rank') {
+		if (currentStep === 'ranking') {
 			setCurrentStep('select')
 		} else if (currentStep === 'confirm') {
-			setCurrentStep('rank')
+			setCurrentStep('ranking')
 		}
 	}
 
 	const handleSubmit = (
 		selectedProposals: GetRankedEligibleProposalsAPIResponse,
-	) => {
-		const proposalIds: SelectedProposalId[] =
-			selectedProposals?.proposals.map(p => ({ id: p.id })) ?? []
-		setSelectedProposals(proposalIds)
-		setShowTransactionDialog(true)
-	}
+	) => {}
 
 	const handleSaveToMemo = (
 		selectedProposals: GetRankedEligibleProposalsAPIResponse,
@@ -219,11 +220,14 @@ export function VotingPhase({ fundingRoundId }: currentStepProps) {
 				<VotingStepRender
 					{...{
 						currentStep,
-						proposals,
-						selectedProposals,
-						setSelectedProposals,
+						proposals: proposals.proposals,
+						selectedProposalsIds,
+						rankedProposalsIds,
 						handleNext,
+						handleBack,
 					}}
+					setRankedProposalsIds={setRankedProposalsIds}
+					setSelectedProposalsIds={setSelectedProposalsIds}
 				/>
 			)}
 
@@ -329,7 +333,7 @@ export function VotingPhase({ fundingRoundId }: currentStepProps) {
 			<RankedVoteTransactionDialog
 				open={showTransactionDialog}
 				onOpenChange={setShowTransactionDialog}
-				selectedProposals={selectedProposals ?? []}
+				selectedProposals={selectedProposalsIds.map(id => ({ id }))}
 				fundingRoundMEFId={parseInt(fundingRoundId)}
 			/>
 		</div>
@@ -358,14 +362,14 @@ function VotingPhaseSteps({ currentStep }: { currentStep: VotingStep }) {
 			{steps.map((step, index) => {
 				const isActive =
 					(currentStep === 'select' && index === 0) ||
-					(currentStep === 'rank' && index <= 1) ||
+					(currentStep === 'ranking' && index <= 1) ||
 					(currentStep === 'confirm' && index <= 2)
 
 				const isLastStep = index === steps.length - 1
 
 				return (
-					<div className="flex items-center">
-						<div key={step.title} className="flex-1">
+					<div className="flex items-center" key={index}>
+						<div className="flex-1">
 							<h3
 								className={`mb-1 text-lg font-bold ${
 									isActive ? 'text-secondary-dark' : 'text-gray-400'
@@ -408,8 +412,8 @@ function StepArrowIcon({
 			<path
 				d="M1 13L6 7L1 1"
 				stroke="currentColor"
-				stroke-linecap="round"
-				stroke-linejoin="round"
+				strokeLinecap="round"
+				strokeLinejoin="round"
 			/>
 		</svg>
 	)
@@ -447,42 +451,54 @@ function ProposalCard({
 }
 
 function VotingSelectStep({
-	availableProposals,
-	selectedProposals,
-	onProposalSelect,
+	proposals,
+	selectedProposalsIds,
+	onChange,
 	onNext,
 }: {
-	availableProposals: RankedProposalAPIResponse[]
-	selectedProposals: SelectedProposalId[]
-	onProposalSelect: (proposal: RankedProposalAPIResponse) => void
+	proposals: RankedProposalAPIResponse[]
+	selectedProposalsIds: ProposalId[]
+	onChange: (proposal: ProposalId[]) => void
 	onNext: () => void
 }) {
+	const handleProposalSelect = (proposalId: number) => {
+		const isSelected = selectedProposalsIds.includes(proposalId)
+		if (isSelected) {
+			onChange(selectedProposalsIds.filter(id => id !== proposalId))
+		} else {
+			if (selectedProposalsIds.length >= 10) {
+				return
+			}
+			onChange([...selectedProposalsIds, proposalId])
+		}
+	}
+
 	return (
 		<div className="space-y-6">
 			<div>
 				<div className="mb-2 flex justify-between text-sm text-gray-600">
 					<span>Selected Proposals</span>
-					<span>{selectedProposals.length} / 10</span>
+					<span>{selectedProposalsIds.length} / 10</span>
 				</div>
 				<div className="h-2 rounded-full bg-gray-100">
 					<div
 						className="h-full rounded-full bg-secondary transition-all"
 						style={{
-							width: `${(selectedProposals.length / 10) * 100}%`,
+							width: `${(selectedProposalsIds.length / 10) * 100}%`,
 						}}
 					/>
 				</div>
 			</div>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-				{availableProposals.map(proposal => (
+				{proposals.map(proposal => (
 					<div
 						key={proposal.id}
-						onClick={() => onProposalSelect(proposal)}
+						onClick={() => handleProposalSelect(proposal.id)}
 						className="cursor-pointer"
 					>
 						<ProposalCard
 							{...proposal}
-							isSelected={!!selectedProposals.find(p => p.id === proposal.id)}
+							isSelected={selectedProposalsIds.includes(proposal.id)}
 						/>
 					</div>
 				))}
@@ -499,41 +515,190 @@ function VotingSelectStep({
 	)
 }
 
+type VotingRankingStepProps = {
+	proposals: RankedProposalAPIResponse[]
+	rankedProposalsIds: ProposalId[]
+	onChange: (rankedProposals: ProposalId[]) => void
+	onBack: () => void
+	onNext: () => void
+}
+
+function VotingRankingStep({
+	proposals,
+	rankedProposalsIds,
+	onChange,
+	onNext,
+	onBack,
+}: VotingRankingStepProps) {
+	// Memoize proposals based on ranking order
+	const rankedProposals = useMemo(
+		() =>
+			[...proposals].sort(
+				(a, b) =>
+					rankedProposalsIds.indexOf(a.id) - rankedProposalsIds.indexOf(b.id),
+			),
+		[proposals, rankedProposalsIds],
+	)
+
+	const moveProposal = useCallback(
+		(draggedId: ProposalId, targetId: ProposalId) => {
+			const draggedIndex = rankedProposalsIds.indexOf(draggedId)
+			const targetIndex = rankedProposalsIds.indexOf(targetId)
+
+			if (
+				draggedIndex === -1 ||
+				targetIndex === -1 ||
+				draggedIndex === targetIndex
+			)
+				return
+
+			const updatedRankings = [...rankedProposalsIds]
+			updatedRankings.splice(draggedIndex, 1)
+			updatedRankings.splice(targetIndex, 0, draggedId)
+
+			onChange(updatedRankings)
+		},
+		[rankedProposalsIds, onChange],
+	)
+
+	return (
+		<DndProvider backend={isTouchDevice() ? TouchBackend : HTML5Backend}>
+			<div className="space-y-6">
+				<div className="space-y-2">
+					{rankedProposals.map((proposal, index) => (
+						<ProposalDraggableItem
+							key={proposal.id}
+							proposal={proposal}
+							index={index}
+							moveProposal={moveProposal}
+						/>
+					))}
+				</div>
+				<div className="flex justify-between">
+					{onBack && (
+						<Button
+							variant="outline"
+							onClick={onBack}
+							className="border-[#FF603B] text-[#FF603B] hover:bg-[#FF603B]/10"
+						>
+							Back
+						</Button>
+					)}
+					<Button
+						onClick={onNext}
+						className="ml-auto bg-[#FF603B] text-white hover:bg-[#FF603B]/90"
+					>
+						Next
+					</Button>
+				</div>
+			</div>
+		</DndProvider>
+	)
+}
+
+// Draggable Proposal Item
+const ProposalDraggableItem = ({
+	proposal,
+	index,
+	moveProposal,
+}: {
+	proposal: RankedProposalAPIResponse
+	index: number
+	moveProposal: (draggedId: ProposalId, targetId: ProposalId) => void
+}) => {
+	const [{ isDragging }, drag] = useDrag({
+		type: 'PROPOSAL',
+		item: { id: proposal.id },
+		collect: monitor => ({
+			isDragging: monitor.isDragging(),
+		}),
+		options: {
+			dropEffect: 'move',
+		},
+	})
+
+	const [{ isOver }, drop] = useDrop({
+		accept: 'PROPOSAL',
+		hover: (draggedItem: { id: ProposalId }) => {
+			if (draggedItem.id !== proposal.id) {
+				moveProposal(draggedItem.id, proposal.id)
+			}
+		},
+		collect: monitor => ({
+			isOver: monitor.isOver(),
+		}),
+	})
+
+	return (
+		<div
+			ref={node => {
+				if (node) {
+					drag(drop(node))
+				}
+			}}
+			className={cn(
+				'group flex cursor-move items-center gap-2 rounded-md border border-gray-200 p-2 transition',
+				isDragging ? 'opacity-0' : 'opacity-100 hover:shadow-sm',
+			)}
+		>
+			{isOver ? (
+				<div className="flex h-24 w-full items-center justify-center bg-muted">
+					<span className="text-lg font-bold text-muted-foreground">
+						Drop here
+					</span>
+				</div>
+			) : (
+				<div className="flex h-24 w-full items-center justify-center">
+					<GripVerticalIcon className="h-5 w-5 text-gray-400 opacity-50 transition-opacity group-hover:opacity-100" />
+					<span className="w-8 text-lg font-bold text-gray-800">
+						{index + 1}.
+					</span>
+					<div className="flex-1">
+						<ProposalCard {...proposal} isDragging={isDragging} />
+					</div>
+				</div>
+			)}
+		</div>
+	)
+}
+
 function VotingStepRender({
 	currentStep,
 	proposals,
-	selectedProposals,
-	setSelectedProposals,
+	selectedProposalsIds,
+	setSelectedProposalsIds,
+	rankedProposalsIds,
+	setRankedProposalsIds,
 	handleNext,
+	handleBack,
 }: {
 	currentStep: VotingStep
-	proposals: GetRankedEligibleProposalsAPIResponse
-	selectedProposals: SelectedProposalId[]
-	setSelectedProposals: (proposals: SelectedProposalId[]) => void
+	proposals: RankedProposalAPIResponse[]
+	selectedProposalsIds: ProposalId[]
+	setSelectedProposalsIds: (proposalsIds: ProposalId[]) => void
+	rankedProposalsIds: ProposalId[]
+	setRankedProposalsIds: (proposalsIds: ProposalId[]) => void
 	handleNext: () => void
+	handleBack: () => void
 }) {
 	switch (currentStep) {
 		case 'select':
 			return (
 				<VotingSelectStep
-					availableProposals={proposals?.proposals || []}
-					selectedProposals={selectedProposals || []}
-					onProposalSelect={proposal => {
-						const isSelected = selectedProposals?.some(
-							p => p.id === proposal.id,
-						)
-						if (isSelected) {
-							setSelectedProposals(
-								selectedProposals?.filter(p => p.id !== proposal.id),
-							)
-						} else {
-							setSelectedProposals([
-								...(selectedProposals || []),
-								{ id: proposal.id },
-							])
-						}
-					}}
+					proposals={proposals}
+					selectedProposalsIds={selectedProposalsIds}
+					onChange={setSelectedProposalsIds}
 					onNext={handleNext}
+				/>
+			)
+		case 'ranking':
+			return (
+				<VotingRankingStep
+					proposals={proposals}
+					rankedProposalsIds={rankedProposalsIds}
+					onChange={setRankedProposalsIds}
+					onNext={handleNext}
+					onBack={handleBack}
 				/>
 			)
 		default:
