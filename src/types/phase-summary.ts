@@ -1,4 +1,5 @@
 import { ProposalStatus as BaseProposalStatus } from '@prisma/client'
+import { OCVVote } from './consideration'
 
 export type ProposalStatus = BaseProposalStatus | 'NO_VOTES'
 
@@ -10,10 +11,7 @@ export interface PhaseTimeInfo {
 export interface CommunityVoteStats {
 	positive: number
 	positiveStakeWeight: number
-	voters: Array<{
-		address: string
-		timestamp: number
-	}>
+	voters: Array<OCVVote>
 	isEligible: boolean
 }
 

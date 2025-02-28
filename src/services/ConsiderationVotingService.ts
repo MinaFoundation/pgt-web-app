@@ -11,6 +11,7 @@ import { ProposalStatusMoveService } from './ProposalStatusMoveService'
 import { FundingRoundService } from './FundingRoundService'
 import logger from '@/logging'
 import { UserMetadata } from '@/services'
+import { OCVVote } from '@/types'
 
 interface VoteInput {
 	proposalId: number
@@ -71,7 +72,7 @@ interface ConsiderationPhaseSummaryResult {
 		communityVotes: {
 			positive: number
 			positiveStakeWeight: number
-			voters: Array<{ address: string; timestamp: number }>
+			voters: Array<OCVVote>
 			isEligible: boolean
 		}
 	}>
@@ -431,6 +432,7 @@ export class ConsiderationVotingService {
 				total_positive_community_votes: 0,
 				total_negative_community_votes: 0,
 				elegible: false,
+				voters: [],
 			}
 
 			return {

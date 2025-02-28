@@ -1,5 +1,6 @@
 import { ProposalStatus } from '@prisma/client'
 import { Decimal } from '@prisma/client/runtime/library'
+import { VoteStatus } from './phase-summary'
 
 export interface ConsiderationVoteStats {
 	approved: number
@@ -66,6 +67,8 @@ export interface OCVVote {
 	account: string
 	timestamp: number
 	hash: string
+	height: number
+	status: VoteStatus
 }
 
 export interface OCVVoteData {
