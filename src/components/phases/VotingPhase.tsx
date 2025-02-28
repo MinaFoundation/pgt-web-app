@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useWallet } from '@/contexts/WalletContext'
 import { useToast } from '@/hooks/use-toast'
-import RankedVoteList from '@/components/voting-phase/RankedVoteList'
 import { VotingResultsDistribution } from '@/components/voting-phase/VotingResultsDistribution'
 import { RankedVoteTransactionDialog } from '@/components/web3/dialogs/RankedVoteTransactionDialog'
 import { WalletConnectorDialog } from '@/components/web3/WalletConnectorDialog'
@@ -19,20 +18,33 @@ import {
 	ChevronUpIcon,
 	ChartBarIcon,
 	GripVerticalIcon,
+	WalletIcon,
+	SaveIcon,
+	AlertTriangleIcon,
 } from 'lucide-react'
 import { InfoCircledIcon } from '@radix-ui/react-icons'
 import { cn, isTouchDevice } from '@/lib/utils'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { useFundingRound } from '@/hooks/use-funding-round'
 import { useEligibleProposals } from '@/hooks/use-eligible-proposals'
-import {
-	GetRankedEligibleProposalsAPIResponse,
-	RankedProposalAPIResponse,
-} from '@/services'
+import { RankedProposalAPIResponse } from '@/services'
 import { useOCVVotes } from '@/hooks/use-ocv-votes'
 import { DndProvider, useDrag, useDrop } from 'react-dnd'
 import { TouchBackend } from 'react-dnd-touch-backend'
 import { HTML5Backend } from 'react-dnd-html5-backend'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from '../ui/tooltip'
+import { formatDistanceToNow } from 'date-fns'
+import { DialogDescription } from '@radix-ui/react-dialog'
+import {
+	ManualVoteDialog,
+	ManualVoteDialogVoteType,
+} from '../web3/dialogs/OCVManualInstructions'
 
 type ProposalId = RankedProposalAPIResponse['id']
 
@@ -42,9 +54,10 @@ export function VotingPhase({ fundingRoundId }: { fundingRoundId: string }) {
 	const { state } = useWallet()
 	const { toast } = useToast()
 
-	const [showWalletDialog, setShowWalletDialog] = useState(false)
-	const [showTransactionDialog, setShowTransactionDialog] = useState(false)
-	const [showFundingDistribution, setShowFundingDistribution] = useState(false)
+	// Fetch data
+	const { data: fundingRound, isLoading } = useFundingRound(fundingRoundId)
+	const { data: proposals } = useEligibleProposals(fundingRoundId)
+	const { data: votesData } = useOCVVotes(fundingRoundId)
 
 	// Steps state
 	const [currentStep, setCurrentStep] = useState<VotingStep>('select')
@@ -53,11 +66,10 @@ export function VotingPhase({ fundingRoundId }: { fundingRoundId: string }) {
 	>([])
 	const [rankedProposalsIds, setRankedProposalsIds] = useState<ProposalId[]>([])
 
-	const { data: fundingRound, isLoading } = useFundingRound(fundingRoundId)
-
-	const { data: proposals } = useEligibleProposals(fundingRoundId)
-
-	const { data: votesData } = useOCVVotes(fundingRoundId)
+	// Action states
+	const [showWalletDialog, setShowWalletDialog] = useState(false)
+	const [showVoteDialog, setShowVoteDialog] = useState(false)
+	const [showFundingDistribution, setShowFundingDistribution] = useState(false)
 
 	// Handle user-specific vote data when wallet is connected
 	useEffect(() => {
@@ -111,28 +123,8 @@ export function VotingPhase({ fundingRoundId }: { fundingRoundId: string }) {
 		}
 	}
 
-	const handleSubmit = (
-		selectedProposals: GetRankedEligibleProposalsAPIResponse,
-	) => {}
-
-	const handleSaveToMemo = (
-		selectedProposals: GetRankedEligibleProposalsAPIResponse,
-	) => {
-		const memo = `YES ${selectedProposals.proposals.map(p => p.id).join(' ')}`
-		navigator.clipboard.writeText(memo).then(() => {
-			toast({
-				title: 'Copied to Clipboard',
-				description: 'The vote memo has been copied to your clipboard',
-			})
-		})
-	}
-
-	const handleConnectWallet = () => {
-		if (!state.wallet) {
-			setShowWalletDialog(true)
-		} else {
-			setShowTransactionDialog(true)
-		}
+	const handleSubmit = () => {
+		setShowVoteDialog(true)
 	}
 
 	// Check if voting phase is active
@@ -159,6 +151,21 @@ export function VotingPhase({ fundingRoundId }: { fundingRoundId: string }) {
 						<CardTitle>Loading Proposals...</CardTitle>
 						<CardDescription>
 							Please wait while we fetch the available proposals.
+						</CardDescription>
+					</CardHeader>
+				</Card>
+			</div>
+		)
+	}
+
+	if (!fundingRound || !proposals) {
+		return (
+			<div className="container mx-auto max-w-7xl px-2 md:px-6">
+				<Card>
+					<CardHeader>
+						<CardTitle>No Data Available</CardTitle>
+						<CardDescription>
+							There was an error fetching the data. Please try again later.
 						</CardDescription>
 					</CardHeader>
 				</Card>
@@ -210,7 +217,8 @@ export function VotingPhase({ fundingRoundId }: { fundingRoundId: string }) {
 			<div>
 				<h2 className="text-2xl font-bold">Voting Phase</h2>
 				<p>
-					Cast your votes to determine which proposals will receive funding.
+					Ranking proposals and cast your votes to determine which proposals
+					will receive funding.
 				</p>
 			</div>
 
@@ -228,21 +236,9 @@ export function VotingPhase({ fundingRoundId }: { fundingRoundId: string }) {
 					}}
 					setRankedProposalsIds={setRankedProposalsIds}
 					setSelectedProposalsIds={setSelectedProposalsIds}
+					handleSubmit={handleSubmit}
 				/>
 			)}
-
-			<RankedVoteList
-				proposals={proposals}
-				existingVote={votesData?.votes.find(
-					vote =>
-						vote.account.toLowerCase() === state.wallet?.address?.toLowerCase(),
-				)}
-				onSubmit={handleSubmit}
-				onSaveToMemo={handleSaveToMemo}
-				onConnectWallet={handleConnectWallet}
-				title={`Rank your vote`}
-				fundingRoundMEFId={proposals?.fundingRound.mefId || 0}
-			/>
 
 			<div className="container mx-auto max-w-7xl py-8">
 				<div className="rounded-lg border bg-card text-card-foreground shadow-sm transition-shadow hover:shadow-md">
@@ -330,11 +326,12 @@ export function VotingPhase({ fundingRoundId }: { fundingRoundId: string }) {
 				onOpenChange={setShowWalletDialog}
 			/>
 
-			<RankedVoteTransactionDialog
-				open={showTransactionDialog}
-				onOpenChange={setShowTransactionDialog}
-				selectedProposals={selectedProposalsIds.map(id => ({ id }))}
-				fundingRoundMEFId={parseInt(fundingRoundId)}
+			<VotingConfirmationDialog
+				open={showVoteDialog}
+				onOpenChange={setShowVoteDialog}
+				fundingRoundId={fundingRoundId}
+				mefId={fundingRound.mefId}
+				rankedProposalsIds={rankedProposalsIds}
 			/>
 		</div>
 	)
@@ -360,10 +357,14 @@ function VotingPhaseSteps({ currentStep }: { currentStep: VotingStep }) {
 	return (
 		<div className="mb-8 flex justify-between">
 			{steps.map((step, index) => {
-				const isActive =
-					(currentStep === 'select' && index === 0) ||
-					(currentStep === 'ranking' && index <= 1) ||
+				const isDone =
+					(currentStep === 'ranking' && index == 0) ||
 					(currentStep === 'confirm' && index <= 2)
+
+				const isActive =
+					(currentStep === 'select' && index == 0) ||
+					(currentStep === 'ranking' && index == 1) ||
+					(currentStep === 'confirm' && index == 2)
 
 				const isLastStep = index === steps.length - 1
 
@@ -371,15 +372,17 @@ function VotingPhaseSteps({ currentStep }: { currentStep: VotingStep }) {
 					<div className="flex items-center" key={index}>
 						<div className="flex-1">
 							<h3
-								className={`mb-1 text-lg font-bold ${
-									isActive ? 'text-secondary-dark' : 'text-gray-400'
-								}`}
+								className={cn(
+									'mb-1 text-lg font-bold',
+									isActive || isDone ? 'text-secondary-dark' : 'text-gray-400',
+									isActive && 'animate-pulse',
+								)}
 							>
 								{step.title}
 							</h3>
 							<p
 								className={`text-sm ${
-									isActive ? 'text-gray-600' : 'text-gray-400'
+									isActive || isDone ? 'text-gray-600' : 'text-gray-400'
 								}`}
 							>
 								{step.description}
@@ -426,13 +429,20 @@ function ProposalCard({
 	communityVotes,
 	isDragging = false,
 	isSelected = false,
+	className,
 }: RankedProposalAPIResponse & {
 	isDragging?: boolean
 	isSelected?: boolean
+	className?: string
 }) {
 	return (
 		<div
-			className={`flex-1 rounded-lg border p-4 transition-all ${isDragging ? 'border-secondary shadow-lg' : 'border-gray-200'} ${isSelected ? '!border-secondary bg-secondary/5' : 'bg-primary-grey/40'} hover:shadow-md`}
+			className={cn(
+				`flex-1 rounded-lg border bg-card p-4 transition-all hover:shadow-md`,
+				isDragging ? 'border-secondary shadow-lg' : 'border-gray-200',
+				isSelected && '!border-secondary bg-secondary/5',
+				className,
+			)}
 			data-proposal-id={id}
 		>
 			<div className="flex items-start justify-between">
@@ -507,6 +517,7 @@ function VotingSelectStep({
 				<Button
 					onClick={onNext}
 					className="button-3d ml-auto bg-[#FF603B] text-white hover:bg-[#FF603B]/90"
+					disabled={selectedProposalsIds.length === 0}
 				>
 					Next
 				</Button>
@@ -575,15 +586,13 @@ function VotingRankingStep({
 					))}
 				</div>
 				<div className="flex justify-between">
-					{onBack && (
-						<Button
-							variant="outline"
-							onClick={onBack}
-							className="border-[#FF603B] text-[#FF603B] hover:bg-[#FF603B]/10"
-						>
-							Back
-						</Button>
-					)}
+					<Button
+						variant="outline"
+						onClick={onBack}
+						className="border-[#FF603B] text-[#FF603B] hover:bg-[#FF603B]/10"
+					>
+						Back
+					</Button>
 					<Button
 						onClick={onNext}
 						className="ml-auto bg-[#FF603B] text-white hover:bg-[#FF603B]/90"
@@ -637,27 +646,93 @@ const ProposalDraggableItem = ({
 				}
 			}}
 			className={cn(
-				'group flex cursor-move items-center gap-2 rounded-md border border-gray-200 p-2 transition',
+				'group flex cursor-move items-center gap-2 rounded-md border border-gray-200 bg-card p-2 transition',
 				isDragging ? 'opacity-0' : 'opacity-100 hover:shadow-sm',
 			)}
 		>
 			{isOver ? (
-				<div className="flex h-24 w-full items-center justify-center bg-muted">
+				<div className="flex h-20 w-full items-center justify-center bg-muted">
 					<span className="text-lg font-bold text-muted-foreground">
 						Drop here
 					</span>
 				</div>
 			) : (
-				<div className="flex h-24 w-full items-center justify-center">
+				<div className="flex h-20 w-full items-center justify-center">
 					<GripVerticalIcon className="h-5 w-5 text-gray-400 opacity-50 transition-opacity group-hover:opacity-100" />
 					<span className="w-8 text-lg font-bold text-gray-800">
 						{index + 1}.
 					</span>
 					<div className="flex-1">
-						<ProposalCard {...proposal} isDragging={isDragging} />
+						<ProposalCard
+							{...proposal}
+							isDragging={isDragging}
+							className="border-none py-0 hover:shadow-none"
+						/>
 					</div>
 				</div>
 			)}
+		</div>
+	)
+}
+
+function VotingConfirmStep({
+	proposals,
+	rankedProposalsIds,
+	onBack,
+	onSubmit,
+}: {
+	proposals: RankedProposalAPIResponse[]
+	rankedProposalsIds: ProposalId[]
+	onBack: () => void
+	onSubmit: (rankedProposalsIds: ProposalId[]) => void
+}) {
+	const rankedProposals = useMemo(
+		() =>
+			[...proposals].sort(
+				(a, b) =>
+					rankedProposalsIds.indexOf(a.id) - rankedProposalsIds.indexOf(b.id),
+			),
+		[proposals, rankedProposalsIds],
+	)
+
+	return (
+		<div className="space-y-6 py-4">
+			<div className="space-y-4 rounded p-4">
+				<div>
+					<h2 className="items-center text-lg font-semibold">
+						<AlertTriangleIcon className="mr-2 inline-block h-5 w-5 text-primary" />
+						Check Your Final Proposals Ranking
+					</h2>
+					<p className="text-gray-600">
+						Please review your ranked choices below. Once you submit your vote,
+						it cannot be undone.
+					</p>
+				</div>
+				{rankedProposals.map((proposal, index) => (
+					<div key={proposal.id} className="mb-2 flex items-center gap-2">
+						<span className="font-bold text-[#2D2D2D]">{index + 1}.</span>
+						<ProposalCard
+							{...proposal}
+							className="border-accent-mint bg-accent-mint/10 hover:shadow-none"
+						/>
+					</div>
+				))}
+			</div>
+			<div className="flex justify-between">
+				<Button
+					variant="outline"
+					onClick={onBack}
+					className="border-[#FF603B] text-[#FF603B] hover:bg-[#FF603B]/10"
+				>
+					Back
+				</Button>
+				<Button
+					className="button-3d bg-[#FF603B] text-white"
+					onClick={() => onSubmit(rankedProposalsIds)}
+				>
+					Submit Vote
+				</Button>
+			</div>
 		</div>
 	)
 }
@@ -671,6 +746,7 @@ function VotingStepRender({
 	setRankedProposalsIds,
 	handleNext,
 	handleBack,
+	handleSubmit,
 }: {
 	currentStep: VotingStep
 	proposals: RankedProposalAPIResponse[]
@@ -680,6 +756,7 @@ function VotingStepRender({
 	setRankedProposalsIds: (proposalsIds: ProposalId[]) => void
 	handleNext: () => void
 	handleBack: () => void
+	handleSubmit: () => void
 }) {
 	switch (currentStep) {
 		case 'select':
@@ -701,7 +778,161 @@ function VotingStepRender({
 					onBack={handleBack}
 				/>
 			)
+		case 'confirm':
+			return (
+				<VotingConfirmStep
+					proposals={proposals}
+					rankedProposalsIds={rankedProposalsIds}
+					onBack={handleBack}
+					onSubmit={handleSubmit}
+				/>
+			)
 		default:
 			return null
 	}
+}
+
+// dialog that should be shown on click submit vote. Show the alert votes cannot be undone, show the option to vote with wallet or through the memo
+function VotingConfirmationDialog({
+	open,
+	onOpenChange,
+	fundingRoundId,
+	mefId,
+	rankedProposalsIds,
+}: {
+	open: boolean
+	onOpenChange: (open: boolean) => void
+	fundingRoundId: string
+	mefId: number
+	rankedProposalsIds: ProposalId[]
+}) {
+	const { state } = useWallet()
+	const [showTransactionDialog, setShowTransactionDialog] = useState(false)
+	const [showWalletDialog, setShowWalletDialog] = useState(false)
+	const [showManualDialog, setShowManualDialog] = useState(false)
+
+	const { data: votesData } = useOCVVotes(fundingRoundId)
+
+	useEffect(() => {
+		if (!open) {
+			setShowWalletDialog(false)
+		}
+	}, [open])
+
+	const handleVoteClick = () => {
+		if (!state.wallet) {
+			setShowWalletDialog(true)
+			return
+		}
+		setShowTransactionDialog(true)
+	}
+
+	const existingVote = votesData?.votes.find(
+		vote => vote.account.toLowerCase() === state.wallet?.address?.toLowerCase(),
+	)
+
+	const voteButtonTooltip = existingVote
+		? `Your last vote was ${formatDistanceToNow((existingVote as any).timestamp)} ago`
+		: undefined
+
+	const handleSaveToMemo = () => {
+		setShowManualDialog(true)
+	}
+
+	if (open && showTransactionDialog) {
+		return (
+			<RankedVoteTransactionDialog
+				open
+				onOpenChange={setShowTransactionDialog}
+				selectedProposals={rankedProposalsIds.map(id => ({ id }))}
+				fundingRoundMEFId={parseInt(fundingRoundId)}
+			/>
+		)
+	}
+
+	if (open && showManualDialog) {
+		// Create a string of ranked proposal IDs
+		const rankedVoteId: string = [mefId.toString(), ...rankedProposalsIds].join(
+			' ',
+		)
+
+		return (
+			<ManualVoteDialog
+				open={showManualDialog}
+				onOpenChange={setShowManualDialog}
+				voteId={rankedVoteId}
+				voteType={ManualVoteDialogVoteType.MEF}
+				existingVote={
+					existingVote
+						? {
+								address: existingVote.account,
+								timestamp: existingVote.timestamp,
+								hash: existingVote.hash,
+							}
+						: null
+				}
+			/>
+		)
+	}
+
+	if (open && showWalletDialog) {
+		return (
+			<WalletConnectorDialog
+				open={showWalletDialog}
+				onOpenChange={setShowWalletDialog}
+			/>
+		)
+	}
+
+	return (
+		<Dialog open={open} onOpenChange={onOpenChange}>
+			<DialogContent>
+				<DialogHeader>
+					<DialogTitle>Submit Your Vote</DialogTitle>
+					<DialogDescription>
+						Use your wallet to cast a vote to our Mina OnChain Voting
+					</DialogDescription>
+				</DialogHeader>
+				<div className="space-y-3">
+					<TooltipProvider>
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<div>
+									<Button
+										className="w-full transform bg-purple-600 transition-all duration-300 hover:scale-105 hover:bg-purple-700"
+										onClick={handleVoteClick}
+									>
+										<WalletIcon className="mr-2 h-4 w-4" />
+										{state.wallet
+											? existingVote
+												? 'Re-Vote With Wallet'
+												: 'Vote with Wallet'
+											: existingVote
+												? 'Re-Vote With Memo without A Wallet'
+												: 'Connect Wallet to Submit Vote'}
+									</Button>
+								</div>
+							</TooltipTrigger>
+							{voteButtonTooltip && (
+								<TooltipContent>
+									<p>{voteButtonTooltip}</p>
+								</TooltipContent>
+							)}
+						</Tooltip>
+					</TooltipProvider>
+
+					<Button
+						variant="outline"
+						className="w-full"
+						onClick={handleSaveToMemo}
+					>
+						<SaveIcon className="mr-2 h-4 w-4" />
+						{existingVote
+							? 'Re-Vote Via Memo Without A Wallet'
+							: 'Vote Via Memo Without A Wallet'}
+					</Button>
+				</div>
+			</DialogContent>
+		</Dialog>
+	)
 }
