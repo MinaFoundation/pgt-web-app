@@ -93,7 +93,13 @@ export const VotingPhaseRankedSummary: FC<Props> = ({
 						showCommunityVotes={false}
 					/>
 				}
-				votesTable={<VotesTable title="Casted Votes" votes={summary.votes} />}
+				votesTable={
+					<VotesTable
+						title="Casted Votes"
+						votes={summary.votes}
+						noVotesMessage="No Community votes has been cast"
+					/>
+				}
 			/>
 		</TooltipProvider>
 	)

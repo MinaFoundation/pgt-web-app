@@ -1,7 +1,10 @@
 import { type FC } from 'react'
 import { CheckCircleIcon } from 'lucide-react'
 import { TooltipProvider } from '@/components/ui/tooltip'
-import { type ConsiderationPhaseSummary as ConsiderationPhaseSummaryType } from '@/types/phase-summary'
+import {
+	Vote,
+	type ConsiderationPhaseSummary as ConsiderationPhaseSummaryType,
+} from '@/types/phase-summary'
 import {
 	getPhaseStatus,
 	getPhaseProgress,
@@ -12,6 +15,7 @@ import { PhaseTimeCard } from './PhaseTimeCard'
 import { StatsCard } from './StatsCard'
 import { ProposalList } from './ProposalList'
 import { BudgetDistributionChart } from '../funding-rounds/BudgetDistributionChart'
+import { VotesTable } from './VotesTable'
 
 interface Props {
 	summary: ConsiderationPhaseSummaryType
@@ -25,6 +29,18 @@ export const ConsiderationPhaseSummary: FC<Props> = ({
 	const phaseStatus = getPhaseStatus(summary.phaseTimeInfo)
 	const progress = getPhaseProgress(summary.phaseTimeInfo)
 	const progressColor = getProgressColor(progress)
+	console.log('summary proposals', summary.proposalVotes)
+	const votes: Vote[] = summary.proposalVotes.flatMap(proposal =>
+		proposal.communityVotes.voters.map(voter => ({
+			account: voter.account,
+			hash: voter.hash,
+			memo: '',
+			height: voter.height,
+			status: voter.status,
+			timestamp: voter.timestamp,
+			nonce: 0,
+		})),
+	)
 
 	// If phase hasn't started yet, show countdown widget
 	if (phaseStatus.status === 'not-started') {
@@ -77,6 +93,13 @@ export const ConsiderationPhaseSummary: FC<Props> = ({
 						title="Ranked Proposals"
 						proposals={summary.proposalVotes}
 						showCommunityVotes={true}
+					/>
+				}
+				votesTable={
+					<VotesTable
+						title="Casted Votes"
+						noVotesMessage="No Community votes has been cast"
+						votes={votes}
 					/>
 				}
 			/>

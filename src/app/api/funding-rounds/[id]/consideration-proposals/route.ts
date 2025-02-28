@@ -41,13 +41,7 @@ function parseOCVVoteData(data: JsonValue | null | undefined): OCVVoteData {
 				? voteData.positive_stake_weight
 				: '0',
 		elegible: Boolean(voteData.elegible),
-		votes: Array.isArray(voteData.votes)
-			? voteData.votes.map(vote => ({
-					account: String(vote.account || ''),
-					timestamp: Number(vote.timestamp || 0),
-					hash: String(vote.hash || ''),
-				}))
-			: [],
+		votes: Array.isArray(voteData.votes) ? voteData.votes : [],
 	}
 }
 
@@ -312,6 +306,8 @@ export async function GET(
 									address: v.account,
 									timestamp: v.timestamp,
 									hash: v.hash,
+									height: v.height,
+									status: v.status,
 								})) || [],
 						},
 						reviewerEligible: approved >= minReviewerApprovals,
