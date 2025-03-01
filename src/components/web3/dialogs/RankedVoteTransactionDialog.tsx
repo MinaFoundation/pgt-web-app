@@ -8,6 +8,7 @@ import {
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
+	DialogDescription,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Icons } from '@/components/icons'
@@ -184,26 +185,21 @@ export function RankedVoteTransactionDialog({
 					<DialogTitle className="text-center text-2xl font-bold">
 						Submit Ranked Vote
 					</DialogTitle>
+					<DialogDescription>
+						You are about to submit your ranked vote using your connected
+						wallet. This will create a transaction with a memo containing your
+						ranked choices.
+					</DialogDescription>
 				</DialogHeader>
 				<div className="space-y-6 py-4">
-					<div className="space-y-4">
-						<p className="text-center text-muted-foreground">
-							You are about to submit your ranked vote using your connected
-							wallet. This will create a transaction with a memo containing your
-							ranked choices.
-						</p>
-
-						<div className="space-y-2 text-sm text-muted-foreground">
-							<p className="font-medium text-foreground">
-								Transaction Details:
-							</p>
-							<ul className="list-disc space-y-1 pl-4">
-								<li>Amount: 0 MINA</li>
-								<li>Recipient: Your wallet address</li>
-								<li>Memo: {memo}</li>
-								<li>Fee: 0.1 MINA</li>
-							</ul>
-						</div>
+					<div className="space-y-2 text-sm text-muted-foreground">
+						<p className="font-medium text-foreground">Transaction Details:</p>
+						<ul className="list-disc space-y-1 pl-4">
+							<li>Amount: 0 MINA</li>
+							<li>Recipient: Your wallet address</li>
+							<li>Memo: {memo}</li>
+							<li>Fee: 0.1 MINA</li>
+						</ul>
 					</div>
 
 					<div className="flex justify-end gap-4">
