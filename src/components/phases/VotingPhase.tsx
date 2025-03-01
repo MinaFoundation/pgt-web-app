@@ -21,6 +21,7 @@ import {
 	WalletIcon,
 	SaveIcon,
 	AlertTriangleIcon,
+	CircleCheckBigIcon,
 } from 'lucide-react'
 import { InfoCircledIcon } from '@radix-ui/react-icons'
 import { cn, isTouchDevice } from '@/lib/utils'
@@ -48,7 +49,7 @@ import {
 
 type ProposalId = RankedProposalAPIResponse['id']
 
-type VotingStep = 'select' | 'ranking' | 'confirm'
+type VotingStep = 'select' | 'ranking' | 'confirm' | 'finished'
 
 export function VotingPhase({ fundingRoundId }: { fundingRoundId: string }) {
 	const { state } = useWallet()
@@ -89,9 +90,11 @@ export function VotingPhase({ fundingRoundId }: { fundingRoundId: string }) {
 						const bIndex = userVote.proposals.indexOf(b.id)
 						return aIndex - bIndex
 					})
-					.map(p => ({ id: p.id }))
+					.map(p => p.id)
 
-				setSelectedProposalsIds(votedProposals.map(p => p.id))
+				setSelectedProposalsIds(votedProposals)
+				setRankedProposalsIds(votedProposals)
+				setCurrentStep('finished')
 			}
 		}
 
@@ -224,21 +227,19 @@ export function VotingPhase({ fundingRoundId }: { fundingRoundId: string }) {
 
 			<VotingPhaseSteps currentStep={currentStep} />
 
-			{proposals && (
-				<VotingStepRender
-					{...{
-						currentStep,
-						proposals: proposals.proposals,
-						selectedProposalsIds,
-						rankedProposalsIds,
-						handleNext,
-						handleBack,
-					}}
-					setRankedProposalsIds={setRankedProposalsIds}
-					setSelectedProposalsIds={setSelectedProposalsIds}
-					handleSubmit={handleSubmit}
-				/>
-			)}
+			<VotingStepRender
+				{...{
+					currentStep,
+					proposals: proposals.proposals,
+					selectedProposalsIds,
+					rankedProposalsIds,
+					handleNext,
+					handleBack,
+				}}
+				setRankedProposalsIds={setRankedProposalsIds}
+				setSelectedProposalsIds={setSelectedProposalsIds}
+				handleSubmit={handleSubmit}
+			/>
 
 			<div className="container mx-auto max-w-7xl py-8">
 				<div className="rounded-lg border bg-card text-card-foreground shadow-sm transition-shadow hover:shadow-md">
@@ -359,7 +360,8 @@ function VotingPhaseSteps({ currentStep }: { currentStep: VotingStep }) {
 			{steps.map((step, index) => {
 				const isDone =
 					(currentStep === 'ranking' && index == 0) ||
-					(currentStep === 'confirm' && index <= 2)
+					(currentStep === 'confirm' && index <= 2) ||
+					(currentStep === 'finished' && index <= 3)
 
 				const isActive =
 					(currentStep === 'select' && index == 0) ||
@@ -784,12 +786,19 @@ function VotingStepRender({
 					onSubmit={handleSubmit}
 				/>
 			)
+
+		case 'finished':
+			return (
+				<VotingResultStep
+					proposals={proposals}
+					rankedProposalsIds={rankedProposalsIds}
+				/>
+			)
 		default:
 			return null
 	}
 }
 
-// dialog that should be shown on click submit vote. Show the alert votes cannot be undone, show the option to vote with wallet or through the memo
 function VotingConfirmationDialog({
 	open,
 	onOpenChange,
@@ -931,5 +940,47 @@ function VotingConfirmationDialog({
 				</div>
 			</DialogContent>
 		</Dialog>
+	)
+}
+
+function VotingResultStep({
+	proposals,
+	rankedProposalsIds,
+}: {
+	proposals: RankedProposalAPIResponse[]
+	rankedProposalsIds: ProposalId[]
+}) {
+	const rankedProposals = useMemo(
+		() =>
+			[...proposals].sort(
+				(a, b) =>
+					rankedProposalsIds.indexOf(a.id) - rankedProposalsIds.indexOf(b.id),
+			),
+		[proposals, rankedProposalsIds],
+	)
+
+	return (
+		<div className="space-y-6 py-4">
+			<div className="space-y-4 rounded p-4">
+				<div>
+					<h2 className="items-center text-lg font-semibold">
+						<CircleCheckBigIcon className="mr-2 inline-block h-5 w-5 text-green-600" />
+						You Voted!
+					</h2>
+					<p className="text-gray-600">
+						This is the ranking you voted for. Thank you!{' '}
+					</p>
+				</div>
+				{rankedProposals.map((proposal, index) => (
+					<div key={proposal.id} className="mb-2 flex items-center gap-2">
+						<span className="font-bold text-[#2D2D2D]">{index + 1}.</span>
+						<ProposalCard
+							{...proposal}
+							className="border-accent-mint bg-accent-mint/10 hover:shadow-none"
+						/>
+					</div>
+				))}
+			</div>
+		</div>
 	)
 }
