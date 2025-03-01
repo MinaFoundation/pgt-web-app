@@ -526,22 +526,19 @@ function VotingSelectStep({
 	)
 }
 
-type VotingRankingStepProps = {
-	proposals: RankedProposalAPIResponse[]
-	rankedProposalsIds: ProposalId[]
-	onChange: (rankedProposals: ProposalId[]) => void
-	onBack: () => void
-	onNext: () => void
-}
-
 function VotingRankingStep({
 	proposals,
 	rankedProposalsIds,
 	onChange,
 	onNext,
 	onBack,
-}: VotingRankingStepProps) {
-	// Memoize proposals based on ranking order
+}: {
+	proposals: RankedProposalAPIResponse[]
+	rankedProposalsIds: ProposalId[]
+	onChange: (rankedProposals: ProposalId[]) => void
+	onBack: () => void
+	onNext: () => void
+}) {
 	const rankedProposals = useMemo(
 		() =>
 			[...proposals].sort(
@@ -646,7 +643,7 @@ const ProposalDraggableItem = ({
 				}
 			}}
 			className={cn(
-				'group flex cursor-move items-center gap-2 rounded-md border border-gray-200 bg-card p-2 transition',
+				'group flex cursor-move items-center gap-2 rounded-md border border-gray-200 bg-card p-2 transition duration-500',
 				isDragging ? 'opacity-0' : 'opacity-100 hover:shadow-sm',
 			)}
 		>
