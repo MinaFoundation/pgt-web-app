@@ -845,7 +845,7 @@ function VotingConfirmationDialog({
 				open
 				onOpenChange={setShowTransactionDialog}
 				selectedProposals={rankedProposalsIds.map(id => ({ id }))}
-				fundingRoundMEFId={parseInt(fundingRoundId)}
+				fundingRoundMEFId={mefId}
 			/>
 		)
 	}
