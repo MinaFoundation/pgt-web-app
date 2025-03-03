@@ -311,9 +311,7 @@ export default function CreateProposal({ mode = 'create', proposalId }: Props) {
 
 			// Submit the proposal
 			const response = await fetch(
-				mode === 'create'
-					? '/api/proposals/draft'
-					: `/api/proposals/${proposalId}`,
+				mode === 'create' ? '/api/proposals' : `/api/proposals/${proposalId}`,
 				{
 					method: mode === 'create' ? 'POST' : 'PUT',
 					headers: {

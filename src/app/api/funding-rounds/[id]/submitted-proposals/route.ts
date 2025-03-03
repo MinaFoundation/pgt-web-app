@@ -10,15 +10,29 @@ export interface SubmittedProposalsJSON {
 	id: number
 	title: string
 	proposalSummary: string
+	keyObjectives: string
+	problemStatement: string
+	problemImportance: string
+	proposedSolution: string
+	implementationDetails: string
 	totalFundingRequired: Prisma.Decimal
+	communityBenefits: string
+	keyPerformanceIndicators: string
+	budgetBreakdown: string
+	milestones: string
+	estimatedCompletionDate: Date
+	teamMembers: string
+	relevantExperience: string
+	potentialRisks: string
+	mitigationPlans: string
+	discordHandle: string
+	email: string
+	website?: string | null
+	githubProfile?: string | null
+	otherLinks?: string | null
 	createdAt: Date
 	status: ProposalStatus
 	submitter: string
-	problemImportance: string
-	problemStatement: string
-	implementationDetails: string
-	potentialRisks: string
-	email: string
 	submitterMetadata: {
 		authSource: {
 			type: string
@@ -41,14 +55,28 @@ interface RawProposal {
 	id: number
 	title: string
 	proposalSummary: string
+	keyObjectives: string
+	problemStatement: string
+	problemImportance: string
+	proposedSolution: string
+	implementationDetails: string
 	totalFundingRequired: Prisma.Decimal
+	communityBenefits: string
+	keyPerformanceIndicators: string
+	budgetBreakdown: string
+	milestones: string
+	estimatedCompletionDate: Date
+	teamMembers: string
+	relevantExperience: string
+	potentialRisks: string
+	mitigationPlans: string
+	discordHandle: string
+	email: string
+	website?: string | null
+	githubProfile?: string | null
+	otherLinks?: string | null
 	createdAt: Date
 	status: ProposalStatus
-	problemImportance: string
-	problemStatement: string
-	implementationDetails: string
-	potentialRisks: string
-	email: string
 	user: {
 		id: string
 		metadata: Prisma.JsonValue
@@ -119,17 +147,31 @@ export async function GET(
 						id: proposal.id,
 						title: proposal.title,
 						proposalSummary: proposal.proposalSummary,
+						keyObjectives: proposal.keyObjectives,
+						problemStatement: proposal.problemStatement,
+						problemImportance: proposal.problemImportance,
+						proposedSolution: proposal.proposedSolution,
+						implementationDetails: proposal.implementationDetails,
 						totalFundingRequired: proposal.totalFundingRequired,
+						communityBenefits: proposal.communityBenefits,
+						keyPerformanceIndicators: proposal.keyPerformanceIndicators,
+						budgetBreakdown: proposal.budgetBreakdown,
+						milestones: proposal.milestones,
+						estimatedCompletionDate: proposal.estimatedCompletionDate,
+						teamMembers: proposal.teamMembers,
+						relevantExperience: proposal.relevantExperience,
+						potentialRisks: proposal.potentialRisks,
+						mitigationPlans: proposal.mitigationPlans,
+						discordHandle: proposal.discordHandle,
+						email: proposal.email,
+						website: proposal.website,
+						githubProfile: proposal.githubProfile,
+						otherLinks: proposal.otherLinks,
 						createdAt: proposal.createdAt,
 						status: proposal.status,
 						submitter: hasUsername(proposal.user.metadata)
 							? proposal.user.metadata.username
 							: 'Unknown',
-						problemStatement: proposal.problemStatement,
-						problemImportance: proposal.problemImportance,
-						implementationDetails: proposal.implementationDetails,
-						potentialRisks: proposal.potentialRisks,
-						email: proposal.email,
 						submitterMetadata: {
 							authSource: {
 								type:

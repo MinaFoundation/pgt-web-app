@@ -44,7 +44,10 @@ export const proposalSchema = z.object({
 		.string()
 		.min(PV.BUDGET_BREAKDOWN.min)
 		.max(PV.BUDGET_BREAKDOWN.max),
-	estimatedCompletionDate: z.date(),
+	estimatedCompletionDate: z.union([
+		z.date(),
+		z.string().transform(val => new Date(val)),
+	]),
 	milestones: z.string().min(PV.MILESTONES.min).max(PV.MILESTONES.max),
 	teamMembers: z.string().min(PV.TEAM_MEMBERS.min).max(PV.TEAM_MEMBERS.max),
 	relevantExperience: z
