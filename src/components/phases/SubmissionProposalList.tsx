@@ -114,7 +114,7 @@ export function SubmissionProposalList({ fundingRoundId }: Props) {
 								</CardHeader>
 								<CardContent className="space-y-4">
 									<div>
-										<h3 className="mb-2 text-xl font-semibold">Abstract</h3>
+										<h3 className="mb-2 text-xl font-semibold">Summary</h3>
 										{expanded[proposal.id] ? (
 											<>
 												<p className="mb-4 text-muted-foreground">
@@ -123,10 +123,10 @@ export function SubmissionProposalList({ fundingRoundId }: Props) {
 												<div className="space-y-4">
 													<div>
 														<h3 className="mb-2 text-xl font-semibold">
-															Motivation
+															Key Objectives
 														</h3>
 														<p className="text-muted-foreground">
-															{proposal.problemImportance}
+															{proposal.keyObjectives}
 														</p>
 													</div>
 													<div>
@@ -139,7 +139,23 @@ export function SubmissionProposalList({ fundingRoundId }: Props) {
 													</div>
 													<div>
 														<h3 className="mb-2 text-xl font-semibold">
-															Delivery Requirements
+															Problem Importance
+														</h3>
+														<p className="text-muted-foreground">
+															{proposal.problemImportance}
+														</p>
+													</div>
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Proposed Solution
+														</h3>
+														<p className="text-muted-foreground">
+															{proposal.proposedSolution}
+														</p>
+													</div>
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Implementation Details
 														</h3>
 														<p className="text-muted-foreground">
 															{proposal.implementationDetails}
@@ -147,19 +163,84 @@ export function SubmissionProposalList({ fundingRoundId }: Props) {
 													</div>
 													<div>
 														<h3 className="mb-2 text-xl font-semibold">
-															Security & Performance
+															Total Funding Required
 														</h3>
 														<p className="text-muted-foreground">
-															{proposal.problemStatement}
+															{proposal.totalFundingRequired.toString()} MINA
 														</p>
 													</div>
 													<div>
 														<h3 className="mb-2 text-xl font-semibold">
-															Budget Request
+															Community Benefits
 														</h3>
 														<p className="text-muted-foreground">
-															{proposal.totalFundingRequired.toLocaleString()}{' '}
-															MINA
+															{proposal.communityBenefits}
+														</p>
+													</div>
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Key Performance Indicators
+														</h3>
+														<p className="text-muted-foreground">
+															{proposal.keyPerformanceIndicators}
+														</p>
+													</div>
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Budget Breakdown
+														</h3>
+														<p className="text-muted-foreground">
+															{proposal.budgetBreakdown}
+														</p>
+													</div>
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Milestones
+														</h3>
+														<p className="text-muted-foreground">
+															{proposal.milestones}
+														</p>
+													</div>
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Estimated Completion Date
+														</h3>
+														<p className="text-muted-foreground">
+															{new Date(
+																proposal.estimatedCompletionDate,
+															).toLocaleDateString()}
+														</p>
+													</div>
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Team Members
+														</h3>
+														<p className="text-muted-foreground">
+															{proposal.teamMembers}
+														</p>
+													</div>
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Relevant Experience
+														</h3>
+														<p className="text-muted-foreground">
+															{proposal.relevantExperience}
+														</p>
+													</div>
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Potential Risks
+														</h3>
+														<p className="text-muted-foreground">
+															{proposal.potentialRisks}
+														</p>
+													</div>
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Mitigation Plans
+														</h3>
+														<p className="text-muted-foreground">
+															{proposal.mitigationPlans}
 														</p>
 													</div>
 													<div>
@@ -167,39 +248,46 @@ export function SubmissionProposalList({ fundingRoundId }: Props) {
 															Contact Information
 														</h3>
 														<div className="space-y-2">
-															{/* Show Discord info if author is a Discord user */}
-															{proposal.submitterMetadata?.authSource?.type ===
-															'discord' ? (
-																<p className="text-muted-foreground">
-																	Discord:{' '}
-																	{
-																		proposal.submitterMetadata.authSource
-																			.username
-																	}
-																</p>
-															) : /* Check for linked Discord account */
-															proposal.submitterMetadata?.linkedAccounts?.some(
-																	account =>
-																		account.authSource.type === 'discord',
-															  ) ? (
-																<p className="text-muted-foreground">
-																	Discord:{' '}
-																	{
-																		proposal.submitterMetadata.linkedAccounts.find(
-																			account =>
-																				account.authSource.type === 'discord',
-																		)?.authSource.username
-																	}{' '}
-																	(linked account)
-																</p>
-															) : (
-																<p className="text-sm italic text-muted-foreground">
-																	No Discord account linked
-																</p>
-															)}
+															<p className="text-muted-foreground">
+																Discord: {proposal.discordHandle}
+															</p>
 															<p className="text-muted-foreground">
 																Email: {proposal.email}
 															</p>
+															{proposal.website && (
+																<p className="text-muted-foreground">
+																	Website:{' '}
+																	<a
+																		href={proposal.website}
+																		target="_blank"
+																		rel="noopener noreferrer"
+																		className="text-primary hover:underline"
+																	>
+																		{proposal.website}
+																	</a>
+																</p>
+															)}
+															{proposal.githubProfile && (
+																<p className="text-muted-foreground">
+																	GitHub:{' '}
+																	<a
+																		href={proposal.githubProfile}
+																		target="_blank"
+																		rel="noopener noreferrer"
+																		className="text-primary hover:underline"
+																	>
+																		{proposal.githubProfile}
+																	</a>
+																</p>
+															)}
+															{proposal.otherLinks && (
+																<p className="text-muted-foreground">
+																	Other Links:{' '}
+																	<span className="text-primary">
+																		{proposal.otherLinks}
+																	</span>
+																</p>
+															)}
 														</div>
 													</div>
 												</div>

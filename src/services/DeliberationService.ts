@@ -207,12 +207,27 @@ export class DeliberationService {
 				return {
 					id: proposal.id,
 					title: proposal.title,
-					abstract: proposal.proposalSummary,
-					motivation: proposal.problemImportance,
-					rationale: proposal.proposedSolution,
-					deliveryRequirements: proposal.implementationDetails,
-					securityAndPerformance: proposal.keyPerformanceIndicators,
+					proposalSummary: proposal.proposalSummary,
+					keyObjectives: proposal.keyObjectives,
+					problemStatement: proposal.problemStatement,
+					problemImportance: proposal.problemImportance,
+					proposedSolution: proposal.proposedSolution,
+					implementationDetails: proposal.implementationDetails,
 					totalFundingRequired: proposal.totalFundingRequired,
+					communityBenefits: proposal.communityBenefits,
+					keyPerformanceIndicators: proposal.keyPerformanceIndicators,
+					budgetBreakdown: proposal.budgetBreakdown,
+					milestones: proposal.milestones,
+					estimatedCompletionDate: proposal.estimatedCompletionDate,
+					teamMembers: proposal.teamMembers,
+					relevantExperience: proposal.relevantExperience,
+					potentialRisks: proposal.potentialRisks,
+					mitigationPlans: proposal.mitigationPlans,
+					discordHandle: proposal.discordHandle,
+					email: proposal.email,
+					website: proposal.website,
+					githubProfile: proposal.githubProfile,
+					createdAt: proposal.createdAt,
 					submitter:
 						(proposal.user?.metadata as UserMetadata)?.username || 'Unknown',
 					isReviewerEligible: fundingRound.topic.reviewerGroups.some(
@@ -231,8 +246,6 @@ export class DeliberationService {
 							}
 						: undefined,
 					hasVoted: Boolean(userDeliberation),
-					createdAt: proposal.createdAt,
-					email: proposal.email || '',
 					submitterMetadata: {
 						authSource: {
 							type:

@@ -30,12 +30,27 @@ export interface ConsiderationProposal {
 	// Core Proposal Fields
 	id: number
 	title: string
-	abstract: string
-	motivation: string
-	rationale: string
-	deliveryRequirements: string
-	securityAndPerformance: string
+	proposalSummary: string
+	keyObjectives: string
+	problemStatement: string
+	problemImportance: string
+	proposedSolution: string
+	implementationDetails: string
 	totalFundingRequired: Decimal
+	communityBenefits: string
+	keyPerformanceIndicators: string
+	budgetBreakdown: string
+	milestones: string
+	estimatedCompletionDate: Date
+	teamMembers: string
+	relevantExperience: string
+	potentialRisks: string
+	mitigationPlans: string
+	discordHandle: string
+	email: string
+	website?: string | null
+	githubProfile?: string | null
+	otherLinks?: string | null
 	createdAt: Date
 
 	submitter: string
@@ -45,7 +60,6 @@ export interface ConsiderationProposal {
 	isReviewerEligible?: boolean
 	voteStats: ConsiderationVoteStats
 	currentPhase: ProposalStatus
-	email: string
 	submitterMetadata: {
 		authSource: {
 			type: string
