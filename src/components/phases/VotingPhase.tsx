@@ -216,7 +216,7 @@ export function VotingPhase({ fundingRoundId }: { fundingRoundId: string }) {
 	}
 
 	return (
-		<div className="space-y-4 px-2 md:px-6">
+		<div className="space-y-4 md:px-6">
 			<div>
 				<h2 className="text-2xl font-bold">Voting Phase</h2>
 				<p>
@@ -341,32 +341,27 @@ export function VotingPhase({ fundingRoundId }: { fundingRoundId: string }) {
 function VotingPhaseSteps({ currentStep }: { currentStep: VotingStep }) {
 	const steps = [
 		{
+			step: 'select',
 			title: '1. Select Proposals',
-			description: 'Select up to 10 proposals you want to vote for.',
 		},
 		{
+			step: 'ranking',
 			title: '2. Rank Proposals',
-			description:
-				'Drag and drop proposals to arrange them in order of preference.',
 		},
 		{
+			step: 'confirm',
 			title: '3. Confirm your vote',
-			description: 'Review your ranked choices and submit your vote.',
 		},
 	]
 
 	return (
-		<div className="mb-8 flex justify-between">
+		<div className="mb-8 flex">
 			{steps.map((step, index) => {
 				const isDone =
-					(currentStep === 'ranking' && index == 0) ||
-					(currentStep === 'confirm' && index <= 2) ||
-					(currentStep === 'finished' && index <= 3)
+					currentStep === 'finished' ||
+					steps.findIndex(s => s.step === currentStep) > index
 
-				const isActive =
-					(currentStep === 'select' && index == 0) ||
-					(currentStep === 'ranking' && index == 1) ||
-					(currentStep === 'confirm' && index == 2)
+				const isActive = currentStep === step.step
 
 				const isLastStep = index === steps.length - 1
 
@@ -375,22 +370,17 @@ function VotingPhaseSteps({ currentStep }: { currentStep: VotingStep }) {
 						<div className="flex-1">
 							<h3
 								className={cn(
-									'mb-1 text-lg font-bold',
+									'mb-1 text-base font-bold sm:text-lg',
 									isActive || isDone ? 'text-secondary-dark' : 'text-gray-400',
 									isActive && 'animate-pulse',
 								)}
 							>
 								{step.title}
 							</h3>
-							<p
-								className={`text-sm ${
-									isActive || isDone ? 'text-gray-600' : 'text-gray-400'
-								}`}
-							>
-								{step.description}
-							</p>
 						</div>
-						{!isLastStep && <StepArrowIcon className="text-muted" />}
+						{!isLastStep && (
+							<StepArrowIcon className="h-5 w-2.5 text-gray-300" />
+						)}
 					</div>
 				)
 			})}
@@ -451,7 +441,7 @@ function ProposalCard({
 				<div className="flex-1">
 					<h3 className="font-medium text-[#2D2D2D]">{title}</h3>
 				</div>
-				<div className="text-secondary-dark ml-4 text-sm font-medium">
+				<div className="ml-4 text-sm font-medium text-secondary-dark">
 					{totalFundingRequired} MINA
 				</div>
 			</div>
@@ -488,9 +478,11 @@ function VotingSelectStep({
 	return (
 		<div className="space-y-6">
 			<div>
-				<div className="mb-2 flex justify-between text-sm text-gray-600">
-					<span>Selected Proposals</span>
-					<span>{selectedProposalsIds.length} / 10</span>
+				<div className="mb-2 flex justify-between gap-x-4 text-gray-600">
+					<p>Select up to 10 proposals you want to vote for.</p>
+					<span className="flex w-20 justify-end text-sm">
+						{selectedProposalsIds.length} / 10
+					</span>
 				</div>
 				<div className="h-2 rounded-full bg-gray-100">
 					<div
@@ -574,6 +566,9 @@ function VotingRankingStep({
 	return (
 		<DndProvider backend={isTouchDevice() ? TouchBackend : HTML5Backend}>
 			<div className="space-y-6">
+				<p className="text-gray-600">
+					Drag and drop proposals to arrange them in order of preference.
+				</p>
 				<div className="space-y-2">
 					{rankedProposals.map((proposal, index) => (
 						<ProposalDraggableItem
@@ -604,7 +599,6 @@ function VotingRankingStep({
 	)
 }
 
-// Draggable Proposal Item
 const ProposalDraggableItem = ({
 	proposal,
 	index,
@@ -695,8 +689,8 @@ function VotingConfirmStep({
 	)
 
 	return (
-		<div className="space-y-6 py-4">
-			<div className="space-y-4 rounded p-4">
+		<div className="space-y-6">
+			<div className="space-y-4">
 				<div>
 					<h2 className="items-center text-lg font-semibold">
 						<AlertTriangleIcon className="mr-2 inline-block h-5 w-5 text-primary" />
@@ -734,69 +728,6 @@ function VotingConfirmStep({
 			</div>
 		</div>
 	)
-}
-
-function VotingStepRender({
-	currentStep,
-	proposals,
-	selectedProposalsIds,
-	setSelectedProposalsIds,
-	rankedProposalsIds,
-	setRankedProposalsIds,
-	handleNext,
-	handleBack,
-	handleSubmit,
-}: {
-	currentStep: VotingStep
-	proposals: RankedProposalAPIResponse[]
-	selectedProposalsIds: ProposalId[]
-	setSelectedProposalsIds: (proposalsIds: ProposalId[]) => void
-	rankedProposalsIds: ProposalId[]
-	setRankedProposalsIds: (proposalsIds: ProposalId[]) => void
-	handleNext: () => void
-	handleBack: () => void
-	handleSubmit: () => void
-}) {
-	switch (currentStep) {
-		case 'select':
-			return (
-				<VotingSelectStep
-					proposals={proposals}
-					selectedProposalsIds={selectedProposalsIds}
-					onChange={setSelectedProposalsIds}
-					onNext={handleNext}
-				/>
-			)
-		case 'ranking':
-			return (
-				<VotingRankingStep
-					proposals={proposals}
-					rankedProposalsIds={rankedProposalsIds}
-					onChange={setRankedProposalsIds}
-					onNext={handleNext}
-					onBack={handleBack}
-				/>
-			)
-		case 'confirm':
-			return (
-				<VotingConfirmStep
-					proposals={proposals}
-					rankedProposalsIds={rankedProposalsIds}
-					onBack={handleBack}
-					onSubmit={handleSubmit}
-				/>
-			)
-
-		case 'finished':
-			return (
-				<VotingResultStep
-					proposals={proposals}
-					rankedProposalsIds={rankedProposalsIds}
-				/>
-			)
-		default:
-			return null
-	}
 }
 
 function VotingConfirmationDialog({
@@ -959,7 +890,7 @@ function VotingResultStep({
 
 	return (
 		<div className="space-y-6 py-4">
-			<div className="space-y-4 rounded p-4">
+			<div className="space-y-4 rounded">
 				<div>
 					<h2 className="items-center text-lg font-semibold">
 						<CircleCheckBigIcon className="mr-2 inline-block h-5 w-5 text-green-600" />
@@ -981,4 +912,67 @@ function VotingResultStep({
 			</div>
 		</div>
 	)
+}
+
+function VotingStepRender({
+	currentStep,
+	proposals,
+	selectedProposalsIds,
+	setSelectedProposalsIds,
+	rankedProposalsIds,
+	setRankedProposalsIds,
+	handleNext,
+	handleBack,
+	handleSubmit,
+}: {
+	currentStep: VotingStep
+	proposals: RankedProposalAPIResponse[]
+	selectedProposalsIds: ProposalId[]
+	setSelectedProposalsIds: (proposalsIds: ProposalId[]) => void
+	rankedProposalsIds: ProposalId[]
+	setRankedProposalsIds: (proposalsIds: ProposalId[]) => void
+	handleNext: () => void
+	handleBack: () => void
+	handleSubmit: () => void
+}) {
+	switch (currentStep) {
+		case 'select':
+			return (
+				<VotingSelectStep
+					proposals={proposals}
+					selectedProposalsIds={selectedProposalsIds}
+					onChange={setSelectedProposalsIds}
+					onNext={handleNext}
+				/>
+			)
+		case 'ranking':
+			return (
+				<VotingRankingStep
+					proposals={proposals}
+					rankedProposalsIds={rankedProposalsIds}
+					onChange={setRankedProposalsIds}
+					onNext={handleNext}
+					onBack={handleBack}
+				/>
+			)
+		case 'confirm':
+			return (
+				<VotingConfirmStep
+					proposals={proposals}
+					rankedProposalsIds={rankedProposalsIds}
+					onBack={handleBack}
+					onSubmit={handleSubmit}
+				/>
+			)
+
+		case 'finished':
+			return (
+				<VotingResultStep
+					proposals={proposals}
+					rankedProposalsIds={rankedProposalsIds}
+				/>
+			)
+		default:
+			return null
+	}
 }
