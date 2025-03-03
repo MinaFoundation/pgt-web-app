@@ -963,7 +963,7 @@ function VotingResultStep({
 							Cancel
 						</Button>
 						<Button
-							onClick={onChangeVote}
+							onClick={handleOnChangeVote}
 							className="ml-2 text-white"
 							variant="destructive"
 						>
