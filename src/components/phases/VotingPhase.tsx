@@ -29,7 +29,7 @@ import { cn, isTouchDevice } from '@/lib/utils'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { useFundingRound } from '@/hooks/use-funding-round'
 import { useEligibleProposals } from '@/hooks/use-eligible-proposals'
-import { RankedProposalAPIResponse } from '@/services'
+import { OCVRankedVoteResponse, RankedProposalAPIResponse } from '@/services'
 import { useOCVVotes } from '@/hooks/use-ocv-votes'
 import { DndProvider, useDrag, useDrop } from 'react-dnd'
 import { TouchBackend } from 'react-dnd-touch-backend'
@@ -47,6 +47,7 @@ import {
 	ManualVoteDialog,
 	ManualVoteDialogVoteType,
 } from '../web3/dialogs/OCVManualInstructions'
+import { FundingRoundWithPhases } from '@/types/funding-round'
 
 type ProposalId = RankedProposalAPIResponse['id']
 
@@ -57,9 +58,12 @@ export function VotingPhase({ fundingRoundId }: { fundingRoundId: string }) {
 	const { toast } = useToast()
 
 	// Fetch data
-	const { data: fundingRound, isLoading } = useFundingRound(fundingRoundId)
-	const { data: proposals } = useEligibleProposals(fundingRoundId)
-	const { data: votesData } = useOCVVotes(fundingRoundId)
+	const { data: fundingRound, isLoading: isFundingRoundLoading } =
+		useFundingRound(fundingRoundId)
+	const { data: proposals, isLoading: isProposalsLoading } =
+		useEligibleProposals(fundingRoundId)
+	const { data: votesData, isLoading: isVotesDataLoading } =
+		useOCVVotes(fundingRoundId)
 
 	// Steps state
 	const [currentStep, setCurrentStep] = useState<VotingStep>('select')
@@ -71,7 +75,6 @@ export function VotingPhase({ fundingRoundId }: { fundingRoundId: string }) {
 	// Action states
 	const [showWalletDialog, setShowWalletDialog] = useState(false)
 	const [showVoteDialog, setShowVoteDialog] = useState(false)
-	const [showFundingDistribution, setShowFundingDistribution] = useState(false)
 
 	// Handle user-specific vote data when wallet is connected
 	useEffect(() => {
@@ -137,23 +140,22 @@ export function VotingPhase({ fundingRoundId }: { fundingRoundId: string }) {
 		setRankedProposalsIds([])
 	}
 
-	// Check if voting phase is active
-	const isVotingActive = () => {
-		if (!proposals?.fundingRound.votingPhase) return false
+	const isVotingActive = useMemo(() => {
+		if (!fundingRound) return false
 		const now = new Date()
-		const startDate = new Date(proposals.fundingRound.votingPhase.startDate)
-		const endDate = new Date(proposals.fundingRound.votingPhase.endDate)
+		const startDate = new Date(fundingRound.phases.voting.startDate)
+		const endDate = new Date(fundingRound.phases.voting.endDate)
 		return now >= startDate && now <= endDate
-	}
+	}, [fundingRound])
 
-	const hasVotingEnded = () => {
-		if (!proposals?.fundingRound.votingPhase) return false
+	const hasVotingEnded = useMemo(() => {
+		if (!fundingRound) return false
 		const now = new Date()
-		const endDate = new Date(proposals.fundingRound.votingPhase.endDate)
+		const endDate = new Date(fundingRound.phases.voting.endDate)
 		return now > endDate
-	}
+	}, [fundingRound])
 
-	if (isLoading) {
+	if (isFundingRoundLoading || isProposalsLoading || isVotesDataLoading) {
 		return (
 			<div className="container mx-auto max-w-7xl px-2 md:px-6">
 				<Card>
@@ -168,7 +170,7 @@ export function VotingPhase({ fundingRoundId }: { fundingRoundId: string }) {
 		)
 	}
 
-	if (!fundingRound || !proposals) {
+	if (!fundingRound || !proposals || !votesData) {
 		return (
 			<div className="container mx-auto max-w-7xl px-2 md:px-6">
 				<Card>
@@ -183,29 +185,8 @@ export function VotingPhase({ fundingRoundId }: { fundingRoundId: string }) {
 		)
 	}
 
-	const renderFundingDistribution = () => {
-		if (!proposals || !votesData || !fundingRound) return null
-
-		return (
-			<VotingResultsDistribution
-				totalBudget={Number(fundingRound!.totalBudget)}
-				isVotingActive={isVotingActive()}
-				proposals={proposals.proposals.map(p => ({
-					id: p.id,
-					title: p.title,
-					totalFundingRequired: Number(p.totalFundingRequired),
-					author: {
-						username: p.author.username,
-						authType: p.author.authType,
-					},
-				}))}
-				winnerIds={votesData.winners}
-			/>
-		)
-	}
-
 	// If voting has ended, only show the funding distribution
-	if (hasVotingEnded()) {
+	if (hasVotingEnded) {
 		return (
 			<div className="container mx-auto max-w-7xl space-y-6 px-4 py-8">
 				<Card>
@@ -217,7 +198,20 @@ export function VotingPhase({ fundingRoundId }: { fundingRoundId: string }) {
 						</CardDescription>
 					</CardHeader>
 				</Card>
-				{renderFundingDistribution()}
+				<VotingResultsDistribution
+					totalBudget={Number(fundingRound!.totalBudget)}
+					isVotingActive={isVotingActive}
+					proposals={proposals.proposals.map(p => ({
+						id: p.id,
+						title: p.title,
+						totalFundingRequired: Number(p.totalFundingRequired),
+						author: {
+							username: p.author.username,
+							authType: p.author.authType,
+						},
+					}))}
+					winnerIds={votesData!.winners}
+				/>
 			</div>
 		)
 	}
@@ -249,86 +243,11 @@ export function VotingPhase({ fundingRoundId }: { fundingRoundId: string }) {
 				handleChangeVote={handleChangeVote}
 			/>
 
-			<div className="container mx-auto max-w-7xl py-8">
-				<div className="rounded-lg border bg-card text-card-foreground shadow-sm transition-shadow hover:shadow-md">
-					<div
-						className="group flex cursor-pointer flex-col space-y-1.5 p-4"
-						onClick={() => setShowFundingDistribution(!showFundingDistribution)}
-					>
-						<div className="flex items-center justify-between">
-							<div className="flex items-center gap-2">
-								<div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-									<ChartBarIcon className="h-4 w-4 text-primary" />
-								</div>
-								<div>
-									<h3 className="text-lg font-semibold leading-none tracking-tight">
-										Live Funding Distribution
-									</h3>
-									<p className="mt-1 text-sm text-muted-foreground">
-										Based on current OCV votes • Updates in real-time
-									</p>
-								</div>
-							</div>
-							<Button
-								variant="ghost"
-								size="icon"
-								className="transition-colors group-hover:bg-primary/10"
-							>
-								{showFundingDistribution ? (
-									<ChevronUpIcon className="h-5 w-5" />
-								) : (
-									<ChevronDownIcon className="h-5 w-5" />
-								)}
-							</Button>
-						</div>
-						{!showFundingDistribution && (
-							<div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
-								<InfoCircledIcon className="h-4 w-4" />
-								<span>
-									Click to see how the funding would be distributed based on
-									current votes
-								</span>
-							</div>
-						)}
-					</div>
-
-					<div
-						className={cn(
-							'overflow-hidden transition-all duration-300 ease-in-out',
-							showFundingDistribution
-								? 'max-h-[2000px] opacity-100'
-								: 'max-h-0 opacity-0',
-						)}
-					>
-						<div className="px-4 pb-4">
-							<Alert className="mb-4 border-blue-200 bg-blue-50">
-								<InfoCircledIcon className="h-4 w-4 text-blue-700" />
-								<AlertTitle className="text-blue-900">
-									Ongoing Voting Phase
-								</AlertTitle>
-								<AlertDescription className="text-blue-800">
-									This distribution is based on current OCV votes and may change
-									as more votes are counted. The final distribution will be
-									determined when the voting phase ends on{' '}
-									{proposals?.fundingRound.votingPhase?.endDate
-										? new Date(
-												proposals.fundingRound.votingPhase.endDate,
-											).toLocaleDateString('en-US', {
-												month: 'long',
-												day: 'numeric',
-												year: 'numeric',
-												hour: '2-digit',
-												minute: '2-digit',
-											})
-										: 'the scheduled end date'}
-									.
-								</AlertDescription>
-							</Alert>
-							{renderFundingDistribution()}
-						</div>
-					</div>
-				</div>
-			</div>
+			<LiveFundingDistribution
+				fundingRound={fundingRound}
+				proposals={proposals.proposals}
+				votesData={votesData}
+			/>
 
 			<WalletConnectorDialog
 				open={showWalletDialog}
@@ -342,6 +261,122 @@ export function VotingPhase({ fundingRoundId }: { fundingRoundId: string }) {
 				mefId={fundingRound.mefId}
 				rankedProposalsIds={rankedProposalsIds}
 			/>
+		</div>
+	)
+}
+
+function LiveFundingDistribution({
+	fundingRound,
+	proposals,
+	votesData,
+}: {
+	fundingRound: FundingRoundWithPhases
+	proposals: RankedProposalAPIResponse[]
+	votesData: OCVRankedVoteResponse
+}) {
+	const [showFundingDistribution, setShowFundingDistribution] = useState(false)
+
+	const isVotingActive = useMemo(() => {
+		if (!fundingRound) return false
+		const now = new Date()
+		const startDate = new Date(fundingRound.phases.voting.startDate)
+		const endDate = new Date(fundingRound.phases.voting.endDate)
+		return now >= startDate && now <= endDate
+	}, [fundingRound])
+
+	return (
+		<div className="container mx-auto max-w-7xl py-8">
+			<div className="rounded-lg border bg-card text-card-foreground shadow-sm transition-shadow hover:shadow-md">
+				<div
+					className="group flex cursor-pointer flex-col space-y-1.5 p-4"
+					onClick={() => setShowFundingDistribution(!showFundingDistribution)}
+				>
+					<div className="flex items-center justify-between">
+						<div className="flex items-center gap-2">
+							<div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+								<ChartBarIcon className="h-4 w-4 text-primary" />
+							</div>
+							<div>
+								<h3 className="text-lg font-semibold leading-none tracking-tight">
+									Live Funding Distribution
+								</h3>
+								<p className="mt-1 text-sm text-muted-foreground">
+									Based on current OCV votes • Updates in real-time
+								</p>
+							</div>
+						</div>
+						<Button
+							variant="ghost"
+							size="icon"
+							className="transition-colors group-hover:bg-primary/10"
+						>
+							{showFundingDistribution ? (
+								<ChevronUpIcon className="h-5 w-5" />
+							) : (
+								<ChevronDownIcon className="h-5 w-5" />
+							)}
+						</Button>
+					</div>
+					{!showFundingDistribution && (
+						<div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+							<InfoCircledIcon className="h-4 w-4" />
+							<span>
+								Click to see how the funding would be distributed based on
+								current votes
+							</span>
+						</div>
+					)}
+				</div>
+
+				<div
+					className={cn(
+						'overflow-hidden transition-all duration-300 ease-in-out',
+						showFundingDistribution
+							? 'max-h-[2000px] opacity-100'
+							: 'max-h-0 opacity-0',
+					)}
+				>
+					<div className="px-4 pb-4">
+						<Alert className="mb-4 border-blue-200 bg-blue-50">
+							<InfoCircledIcon className="h-4 w-4 text-blue-700" />
+							<AlertTitle className="text-blue-900">
+								Ongoing Voting Phase
+							</AlertTitle>
+							<AlertDescription className="text-blue-800">
+								This distribution is based on current OCV votes and may change
+								as more votes are counted. The final distribution will be
+								determined when the voting phase ends on{' '}
+								{fundingRound.phases.voting.endDate
+									? new Date(
+											fundingRound.phases.voting.endDate,
+										).toLocaleDateString('en-US', {
+											month: 'long',
+											day: 'numeric',
+											year: 'numeric',
+											hour: '2-digit',
+											minute: '2-digit',
+										})
+									: 'the scheduled end date'}
+								.
+							</AlertDescription>
+						</Alert>
+						<VotingResultsDistribution
+							totalBudget={Number(fundingRound!.totalBudget)}
+							isVotingActive={isVotingActive}
+							proposals={proposals.map(p => ({
+								id: p.id,
+								title: p.title,
+								totalFundingRequired: Number(p.totalFundingRequired),
+								author: {
+									username: p.author.username,
+									authType: p.author.authType,
+								},
+							}))}
+							winnerIds={votesData.winners}
+						/>
+					</div>
+				</div>
+			</div>
 		</div>
 	)
 }
