@@ -914,8 +914,8 @@ function VotingConfirmationDialog({
 												? 'Re-Vote With Wallet'
 												: 'Vote with Wallet'
 											: existingVote
-												? 'Re-Vote With Memo without A Wallet'
-												: 'Connect Wallet to Submit Vote'}
+												? 'Re-Vote via memo'
+												: 'Connect Wallet to Vote'}
 									</Button>
 								</div>
 							</TooltipTrigger>
@@ -933,9 +933,7 @@ function VotingConfirmationDialog({
 						onClick={handleSaveToMemo}
 					>
 						<SaveIcon className="mr-2 h-4 w-4" />
-						{existingVote
-							? 'Re-Vote Via Memo Without A Wallet'
-							: 'Vote Via Memo Without A Wallet'}
+						{existingVote ? 'Re-Vote Vote via memo' : 'Vote Vote via memo'}
 					</Button>
 				</div>
 			</DialogContent>
