@@ -80,7 +80,7 @@ export function OCVVoteButton({
 				? 'Already Voted'
 				: 'Vote with Wallet'
 			: 'Connect Wallet to Vote'
-		: 'Vote Without Wallet'
+		: 'Vote Via Memo'
 
 	const walletButton = (
 		<Button
