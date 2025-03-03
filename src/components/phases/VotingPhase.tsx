@@ -22,6 +22,7 @@ import {
 	SaveIcon,
 	AlertTriangleIcon,
 	CircleCheckBigIcon,
+	PenIcon,
 } from 'lucide-react'
 import { InfoCircledIcon } from '@radix-ui/react-icons'
 import { cn, isTouchDevice } from '@/lib/utils'
@@ -128,6 +129,12 @@ export function VotingPhase({ fundingRoundId }: { fundingRoundId: string }) {
 
 	const handleSubmit = () => {
 		setShowVoteDialog(true)
+	}
+
+	const handleChangeVote = () => {
+		setCurrentStep('select')
+		setSelectedProposalsIds([])
+		setRankedProposalsIds([])
 	}
 
 	// Check if voting phase is active
@@ -239,6 +246,7 @@ export function VotingPhase({ fundingRoundId }: { fundingRoundId: string }) {
 				setRankedProposalsIds={setRankedProposalsIds}
 				setSelectedProposalsIds={setSelectedProposalsIds}
 				handleSubmit={handleSubmit}
+				handleChangeVote={handleChangeVote}
 			/>
 
 			<div className="container mx-auto max-w-7xl py-8">
@@ -875,10 +883,15 @@ function VotingConfirmationDialog({
 function VotingResultStep({
 	proposals,
 	rankedProposalsIds,
+	onChangeVote,
 }: {
 	proposals: RankedProposalAPIResponse[]
 	rankedProposalsIds: ProposalId[]
+	onChangeVote: () => void
 }) {
+	const [showChangeVoteAlertDialog, setShowChangeVoteAlertDialog] =
+		useState(false)
+
 	const rankedProposals = useMemo(
 		() =>
 			[...proposals].sort(
@@ -887,6 +900,45 @@ function VotingResultStep({
 			),
 		[proposals, rankedProposalsIds],
 	)
+
+	const handleOnChangeVote = () => {
+		onChangeVote()
+		setShowChangeVoteAlertDialog(false)
+	}
+
+	if (showChangeVoteAlertDialog) {
+		return (
+			<Dialog
+				open={showChangeVoteAlertDialog}
+				onOpenChange={setShowChangeVoteAlertDialog}
+			>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Change Your Vote</DialogTitle>
+						<DialogDescription>
+							Are you sure you want to change your vote? You will be taken back
+							to the voting phase to select new proposals.
+						</DialogDescription>
+					</DialogHeader>
+					<div className="flex justify-end">
+						<Button
+							variant="outline"
+							onClick={() => setShowChangeVoteAlertDialog(false)}
+						>
+							Cancel
+						</Button>
+						<Button
+							onClick={onChangeVote}
+							className="ml-2 text-white"
+							variant="destructive"
+						>
+							Change Vote
+						</Button>
+					</div>
+				</DialogContent>
+			</Dialog>
+		)
+	}
 
 	return (
 		<div className="space-y-6 py-4">
@@ -910,6 +962,17 @@ function VotingResultStep({
 					</div>
 				))}
 			</div>
+			<div className="flex justify-end">
+				<Button
+					className="button-3d text-white"
+					variant="destructive"
+					onClick={() => setShowChangeVoteAlertDialog(true)}
+					size="sm"
+				>
+					<PenIcon className="mr-1 h-4 w-4" />
+					Change Vote
+				</Button>
+			</div>
 		</div>
 	)
 }
@@ -924,6 +987,7 @@ function VotingStepRender({
 	handleNext,
 	handleBack,
 	handleSubmit,
+	handleChangeVote,
 }: {
 	currentStep: VotingStep
 	proposals: RankedProposalAPIResponse[]
@@ -934,6 +998,7 @@ function VotingStepRender({
 	handleNext: () => void
 	handleBack: () => void
 	handleSubmit: () => void
+	handleChangeVote: () => void
 }) {
 	switch (currentStep) {
 		case 'select':
@@ -970,6 +1035,7 @@ function VotingStepRender({
 				<VotingResultStep
 					proposals={proposals}
 					rankedProposalsIds={rankedProposalsIds}
+					onChangeVote={handleChangeVote}
 				/>
 			)
 		default:
