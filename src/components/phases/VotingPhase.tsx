@@ -156,32 +156,26 @@ export function VotingPhase({ fundingRoundId }: { fundingRoundId: string }) {
 	}, [fundingRound])
 
 	if (isFundingRoundLoading || isProposalsLoading || isVotesDataLoading) {
-		return (
-			<div className="container mx-auto max-w-7xl px-2 md:px-6">
-				<VotingPhaseSkeleton />
-			</div>
-		)
+		return <VotingPhaseSkeleton />
 	}
 
 	if (!fundingRound || !proposals || !votesData) {
 		return (
-			<div className="container mx-auto max-w-7xl px-2 md:px-6">
-				<Card>
-					<CardHeader>
-						<CardTitle>No Data Available</CardTitle>
-						<CardDescription>
-							There was an error fetching the data. Please try again later.
-						</CardDescription>
-					</CardHeader>
-				</Card>
-			</div>
+			<Card>
+				<CardHeader>
+					<CardTitle>No Data Available</CardTitle>
+					<CardDescription>
+						There was an error fetching the data. Please try again later.
+					</CardDescription>
+				</CardHeader>
+			</Card>
 		)
 	}
 
 	// If voting has ended, only show the funding distribution
 	if (hasVotingEnded) {
 		return (
-			<div className="container mx-auto max-w-7xl space-y-6 px-4 py-8">
+			<div className="space-y-6">
 				<Card>
 					<CardHeader>
 						<CardTitle>Voting Phase Completed</CardTitle>
@@ -278,96 +272,94 @@ function LiveFundingDistribution({
 	}, [fundingRound])
 
 	return (
-		<div className="container mx-auto max-w-7xl py-8">
-			<div className="rounded-lg border bg-card text-card-foreground shadow-sm transition-shadow hover:shadow-md">
-				<div
-					className="group flex cursor-pointer flex-col space-y-1.5 p-4"
-					onClick={() => setShowFundingDistribution(!showFundingDistribution)}
-				>
-					<div className="flex items-center justify-between">
-						<div className="flex items-center gap-2">
-							<div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-								<ChartBarIcon className="h-4 w-4 text-primary" />
-							</div>
-							<div>
-								<h3 className="text-lg font-semibold leading-none tracking-tight">
-									Live Funding Distribution
-								</h3>
-								<p className="mt-1 text-sm text-muted-foreground">
-									Based on current OCV votes • Updates in real-time
-								</p>
-							</div>
+		<div className="rounded-lg border bg-card text-card-foreground shadow-sm transition-shadow hover:shadow-md">
+			<div
+				className="group flex cursor-pointer flex-col space-y-1.5 p-4"
+				onClick={() => setShowFundingDistribution(!showFundingDistribution)}
+			>
+				<div className="flex items-center justify-between">
+					<div className="flex items-center gap-2">
+						<div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+							<ChartBarIcon className="h-4 w-4 text-primary" />
 						</div>
-						<Button
-							variant="ghost"
-							size="icon"
-							className="transition-colors group-hover:bg-primary/10"
-						>
-							{showFundingDistribution ? (
-								<ChevronUpIcon className="h-5 w-5" />
-							) : (
-								<ChevronDownIcon className="h-5 w-5" />
-							)}
-						</Button>
+						<div>
+							<h3 className="text-lg font-semibold leading-none tracking-tight">
+								Live Funding Distribution
+							</h3>
+							<p className="mt-1 text-sm text-muted-foreground">
+								Based on current OCV votes • Updates in real-time
+							</p>
+						</div>
 					</div>
-					{!showFundingDistribution && (
-						<div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
-							<InfoCircledIcon className="h-4 w-4" />
-							<span>
-								Click to see how the funding would be distributed based on
-								current votes
-							</span>
-						</div>
-					)}
+					<Button
+						variant="ghost"
+						size="icon"
+						className="transition-colors group-hover:bg-primary/10"
+					>
+						{showFundingDistribution ? (
+							<ChevronUpIcon className="h-5 w-5" />
+						) : (
+							<ChevronDownIcon className="h-5 w-5" />
+						)}
+					</Button>
 				</div>
-
-				<div
-					className={cn(
-						'overflow-hidden transition-all duration-300 ease-in-out',
-						showFundingDistribution
-							? 'max-h-[2000px] opacity-100'
-							: 'max-h-0 opacity-0',
-					)}
-				>
-					<div className="px-4 pb-4">
-						<Alert className="mb-4 border-blue-200 bg-blue-50">
-							<InfoCircledIcon className="h-4 w-4 text-blue-700" />
-							<AlertTitle className="text-blue-900">
-								Ongoing Voting Phase
-							</AlertTitle>
-							<AlertDescription className="text-blue-800">
-								This distribution is based on current OCV votes and may change
-								as more votes are counted. The final distribution will be
-								determined when the voting phase ends on{' '}
-								{fundingRound.phases.voting.endDate
-									? new Date(
-											fundingRound.phases.voting.endDate,
-										).toLocaleDateString('en-US', {
-											month: 'long',
-											day: 'numeric',
-											year: 'numeric',
-											hour: '2-digit',
-											minute: '2-digit',
-										})
-									: 'the scheduled end date'}
-								.
-							</AlertDescription>
-						</Alert>
-						<VotingResultsDistribution
-							totalBudget={Number(fundingRound!.totalBudget)}
-							isVotingActive={isVotingActive}
-							proposals={proposals.map(p => ({
-								id: p.id,
-								title: p.title,
-								totalFundingRequired: Number(p.totalFundingRequired),
-								author: {
-									username: p.author.username,
-									authType: p.author.authType,
-								},
-							}))}
-							winnerIds={votesData.winners}
-						/>
+				{!showFundingDistribution && (
+					<div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+						<InfoCircledIcon className="h-4 w-4" />
+						<span>
+							Click to see how the funding would be distributed based on current
+							votes
+						</span>
 					</div>
+				)}
+			</div>
+
+			<div
+				className={cn(
+					'overflow-hidden transition-all duration-300 ease-in-out',
+					showFundingDistribution
+						? 'max-h-[2000px] opacity-100'
+						: 'max-h-0 opacity-0',
+				)}
+			>
+				<div className="px-4 pb-4">
+					<Alert className="mb-4 border-blue-200 bg-blue-50">
+						<InfoCircledIcon className="h-4 w-4 text-blue-700" />
+						<AlertTitle className="text-blue-900">
+							Ongoing Voting Phase
+						</AlertTitle>
+						<AlertDescription className="text-blue-800">
+							This distribution is based on current OCV votes and may change as
+							more votes are counted. The final distribution will be determined
+							when the voting phase ends on{' '}
+							{fundingRound.phases.voting.endDate
+								? new Date(
+										fundingRound.phases.voting.endDate,
+									).toLocaleDateString('en-US', {
+										month: 'long',
+										day: 'numeric',
+										year: 'numeric',
+										hour: '2-digit',
+										minute: '2-digit',
+									})
+								: 'the scheduled end date'}
+							.
+						</AlertDescription>
+					</Alert>
+					<VotingResultsDistribution
+						totalBudget={Number(fundingRound!.totalBudget)}
+						isVotingActive={isVotingActive}
+						proposals={proposals.map(p => ({
+							id: p.id,
+							title: p.title,
+							totalFundingRequired: Number(p.totalFundingRequired),
+							author: {
+								username: p.author.username,
+								authType: p.author.authType,
+							},
+						}))}
+						winnerIds={votesData.winners}
+					/>
 				</div>
 			</div>
 		</div>
@@ -391,7 +383,7 @@ function VotingPhaseSteps({ currentStep }: { currentStep: VotingStep }) {
 	]
 
 	return (
-		<div className="mb-8 flex">
+		<div className="flex">
 			{steps.map((step, index) => {
 				const isDone =
 					currentStep === 'finished' ||
