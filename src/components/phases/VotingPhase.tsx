@@ -26,7 +26,7 @@ import {
 	LinkIcon,
 } from 'lucide-react'
 import { InfoCircledIcon } from '@radix-ui/react-icons'
-import { cn, isTouchDevice } from '@/lib/utils'
+import { cn, isTouchDevice, isWalletAddress, truncateWallet } from '@/lib/utils'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { useFundingRound } from '@/hooks/use-funding-round'
 import { useEligibleProposals } from '@/hooks/use-eligible-proposals'
@@ -455,8 +455,10 @@ function StepArrowIcon({
 function ProposalCard({
 	id,
 	title,
+	author,
 	totalFundingRequired,
 	communityVotes,
+	reviewerVotes,
 	isDragging = false,
 	isSelected = false,
 	showRadio,
@@ -489,6 +491,14 @@ function ProposalCard({
 							{title} <LinkIcon className="h-3 w-3" />
 						</h3>
 					</Link>
+					<p className="w-64 max-w-full overflow-hidden truncate text-sm">
+						<span className="font-semibold">Author:</span>{' '}
+						<span className="text-gray-500">
+							{isWalletAddress(author.username)
+								? truncateWallet(author.username)
+								: author.username}
+						</span>
+					</p>
 				</div>
 				{showRadio && (
 					<div className="rounded-full border border-gray-300 p-0.5">
@@ -503,7 +513,8 @@ function ProposalCard({
 			</div>
 			<div className="mt-2 flex justify-between">
 				<div className="text-sm text-gray-500">
-					{communityVotes.totalVotes} votes
+					<p> {communityVotes.totalVotes} community votes</p>
+					<p> {reviewerVotes.approved} reviewer votes</p>
 				</div>
 				<div className="ml-4 text-sm font-medium text-secondary-dark">
 					{totalFundingRequired} MINA
