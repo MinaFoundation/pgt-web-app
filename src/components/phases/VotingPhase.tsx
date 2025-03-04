@@ -717,13 +717,13 @@ const ProposalDraggableItem = ({
 			)}
 		>
 			{isOver ? (
-				<div className="flex h-20 w-full items-center justify-center bg-muted">
+				<div className="flex h-24 w-full items-center justify-center bg-muted">
 					<span className="text-lg font-bold text-muted-foreground">
 						Drop here
 					</span>
 				</div>
 			) : (
-				<div className="flex h-20 w-full items-center justify-center">
+				<div className="flex h-24 w-full items-center justify-center">
 					<GripVerticalIcon className="h-5 w-5 text-gray-400 opacity-50 transition-opacity group-hover:opacity-100" />
 					<span className="w-8 text-lg font-bold text-gray-800">
 						{index + 1}.
