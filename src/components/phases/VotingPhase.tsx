@@ -50,13 +50,15 @@ import {
 } from '../web3/dialogs/OCVManualInstructions'
 import { FundingRoundWithPhases } from '@/types/funding-round'
 import Link from 'next/link'
+import { useAuth } from '@/contexts/AuthContext'
 
 type ProposalId = RankedProposalAPIResponse['id']
 
 type VotingStep = 'select' | 'ranking' | 'confirm' | 'finished'
 
 export function VotingPhase({ fundingRoundId }: { fundingRoundId: string }) {
-	const { state } = useWallet()
+	const { state: walletState } = useWallet()
+	const { user } = useAuth()
 	const { toast } = useToast()
 
 	// Fetch data
@@ -78,14 +80,18 @@ export function VotingPhase({ fundingRoundId }: { fundingRoundId: string }) {
 	const [showWalletDialog, setShowWalletDialog] = useState(false)
 	const [showVoteDialog, setShowVoteDialog] = useState(false)
 
+	const walletAddress =
+		user?.metadata.authSource.type === 'wallet'
+			? user?.metadata.authSource.username
+			: walletState.wallet?.address
+
 	// Handle user-specific vote data when wallet is connected
 	useEffect(() => {
-		if (!state.wallet?.address || !votesData || !proposals) return
+		if (!walletAddress || !votesData || !proposals) return
 
 		const updateSelectedProposals = () => {
 			const userVote = votesData.votes.find(
-				vote =>
-					vote.account.toLowerCase() === state.wallet!.address.toLowerCase(),
+				vote => vote.account.toLowerCase() === walletAddress.toLowerCase(),
 			)
 
 			if (userVote) {
@@ -105,7 +111,7 @@ export function VotingPhase({ fundingRoundId }: { fundingRoundId: string }) {
 		}
 
 		updateSelectedProposals()
-	}, [state.wallet, votesData, proposals])
+	}, [walletAddress, votesData, proposals])
 
 	const handleNext = () => {
 		if (currentStep === 'select') {
