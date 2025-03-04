@@ -1,9 +1,10 @@
 import logger from '@/logging'
-import { processProposals } from '@/tasks/ocv-vote-counting'
+import { cleanupStaleJobs, processProposals } from '@/tasks/ocv-vote-counting'
 import { ApiResponse } from '@/lib/api-response'
 
 export async function POST() {
 	try {
+		await cleanupStaleJobs()
 		await processProposals()
 		return ApiResponse.success({ success: true })
 	} catch (error) {
