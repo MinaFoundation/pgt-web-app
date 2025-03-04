@@ -2,8 +2,8 @@ import logger from '@/logging'
 import { useQuery } from '@tanstack/react-query'
 import type { OCVRankedVoteResponse } from '@/services'
 
-export function useOCVVotes(fundingRoundId: string) {
-	const url = `/api/voting/ocv-votes?roundId=${fundingRoundId}`
+export function useRankedOCVVotes(fundingRoundId: string) {
+	const url = `/api/voting/ranked-ocv-votes?roundId=${fundingRoundId}`
 
 	return useQuery<OCVRankedVoteResponse>({
 		queryKey: [url],

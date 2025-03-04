@@ -31,7 +31,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { useFundingRound } from '@/hooks/use-funding-round'
 import { useEligibleProposals } from '@/hooks/use-eligible-proposals'
 import { OCVRankedVoteResponse, RankedProposalAPIResponse } from '@/services'
-import { useOCVVotes } from '@/hooks/use-ocv-votes'
+import { useRankedOCVVotes } from '@/hooks/use-ranked-ocv-votes'
 import { DndProvider, useDrag, useDrop } from 'react-dnd'
 import { TouchBackend } from 'react-dnd-touch-backend'
 import { HTML5Backend } from 'react-dnd-html5-backend'
@@ -65,7 +65,7 @@ export function VotingPhase({ fundingRoundId }: { fundingRoundId: string }) {
 	const { data: proposals, isLoading: isProposalsLoading } =
 		useEligibleProposals(fundingRoundId)
 	const { data: votesData, isLoading: isVotesDataLoading } =
-		useOCVVotes(fundingRoundId)
+		useRankedOCVVotes(fundingRoundId)
 
 	// Steps state
 	const [currentStep, setCurrentStep] = useState<VotingStep>('select')
@@ -804,7 +804,7 @@ function VotingConfirmationDialog({
 	const [showWalletDialog, setShowWalletDialog] = useState(false)
 	const [showManualDialog, setShowManualDialog] = useState(false)
 
-	const { data: votesData } = useOCVVotes(fundingRoundId)
+	const { data: votesData } = useRankedOCVVotes(fundingRoundId)
 
 	useEffect(() => {
 		if (!open) {
