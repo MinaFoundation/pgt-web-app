@@ -3,7 +3,7 @@ import { useMutation, UseMutationOptions } from '@tanstack/react-query'
 
 // Allows admin to manually process proposals
 export function useProcessProposals(
-	options: Omit<UseMutationOptions<void>, 'mutationFn'>,
+	options?: Omit<UseMutationOptions<void>, 'mutationFn'>,
 ) {
 	const url = `/api/admin/process-proposals`
 

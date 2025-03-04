@@ -48,7 +48,9 @@ export default function RootLayout({
 									<AuthProvider>
 										<WalletProvider>
 											<Header />
-											<main className="flex flex-1 flex-col">{children}</main>
+											<main className="flex min-h-[calc(100vh-56px)] flex-1 flex-col">
+												{children}
+											</main>
 											<Footer />
 											<Toaster />
 											<FeedbackDialog />

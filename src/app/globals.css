@@ -11,7 +11,7 @@ body {
 		--background: 0 0% 100%;
 		--foreground: 240 10% 3.9%;
 
-		--card: 0, 0%, 98%;
+		--card: 0 0% 98%;
 		--card-foreground: 240 10% 3.9%;
 
 		--popover: 0 0% 100%;
@@ -31,6 +31,8 @@ body {
 
 		--secondary: 251 82% 69%;
 		--secondary-foreground: 0 0% 100%;
+
+		--secondary-dark: 238 33.9% 50.8%;
 
 		--accent: 240 4.8% 95.9%;
 		--accent-foreground: 240 5.9% 10%;
@@ -138,4 +140,9 @@ body {
 
 .button-3d:disabled:after {
 	border: 0 solid transparent;
+}
+
+.button-3d:disabled {
+	opacity: 0.7;
+	border: none;
 }

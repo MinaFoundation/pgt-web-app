@@ -44,6 +44,9 @@ type FundingRoundDashboardProps = {
 	params: Promise<{ id: string }>
 }
 
+const formatDate = (date: Date) =>
+	`${date.toLocaleString('default', { month: 'short' })} ${date.getDate()}, ${date.getFullYear()}`
+
 export default function FundingRoundDashboard({
 	params,
 }: FundingRoundDashboardProps) {
@@ -57,11 +60,11 @@ export default function FundingRoundDashboard({
 	const data = untypedData as StartedFundingRoundWithPhases
 
 	if (isLoading || !data) {
-		return <div>Loading...</div>
+		return <FundingRoundDashboardSkeleton />
 	}
 
 	return (
-		<div className="container mx-auto max-w-7xl px-2 md:px-6">
+		<div className="container mx-auto max-w-7xl px-2 lg:px-6">
 			<div className="space-y-8">
 				<div className="space-y-4">
 					<Link href="/funding-rounds">
@@ -69,19 +72,22 @@ export default function FundingRoundDashboard({
 							<ArrowLeftIcon className="h-4 w-4" /> Back to Funding Rounds
 						</Button>
 					</Link>
-					<h1 className="text-3xl font-bold uppercase">
-						{data.name} | Funding Round
-					</h1>
-					<h1>
-						{data.startDate} - {data.endDate}
-					</h1>
+					<div>
+						<h1 className="mb-1 text-3xl font-bold uppercase">
+							{data.name} | Funding Round
+						</h1>
+						<p className="text-muted-foreground">
+							From <b>{formatDate(new Date(data.startDate))}</b> to{' '}
+							<b>{formatDate(new Date(data.endDate))}</b>
+						</p>
+					</div>
 				</div>
 
 				{/* Status Overview */}
 				<FundingRoundStatusOverviewCards data={data} />
 
 				{/* Main Content */}
-				<div className="grid grid-cols-1 gap-8 md:grid-cols-[200px,1fr]">
+				<div className="grid grid-cols-1 gap-8 lg:grid-cols-[200px,1fr]">
 					{/* Phase Progress */}
 					<PhaseTimeline data={data} />
 
@@ -167,15 +173,17 @@ function FundingRoundStatusOverviewCards({
 			{cards.map(({ label, value, icon: Icon }) => (
 				<div
 					key={label}
-					className="rounded-md border border-border bg-muted p-4"
+					className="rounded-md border border-border bg-muted p-2 md:p-4"
 				>
 					<div className="flex items-center gap-2">
 						<div className="rounded-full bg-secondary/20 p-2">
-							<Icon className="h-6 w-6 text-secondary" />
+							<Icon className="h-4 w-4 text-secondary md:h-6 md:w-6" />
 						</div>
 						<div>
-							<p className="text-lg font-bold">{value}</p>
-							<p className="text-sm text-muted-foreground">{label}</p>
+							<p className="text-base font-bold md:text-lg">{value}</p>
+							<p className="text-xs text-muted-foreground md:text-sm">
+								{label}
+							</p>
 						</div>
 					</div>
 				</div>
@@ -201,7 +209,7 @@ function PhaseTimeline({ data }: { data: StartedFundingRoundWithPhases }) {
 				const isCompleted =
 					data.phase === 'COMPLETED' ||
 					(previousOrCurrentActivePhase &&
-						index < STARTED_PHASES.indexOf(previousOrCurrentActivePhase))
+						index <= STARTED_PHASES.indexOf(previousOrCurrentActivePhase))
 
 				return (
 					<div key={phase as string} className="relative">
@@ -353,10 +361,9 @@ const getPreviousAndNextForBetweenPhase = (
 		({ startDate }) => new Date(startDate) > now,
 	)
 
-	const previousPhase =
-		nextPhase && nextPhase.index > 0
-			? destructuredPhases[nextPhase.index - 1]
-			: null
+	const previousPhase = destructuredPhases.find(
+		({ endDate }) => new Date(endDate) < now,
+	)
 
 	return {
 		nextPhase: nextPhase
@@ -374,4 +381,58 @@ const getPreviousAndNextForBetweenPhase = (
 				}
 			: null,
 	}
+}
+
+function FundingRoundDashboardSkeleton() {
+	return (
+		<div className="container mx-auto max-w-7xl px-2 lg:px-6">
+			<div className="space-y-8">
+				<div className="space-y-4">
+					<div className="h-8 w-48 animate-pulse rounded-md bg-muted" />
+					<div className="h-20 w-96 max-w-full animate-pulse rounded bg-muted md:h-12" />
+					<div className="h-6 w-48 animate-pulse rounded bg-muted" />
+				</div>
+
+				{/* Status Overview */}
+				<div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+					{new Array(4).fill('').map((_, index) => (
+						<div
+							key={index}
+							className="animate h-20 animate-pulse rounded-md bg-muted p-2 md:p-4"
+						/>
+					))}
+				</div>
+
+				{/* Main Content */}
+				<div className="grid grid-cols-1 gap-8 lg:grid-cols-[200px,1fr]">
+					{/* Phase Progress */}
+					<div className="space-y-4">
+						{new Array(5).fill('').map((_, index) => (
+							<div
+								key={index}
+								className="h-12 rounded-md bg-muted font-medium"
+							/>
+						))}
+					</div>
+
+					{/* Content Area */}
+					<div className="space-y-4">
+						<div className="h-10 w-32 animate-pulse rounded bg-muted" />
+						<div className="h-6 w-48 animate-pulse rounded bg-muted" />
+						{new Array(2).fill('').map((_, index) => (
+							<div
+								key={index}
+								className="h-24 w-full animate-pulse rounded bg-muted"
+							/>
+						))}
+					</div>
+				</div>
+
+				{/* Help Link */}
+				<div className="flex justify-end">
+					<div className="h-6 w-32 animate-pulse rounded bg-muted" />
+				</div>
+			</div>
+		</div>
+	)
 }
