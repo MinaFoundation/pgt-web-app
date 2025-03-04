@@ -213,7 +213,9 @@ export function VotingPhase({ fundingRoundId }: { fundingRoundId: string }) {
 				</p>
 			</div>
 
-			<VotingPhaseSteps currentStep={currentStep} />
+			{currentStep !== 'finished' && (
+				<VotingPhaseSteps currentStep={currentStep} />
+			)}
 
 			<VotingStepRender
 				{...{
