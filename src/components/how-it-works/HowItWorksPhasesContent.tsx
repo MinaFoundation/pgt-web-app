@@ -23,7 +23,7 @@ export function HowItWorksPhasesContent() {
 					<li>Key Objectives: List the specific goals you aim to achieve.</li>
 					<li>Problem Statement: What is the problem / Why does it matters.</li>
 					<li>Proposed Solution: What will you do / How will it works.</li>
-					<li>Expected Impact: Community benefits / KPI's.</li>
+					<li>Expected Impact: Community benefits / KPI&quote;s.</li>
 					<li>Budget Request: Total funding required / Costs breakdown.</li>
 					<li>
 						Milestones and Timeline: Key Milestones / Estimated completion date.

@@ -53,8 +53,8 @@ function Phases() {
 				<p>
 					MEF is a community-led funding process that empowers community members
 					to collectively decide how resources are allocated. This inclusive and
-					transparent approach ensures that funding reflects the community's
-					priorities and values.
+					transparent approach ensures that funding reflects the
+					community&quote;s priorities and values.
 				</p>
 				<p>
 					The Mina foundation & funding rounds moderators will provide the
