@@ -23,6 +23,7 @@ import {
 	AlertTriangleIcon,
 	CircleCheckBigIcon,
 	PenIcon,
+	LinkIcon,
 } from 'lucide-react'
 import { InfoCircledIcon } from '@radix-ui/react-icons'
 import { cn, isTouchDevice } from '@/lib/utils'
@@ -48,6 +49,7 @@ import {
 	ManualVoteDialogVoteType,
 } from '../web3/dialogs/OCVManualInstructions'
 import { FundingRoundWithPhases } from '@/types/funding-round'
+import Link from 'next/link'
 
 type ProposalId = RankedProposalAPIResponse['id']
 
@@ -469,7 +471,16 @@ function ProposalCard({
 		>
 			<div className="flex items-start justify-between">
 				<div className="flex-1">
-					<h3 className="font-medium text-[#2D2D2D]">{title}</h3>
+					<Link
+						href={`/proposals/${id}`}
+						target="_blank"
+						className="text-[#2D2D2D underline hover:text-primary"
+						onClick={e => e.stopPropagation()}
+					>
+						<h3 className="font-medium] flex items-center gap-1">
+							{title} <LinkIcon className="h-3 w-3" />
+						</h3>
+					</Link>
 				</div>
 				<div className="ml-4 text-sm font-medium text-secondary-dark">
 					{totalFundingRequired} MINA
