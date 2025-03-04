@@ -453,10 +453,12 @@ function ProposalCard({
 	communityVotes,
 	isDragging = false,
 	isSelected = false,
+	showRadio,
 	className,
 }: RankedProposalAPIResponse & {
 	isDragging?: boolean
 	isSelected?: boolean
+	showRadio?: boolean
 	className?: string
 }) {
 	return (
@@ -469,25 +471,37 @@ function ProposalCard({
 			)}
 			data-proposal-id={id}
 		>
-			<div className="flex items-start justify-between">
-				<div className="flex-1">
+			<div className="flex items-start justify-between gap-4">
+				<div>
 					<Link
 						href={`/proposals/${id}`}
 						target="_blank"
-						className="text-[#2D2D2D underline hover:text-primary"
+						className="bg-red-400 text-dark underline hover:text-primary"
 						onClick={e => e.stopPropagation()}
 					>
-						<h3 className="font-medium] flex items-center gap-1">
+						<h3 className="flex items-center gap-1 font-medium">
 							{title} <LinkIcon className="h-3 w-3" />
 						</h3>
 					</Link>
 				</div>
+				{showRadio && (
+					<div className="rounded-full border border-gray-300 p-0.5">
+						<div
+							className={cn(
+								'h-3 w-3 rounded-full',
+								isSelected && 'bg-secondary',
+							)}
+						/>
+					</div>
+				)}
+			</div>
+			<div className="mt-2 flex justify-between">
+				<div className="text-sm text-gray-500">
+					{communityVotes.totalVotes} votes
+				</div>
 				<div className="ml-4 text-sm font-medium text-secondary-dark">
 					{totalFundingRequired} MINA
 				</div>
-			</div>
-			<div className="mt-2 text-sm text-gray-500">
-				{communityVotes.totalVotes} votes
 			</div>
 		</div>
 	)
@@ -544,6 +558,7 @@ function VotingSelectStep({
 						<ProposalCard
 							{...proposal}
 							isSelected={selectedProposalsIds.includes(proposal.id)}
+							showRadio={true}
 						/>
 					</div>
 				))}
