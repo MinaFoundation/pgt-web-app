@@ -158,14 +158,7 @@ export function VotingPhase({ fundingRoundId }: { fundingRoundId: string }) {
 	if (isFundingRoundLoading || isProposalsLoading || isVotesDataLoading) {
 		return (
 			<div className="container mx-auto max-w-7xl px-2 md:px-6">
-				<Card>
-					<CardHeader>
-						<CardTitle>Loading Proposals...</CardTitle>
-						<CardDescription>
-							Please wait while we fetch the available proposals.
-						</CardDescription>
-					</CardHeader>
-				</Card>
+				<VotingPhaseSkeleton />
 			</div>
 		)
 	}
@@ -1076,4 +1069,33 @@ function VotingStepRender({
 		default:
 			return null
 	}
+}
+
+function VotingPhaseSkeleton() {
+	return (
+		<div className="space-y-4 md:px-6">
+			<div>
+				<h2 className="text-2xl font-bold">Voting Phase</h2>
+				<p>
+					Ranking proposals and cast your votes to determine which proposals
+					will receive funding.
+				</p>
+			</div>
+			<div className="flex space-x-4">
+				{new Array(3).fill(null).map((_, index) => (
+					<div
+						key={index}
+						className="h-8 flex-1 animate-pulse rounded bg-muted"
+					/>
+				))}
+			</div>
+			<div className="h-6 w-full animate-pulse bg-muted" />
+			{new Array(2).fill(null).map((_, index) => (
+				<div
+					key={index}
+					className="h-32 w-full animate-pulse rounded-lg bg-muted shadow-sm"
+				/>
+			))}
+		</div>
+	)
 }
