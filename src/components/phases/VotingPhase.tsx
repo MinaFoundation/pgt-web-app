@@ -928,40 +928,6 @@ function VotingResultStep({
 		setShowChangeVoteAlertDialog(false)
 	}
 
-	if (showChangeVoteAlertDialog) {
-		return (
-			<Dialog
-				open={showChangeVoteAlertDialog}
-				onOpenChange={setShowChangeVoteAlertDialog}
-			>
-				<DialogContent>
-					<DialogHeader>
-						<DialogTitle>Change Your Vote</DialogTitle>
-						<DialogDescription>
-							Are you sure you want to change your vote? You will be taken back
-							to the voting phase to select new proposals.
-						</DialogDescription>
-					</DialogHeader>
-					<div className="flex justify-end">
-						<Button
-							variant="outline"
-							onClick={() => setShowChangeVoteAlertDialog(false)}
-						>
-							Cancel
-						</Button>
-						<Button
-							onClick={handleOnChangeVote}
-							className="ml-2 text-white"
-							variant="destructive"
-						>
-							Change Vote
-						</Button>
-					</div>
-				</DialogContent>
-			</Dialog>
-		)
-	}
-
 	return (
 		<div className="space-y-6">
 			<div className="space-y-4 rounded">
@@ -999,6 +965,35 @@ function VotingResultStep({
 					Change Vote
 				</Button>
 			</div>
+			<Dialog
+				open={showChangeVoteAlertDialog}
+				onOpenChange={setShowChangeVoteAlertDialog}
+			>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Change Your Vote</DialogTitle>
+						<DialogDescription>
+							Are you sure you want to change your vote? You will be taken back
+							to the voting phase to select new proposals.
+						</DialogDescription>
+					</DialogHeader>
+					<div className="flex justify-end">
+						<Button
+							variant="outline"
+							onClick={() => setShowChangeVoteAlertDialog(false)}
+						>
+							Cancel
+						</Button>
+						<Button
+							onClick={handleOnChangeVote}
+							className="ml-2 text-white"
+							variant="destructive"
+						>
+							Change Vote
+						</Button>
+					</div>
+				</DialogContent>
+			</Dialog>
 		</div>
 	)
 }
