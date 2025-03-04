@@ -969,16 +969,20 @@ function VotingResultStep({
 	}
 
 	return (
-		<div className="space-y-6 py-4">
+		<div className="space-y-6">
 			<div className="space-y-4 rounded">
 				<div>
-					<h2 className="items-center text-lg font-semibold">
-						<CircleCheckBigIcon className="mr-2 inline-block h-5 w-5 text-green-600" />
-						You Voted!
-					</h2>
-					<p className="text-gray-600">
-						This is the ranking you voted for. Thank you!{' '}
-					</p>
+					<div className="flex gap-2">
+						<div className="h-fit rounded-full bg-green-100 p-2">
+							<CircleCheckBigIcon className="h-7 w-7 text-green-600" />
+						</div>
+						<div>
+							<h3 className="text-lg font-semibold">You Voted!</h3>
+							<p className="text-gray-600">
+								This is the ranking you voted for. Thank you!{' '}
+							</p>
+						</div>
+					</div>
 				</div>
 				{rankedProposals.map((proposal, index) => (
 					<div key={proposal.id} className="mb-2 flex items-center gap-2">
