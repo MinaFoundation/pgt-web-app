@@ -17,6 +17,7 @@ import {
 } from '@/lib/funding-round-utils'
 import { PhaseTimeline } from '@/components/funding-rounds/PhaseTimeline'
 import { FundingRoundStatusOverviewCards } from '@/components/funding-rounds/FundingRoundOverviewCards'
+import { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,6 +28,21 @@ const getFundingRoundById = async (
 	const fundingRound = await fundingRoundService.getFundingRoundById(id)
 	if (!fundingRound) return notFound()
 	return fundingRound
+}
+
+export async function generateMetadata({
+	params,
+}: {
+	params: Promise<{ id: string }>
+}): Promise<Metadata> {
+	const { id } = await params
+
+	const data = await getFundingRoundById(id)
+
+	return {
+		title: `${data.name} | Funding Round | MEF`,
+		description: data.description,
+	}
 }
 
 export default async function FundingRoundDashboard({
