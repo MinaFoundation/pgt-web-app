@@ -190,7 +190,7 @@ function VoterAddress({ address }: { address: string }) {
 	)
 }
 
-export function ConsiderationProposalList({
+export function ConsiderationPhase({
 	fundingRoundId,
 	fundingRoundMEFId,
 }: Props) {

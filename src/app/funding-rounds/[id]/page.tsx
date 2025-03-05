@@ -10,7 +10,7 @@ import {
 import { CompletedPhase } from '@/components/phases/CompletedPhase'
 import { VotingPhase } from '@/components/phases/VotingPhase'
 import { DeliberationPhase } from '@/components/phases/DeliberationPhase'
-import { ConsiderationProposalList } from '@/components/ConsiderationProposalList'
+import { ConsiderationPhase } from '@/components/phases/ConsiderationPhase'
 import { SubmissionProposalList } from '@/components/phases/SubmissionProposalList'
 import { BetweenPhases } from '@/components/phases/BetweenPhases'
 import { useFundingRound } from '@/hooks/use-funding-round'
@@ -286,7 +286,7 @@ function FundingRoundPhaseComponent({
 			return <SubmissionProposalList fundingRoundId={data.id} />
 		case 'CONSIDERATION':
 			return (
-				<ConsiderationProposalList
+				<ConsiderationPhase
 					fundingRoundId={data.id}
 					fundingRoundMEFId={data.mefId}
 				/>
