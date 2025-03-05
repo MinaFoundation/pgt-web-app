@@ -26,8 +26,7 @@ import { notFound } from 'next/navigation'
 
 export const dynamic = 'force-dynamic'
 
-const FUNDING_ROUND_PHASES: FundingRoundPhase[] = [
-	'UPCOMING',
+const FUNDING_ROUND_PHASES: Exclude<FundingRoundPhase, 'UPCOMING'>[] = [
 	'SUBMISSION',
 	'CONSIDERATION',
 	'DELIBERATION',
@@ -212,6 +211,7 @@ function PhaseTimeline({ data }: { data: FundingRoundWithPhases }) {
 				const isCompleted =
 					data.phase === 'COMPLETED' ||
 					(previousOrCurrentActivePhase &&
+						previousOrCurrentActivePhase !== 'UPCOMING' &&
 						index <= FUNDING_ROUND_PHASES.indexOf(previousOrCurrentActivePhase))
 
 				return (
