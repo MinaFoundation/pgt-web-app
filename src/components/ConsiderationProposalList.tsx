@@ -540,7 +540,7 @@ export function ConsiderationProposalList({
 			<div className="space-y-8">
 				<div>
 					<h2 className="text-2xl font-bold">
-						🤔 Consideration Phase
+						Consideration Phase
 						<span className="ml-2 text-lg font-normal text-muted-foreground">
 							({proposals.length} proposals,{' '}
 							{
@@ -560,177 +560,415 @@ export function ConsiderationProposalList({
 
 				<div className="space-y-6">
 					{/* Consideration Phase Proposals */}
-					<div className="space-y-4">
-						<div className="flex items-center justify-between">
-							<h2 className="text-2xl font-bold">Consideration Phase</h2>
-							<span className="text-muted-foreground">
-								{groupedProposals.considerationProposals.length} proposals
-							</span>
-						</div>
-						<div className="grid gap-4">
-							{groupedProposals.considerationProposals.map(proposal => (
-								<Card
-									key={proposal.id}
-									className={cn(
-										'transition-all duration-200',
-										proposal.status === 'approved' &&
-											'border-green-500/20 bg-green-50/50 dark:bg-green-900/10',
-										proposal.status === 'rejected' &&
-											'border-red-500/20 bg-red-50/50 dark:bg-red-900/10',
-									)}
-								>
-									<CardHeader>
-										<div className="flex items-start justify-between">
-											<div>
-												<CardTitle className="text-2xl">
-													{proposal.title}
-												</CardTitle>
-												<CardDescription className="break-all">
-													👤 Submitted by {proposal.submitter}
-												</CardDescription>
-												<div className="mt-4">
-													<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-														{/* Reviewer Votes */}
-														<VoteStatusCard
-															icon="👥"
-															title="Reviewer Votes"
-															eligibilityStatus={
-																proposal.voteStats.reviewerEligible
-																	? 'Eligible'
-																	: `Need ${proposal.voteStats.requiredReviewerApprovals - proposal.voteStats.approved} more`
-															}
-															isEligible={proposal.voteStats.reviewerEligible}
-															stats={
-																<VoteProgress
-																	approved={proposal.voteStats.approved}
-																	rejected={proposal.voteStats.rejected}
-																	total={proposal.voteStats.total}
-																/>
-															}
-														>
-															<div />
-														</VoteStatusCard>
+					<div className="grid gap-4">
+						{groupedProposals.considerationProposals.map(proposal => (
+							<Card
+								key={proposal.id}
+								className={cn(
+									'transition-all duration-200',
+									proposal.status === 'approved' &&
+										'border-green-500/20 bg-green-50/50 dark:bg-green-900/10',
+									proposal.status === 'rejected' &&
+										'border-red-500/20 bg-red-50/50 dark:bg-red-900/10',
+								)}
+							>
+								<CardHeader>
+									<div className="flex items-start justify-between">
+										<div>
+											<CardTitle className="text-2xl">
+												{proposal.title}
+											</CardTitle>
+											<CardDescription className="break-all">
+												👤 Submitted by {proposal.submitter}
+											</CardDescription>
+											<div className="mt-4">
+												<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+													{/* Reviewer Votes */}
+													<VoteStatusCard
+														icon="👥"
+														title="Reviewer Votes"
+														eligibilityStatus={
+															proposal.voteStats.reviewerEligible
+																? 'Eligible'
+																: `Need ${proposal.voteStats.requiredReviewerApprovals - proposal.voteStats.approved} more`
+														}
+														isEligible={proposal.voteStats.reviewerEligible}
+														stats={
+															<VoteProgress
+																approved={proposal.voteStats.approved}
+																rejected={proposal.voteStats.rejected}
+																total={proposal.voteStats.total}
+															/>
+														}
+													>
+														<div />
+													</VoteStatusCard>
 
-														{/* Community Votes */}
-														<VoteStatusCard
-															icon="🌍"
-															title="Community Votes"
-															eligibilityStatus={
-																proposal.voteStats.communityVotes.isEligible
-																	? 'Eligible'
-																	: 'Not Eligible'
-															}
-															isEligible={
-																proposal.voteStats.communityVotes.isEligible
-															}
-														>
-															<HoverCard>
-																<HoverCardTrigger asChild>
-																	<div className="flex cursor-help items-center justify-between">
-																		<div className="flex items-center gap-2">
-																			<span className="text-sm font-medium text-green-600">
-																				{
-																					proposal.voteStats.communityVotes
-																						.positive
-																				}{' '}
-																				votes
-																			</span>
-																			<span className="text-xs text-muted-foreground">
-																				(
-																				{
-																					proposal.voteStats.communityVotes
-																						.positiveStakeWeight
-																				}{' '}
-																				stake)
-																			</span>
-																		</div>
-																		<Button
-																			variant="ghost"
-																			size="sm"
-																			className="text-xs text-muted-foreground"
+													{/* Community Votes */}
+													<VoteStatusCard
+														icon="🌍"
+														title="Community Votes"
+														eligibilityStatus={
+															proposal.voteStats.communityVotes.isEligible
+																? 'Eligible'
+																: 'Not Eligible'
+														}
+														isEligible={
+															proposal.voteStats.communityVotes.isEligible
+														}
+													>
+														<HoverCard>
+															<HoverCardTrigger asChild>
+																<div className="flex cursor-help items-center justify-between">
+																	<div className="flex items-center gap-2">
+																		<span className="text-sm font-medium text-green-600">
+																			{
+																				proposal.voteStats.communityVotes
+																					.positive
+																			}{' '}
+																			votes
+																		</span>
+																		<span className="text-xs text-muted-foreground">
+																			(
+																			{
+																				proposal.voteStats.communityVotes
+																					.positiveStakeWeight
+																			}{' '}
+																			stake)
+																		</span>
+																	</div>
+																	<Button
+																		variant="ghost"
+																		size="sm"
+																		className="text-xs text-muted-foreground"
+																	>
+																		View Voters ↗
+																	</Button>
+																</div>
+															</HoverCardTrigger>
+															<HoverCardContent
+																className="w-full max-w-[340px]"
+																align="end"
+																side="left"
+															>
+																<div className="space-y-3">
+																	<div className="flex items-center justify-between">
+																		<h4 className="text-sm font-semibold">
+																			Community Voters
+																		</h4>
+																		<Badge
+																			variant="outline"
+																			className="text-xs"
 																		>
-																			View Voters ↗
-																		</Button>
+																			{
+																				proposal.voteStats.communityVotes.voters
+																					.length
+																			}{' '}
+																			total
+																		</Badge>
 																	</div>
-																</HoverCardTrigger>
-																<HoverCardContent
-																	className="w-full max-w-[340px]"
-																	align="end"
-																	side="left"
-																>
-																	<div className="space-y-3">
-																		<div className="flex items-center justify-between">
-																			<h4 className="text-sm font-semibold">
-																				Community Voters
-																			</h4>
-																			<Badge
-																				variant="outline"
-																				className="text-xs"
-																			>
-																				{
-																					proposal.voteStats.communityVotes
-																						.voters.length
-																				}{' '}
-																				total
-																			</Badge>
-																		</div>
 
-																		<div className="rounded bg-muted/50 p-2 text-xs text-muted-foreground">
-																			Note: OCV votes may take up to 10 minutes
-																			to appear here. Don&apos;t worry if your
-																			vote doesn&apos;t show up immediately
-																			after voting.
-																		</div>
+																	<div className="rounded bg-muted/50 p-2 text-xs text-muted-foreground">
+																		Note: OCV votes may take up to 10 minutes to
+																		appear here. Don&apos;t worry if your vote
+																		doesn&apos;t show up immediately after
+																		voting.
+																	</div>
 
-																		{proposal.voteStats.communityVotes.voters
-																			.length > 0 ? (
-																			<div className="-mr-2 max-h-[240px] space-y-1.5 overflow-y-auto pr-2">
-																				{proposal.voteStats.communityVotes.voters.map(
-																					(voter, i) => (
-																						<div
-																							key={i}
-																							className="flex items-center justify-between rounded-md p-1.5 transition-colors hover:bg-muted"
-																						>
-																							<div className="flex min-w-0 flex-1 items-center gap-2">
-																								<span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs text-primary">
-																									{i + 1}
-																								</span>
-																								<VoterAddress
-																									address={voter.address}
-																								/>
-																							</div>
-																							<div className="flex-shrink-0 pl-2">
-																								<FormattedTimestamp
-																									timestamp={voter.timestamp}
-																								/>
-																							</div>
+																	{proposal.voteStats.communityVotes.voters
+																		.length > 0 ? (
+																		<div className="-mr-2 max-h-[240px] space-y-1.5 overflow-y-auto pr-2">
+																			{proposal.voteStats.communityVotes.voters.map(
+																				(voter, i) => (
+																					<div
+																						key={i}
+																						className="flex items-center justify-between rounded-md p-1.5 transition-colors hover:bg-muted"
+																					>
+																						<div className="flex min-w-0 flex-1 items-center gap-2">
+																							<span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs text-primary">
+																								{i + 1}
+																							</span>
+																							<VoterAddress
+																								address={voter.address}
+																							/>
 																						</div>
-																					),
-																				)}
-																			</div>
-																		) : (
-																			<div className="py-4 text-center text-sm text-muted-foreground">
-																				No votes yet
-																			</div>
-																		)}
-
-																		<div className="border-t pt-2">
-																			<p className="text-xs text-muted-foreground">
-																				Total Stake Weight:{' '}
-																				{
-																					proposal.voteStats.communityVotes
-																						.positiveStakeWeight
-																				}
-																			</p>
+																						<div className="flex-shrink-0 pl-2">
+																							<FormattedTimestamp
+																								timestamp={voter.timestamp}
+																							/>
+																						</div>
+																					</div>
+																				),
+																			)}
 																		</div>
+																	) : (
+																		<div className="py-4 text-center text-sm text-muted-foreground">
+																			No votes yet
+																		</div>
+																	)}
+
+																	<div className="border-t pt-2">
+																		<p className="text-xs text-muted-foreground">
+																			Total Stake Weight:{' '}
+																			{
+																				proposal.voteStats.communityVotes
+																					.positiveStakeWeight
+																			}
+																		</p>
 																	</div>
-																</HoverCardContent>
-															</HoverCard>
-														</VoteStatusCard>
-													</div>
+																</div>
+															</HoverCardContent>
+														</HoverCard>
+													</VoteStatusCard>
 												</div>
 											</div>
-											{proposal.status !== 'pending' && (
+										</div>
+										{proposal.status !== 'pending' && (
+											<Badge
+												variant={
+													proposal.status === 'approved'
+														? 'default'
+														: 'destructive'
+												}
+											>
+												{proposal.status === 'approved'
+													? '✅ Approved'
+													: '❌ Rejected'}
+											</Badge>
+										)}
+									</div>
+								</CardHeader>
+								<CardContent className="space-y-4">
+									<div>
+										<h3 className="mb-2 text-xl font-semibold">Summary</h3>
+										{expanded[proposal.id] ? (
+											<>
+												<p className="mb-4 text-muted-foreground">
+													{proposal.proposalSummary}
+												</p>
+												<div className="space-y-4">
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Key Objectives
+														</h3>
+														<p className="text-muted-foreground">
+															{proposal.keyObjectives}
+														</p>
+													</div>
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Problem Statement
+														</h3>
+														<p className="text-muted-foreground">
+															{proposal.problemStatement}
+														</p>
+													</div>
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Problem Importance
+														</h3>
+														<p className="text-muted-foreground">
+															{proposal.problemImportance}
+														</p>
+													</div>
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Proposed Solution
+														</h3>
+														<p className="text-muted-foreground">
+															{proposal.proposedSolution}
+														</p>
+													</div>
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Implementation Details
+														</h3>
+														<p className="text-muted-foreground">
+															{proposal.implementationDetails}
+														</p>
+													</div>
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Total Funding Required
+														</h3>
+														<p className="text-muted-foreground">
+															{proposal.totalFundingRequired.toLocaleString()}{' '}
+															MINA
+														</p>
+													</div>
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Community Benefits
+														</h3>
+														<p className="text-muted-foreground">
+															{proposal.communityBenefits}
+														</p>
+													</div>
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Key Performance Indicators
+														</h3>
+														<p className="text-muted-foreground">
+															{proposal.keyPerformanceIndicators}
+														</p>
+													</div>
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Budget Breakdown
+														</h3>
+														<p className="text-muted-foreground">
+															{proposal.budgetBreakdown}
+														</p>
+													</div>
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Milestones
+														</h3>
+														<p className="text-muted-foreground">
+															{proposal.milestones}
+														</p>
+													</div>
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Estimated Completion Date
+														</h3>
+														<p className="text-muted-foreground">
+															{new Date(
+																proposal.estimatedCompletionDate,
+															).toLocaleDateString()}
+														</p>
+													</div>
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Team Members
+														</h3>
+														<p className="text-muted-foreground">
+															{proposal.teamMembers}
+														</p>
+													</div>
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Relevant Experience
+														</h3>
+														<p className="text-muted-foreground">
+															{proposal.relevantExperience}
+														</p>
+													</div>
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Potential Risks
+														</h3>
+														<p className="text-muted-foreground">
+															{proposal.potentialRisks}
+														</p>
+													</div>
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Mitigation Plans
+														</h3>
+														<p className="text-muted-foreground">
+															{proposal.mitigationPlans}
+														</p>
+													</div>
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Contact Information
+														</h3>
+														<div className="space-y-2">
+															<p className="text-muted-foreground">
+																Discord: {proposal.discordHandle}
+															</p>
+															<p className="text-muted-foreground">
+																Email: {proposal.email}
+															</p>
+															{proposal.website && (
+																<p className="text-muted-foreground">
+																	Website:{' '}
+																	<a
+																		href={proposal.website}
+																		target="_blank"
+																		rel="noopener noreferrer"
+																		className="text-primary hover:underline"
+																	>
+																		{proposal.website}
+																	</a>
+																</p>
+															)}
+															{proposal.githubProfile && (
+																<p className="text-muted-foreground">
+																	GitHub:{' '}
+																	<a
+																		href={proposal.githubProfile}
+																		target="_blank"
+																		rel="noopener noreferrer"
+																		className="text-primary hover:underline"
+																	>
+																		{proposal.githubProfile}
+																	</a>
+																</p>
+															)}
+															{proposal.otherLinks && (
+																<p className="text-muted-foreground">
+																	Other Links:{' '}
+																	<span className="text-primary">
+																		{proposal.otherLinks}
+																	</span>
+																</p>
+															)}
+														</div>
+													</div>
+												</div>
+											</>
+										) : (
+											<p className="line-clamp-3 text-muted-foreground">
+												{proposal.proposalSummary}
+											</p>
+										)}
+									</div>
+
+									{renderFeedbackSection(proposal)}
+								</CardContent>
+								<CardFooter className="flex items-center justify-between">
+									<Button
+										variant="ghost"
+										className="gap-2"
+										onClick={() => toggleExpanded(proposal.id)}
+									>
+										{expanded[proposal.id] ? (
+											<>
+												See less
+												<ChevronDown className="h-4 w-4" />
+											</>
+										) : (
+											<>
+												See more
+												<ChevronRight className="h-4 w-4" />
+											</>
+										)}
+									</Button>
+
+									<div className="flex items-center gap-4">
+										{reviewStates[proposal.id] === 'editing' ? (
+											<>
+												<Button
+													variant="outline"
+													onClick={() => cancelEdit(proposal.id)}
+												>
+													❌ Cancel
+												</Button>
+												{renderEditButtons(proposal)}
+											</>
+										) : reviewStates[proposal.id] === 'decided' ? (
+											<>
+												{proposal.isReviewerEligible && (
+													<Button
+														variant="ghost"
+														className="underline"
+														onClick={() => startEdit(proposal.id)}
+													>
+														✏️ Edit Decision
+													</Button>
+												)}
 												<Badge
 													variant={
 														proposal.status === 'approved'
@@ -740,263 +978,17 @@ export function ConsiderationProposalList({
 												>
 													{proposal.status === 'approved'
 														? '✅ Approved'
-														: '❌ Rejected'}
+														: '❌ Rejected'}{' '}
+													for Deliberation
 												</Badge>
-											)}
-										</div>
-									</CardHeader>
-									<CardContent className="space-y-4">
-										<div>
-											<h3 className="mb-2 text-xl font-semibold">Summary</h3>
-											{expanded[proposal.id] ? (
-												<>
-													<p className="mb-4 text-muted-foreground">
-														{proposal.proposalSummary}
-													</p>
-													<div className="space-y-4">
-														<div>
-															<h3 className="mb-2 text-xl font-semibold">
-																Key Objectives
-															</h3>
-															<p className="text-muted-foreground">
-																{proposal.keyObjectives}
-															</p>
-														</div>
-														<div>
-															<h3 className="mb-2 text-xl font-semibold">
-																Problem Statement
-															</h3>
-															<p className="text-muted-foreground">
-																{proposal.problemStatement}
-															</p>
-														</div>
-														<div>
-															<h3 className="mb-2 text-xl font-semibold">
-																Problem Importance
-															</h3>
-															<p className="text-muted-foreground">
-																{proposal.problemImportance}
-															</p>
-														</div>
-														<div>
-															<h3 className="mb-2 text-xl font-semibold">
-																Proposed Solution
-															</h3>
-															<p className="text-muted-foreground">
-																{proposal.proposedSolution}
-															</p>
-														</div>
-														<div>
-															<h3 className="mb-2 text-xl font-semibold">
-																Implementation Details
-															</h3>
-															<p className="text-muted-foreground">
-																{proposal.implementationDetails}
-															</p>
-														</div>
-														<div>
-															<h3 className="mb-2 text-xl font-semibold">
-																Total Funding Required
-															</h3>
-															<p className="text-muted-foreground">
-																{proposal.totalFundingRequired.toLocaleString()}{' '}
-																MINA
-															</p>
-														</div>
-														<div>
-															<h3 className="mb-2 text-xl font-semibold">
-																Community Benefits
-															</h3>
-															<p className="text-muted-foreground">
-																{proposal.communityBenefits}
-															</p>
-														</div>
-														<div>
-															<h3 className="mb-2 text-xl font-semibold">
-																Key Performance Indicators
-															</h3>
-															<p className="text-muted-foreground">
-																{proposal.keyPerformanceIndicators}
-															</p>
-														</div>
-														<div>
-															<h3 className="mb-2 text-xl font-semibold">
-																Budget Breakdown
-															</h3>
-															<p className="text-muted-foreground">
-																{proposal.budgetBreakdown}
-															</p>
-														</div>
-														<div>
-															<h3 className="mb-2 text-xl font-semibold">
-																Milestones
-															</h3>
-															<p className="text-muted-foreground">
-																{proposal.milestones}
-															</p>
-														</div>
-														<div>
-															<h3 className="mb-2 text-xl font-semibold">
-																Estimated Completion Date
-															</h3>
-															<p className="text-muted-foreground">
-																{new Date(
-																	proposal.estimatedCompletionDate,
-																).toLocaleDateString()}
-															</p>
-														</div>
-														<div>
-															<h3 className="mb-2 text-xl font-semibold">
-																Team Members
-															</h3>
-															<p className="text-muted-foreground">
-																{proposal.teamMembers}
-															</p>
-														</div>
-														<div>
-															<h3 className="mb-2 text-xl font-semibold">
-																Relevant Experience
-															</h3>
-															<p className="text-muted-foreground">
-																{proposal.relevantExperience}
-															</p>
-														</div>
-														<div>
-															<h3 className="mb-2 text-xl font-semibold">
-																Potential Risks
-															</h3>
-															<p className="text-muted-foreground">
-																{proposal.potentialRisks}
-															</p>
-														</div>
-														<div>
-															<h3 className="mb-2 text-xl font-semibold">
-																Mitigation Plans
-															</h3>
-															<p className="text-muted-foreground">
-																{proposal.mitigationPlans}
-															</p>
-														</div>
-														<div>
-															<h3 className="mb-2 text-xl font-semibold">
-																Contact Information
-															</h3>
-															<div className="space-y-2">
-																<p className="text-muted-foreground">
-																	Discord: {proposal.discordHandle}
-																</p>
-																<p className="text-muted-foreground">
-																	Email: {proposal.email}
-																</p>
-																{proposal.website && (
-																	<p className="text-muted-foreground">
-																		Website:{' '}
-																		<a
-																			href={proposal.website}
-																			target="_blank"
-																			rel="noopener noreferrer"
-																			className="text-primary hover:underline"
-																		>
-																			{proposal.website}
-																		</a>
-																	</p>
-																)}
-																{proposal.githubProfile && (
-																	<p className="text-muted-foreground">
-																		GitHub:{' '}
-																		<a
-																			href={proposal.githubProfile}
-																			target="_blank"
-																			rel="noopener noreferrer"
-																			className="text-primary hover:underline"
-																		>
-																			{proposal.githubProfile}
-																		</a>
-																	</p>
-																)}
-																{proposal.otherLinks && (
-																	<p className="text-muted-foreground">
-																		Other Links:{' '}
-																		<span className="text-primary">
-																			{proposal.otherLinks}
-																		</span>
-																	</p>
-																)}
-															</div>
-														</div>
-													</div>
-												</>
-											) : (
-												<p className="line-clamp-3 text-muted-foreground">
-													{proposal.proposalSummary}
-												</p>
-											)}
-										</div>
-
-										{renderFeedbackSection(proposal)}
-									</CardContent>
-									<CardFooter className="flex items-center justify-between">
-										<Button
-											variant="ghost"
-											className="gap-2"
-											onClick={() => toggleExpanded(proposal.id)}
-										>
-											{expanded[proposal.id] ? (
-												<>
-													See less
-													<ChevronDown className="h-4 w-4" />
-												</>
-											) : (
-												<>
-													See more
-													<ChevronRight className="h-4 w-4" />
-												</>
-											)}
-										</Button>
-
-										<div className="flex items-center gap-4">
-											{reviewStates[proposal.id] === 'editing' ? (
-												<>
-													<Button
-														variant="outline"
-														onClick={() => cancelEdit(proposal.id)}
-													>
-														❌ Cancel
-													</Button>
-													{renderEditButtons(proposal)}
-												</>
-											) : reviewStates[proposal.id] === 'decided' ? (
-												<>
-													{proposal.isReviewerEligible && (
-														<Button
-															variant="ghost"
-															className="underline"
-															onClick={() => startEdit(proposal.id)}
-														>
-															✏️ Edit Decision
-														</Button>
-													)}
-													<Badge
-														variant={
-															proposal.status === 'approved'
-																? 'default'
-																: 'destructive'
-														}
-													>
-														{proposal.status === 'approved'
-															? '✅ Approved'
-															: '❌ Rejected'}{' '}
-														for Deliberation
-													</Badge>
-												</>
-											) : (
-												<>{renderVoteButtons(proposal)}</>
-											)}
-										</div>
-									</CardFooter>
-								</Card>
-							))}
-						</div>
+											</>
+										) : (
+											<>{renderVoteButtons(proposal)}</>
+										)}
+									</div>
+								</CardFooter>
+							</Card>
+						))}
 					</div>
 
 					{/* Deliberation Phase Proposals */}
