@@ -22,9 +22,11 @@ export const dynamic = 'force-dynamic'
 
 const getFundingRoundById = async (
 	id: string,
-): Promise<FundingRoundWithPhases | null> => {
+): Promise<FundingRoundWithPhases> => {
 	const fundingRoundService = new FundingRoundService(prisma)
-	return await fundingRoundService.getFundingRoundById(id)
+	const fundingRound = await fundingRoundService.getFundingRoundById(id)
+	if (!fundingRound) return notFound()
+	return fundingRound
 }
 
 export default async function FundingRoundDashboard({
@@ -35,10 +37,6 @@ export default async function FundingRoundDashboard({
 	const { id } = await params
 
 	const data = await getFundingRoundById(id)
-
-	if (!data) {
-		return notFound()
-	}
 
 	// TODO: This is a temporary fix to handle the case where the funding round is upcoming
 	if (data.phase === 'UPCOMING') {
