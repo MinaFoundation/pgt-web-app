@@ -1,5 +1,3 @@
-'use client'
-
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import {
@@ -13,7 +11,6 @@ import { DeliberationPhase } from '@/components/phases/DeliberationPhase'
 import { ConsiderationPhase } from '@/components/phases/ConsiderationPhase'
 import { SubmissionProposalList } from '@/components/phases/SubmissionProposalList'
 import { BetweenPhases } from '@/components/phases/BetweenPhases'
-import { useFundingRound } from '@/hooks/use-funding-round'
 import {
 	ArrowLeftIcon,
 	CircleHelpIcon,
@@ -22,12 +19,15 @@ import {
 	FileTextIcon,
 	TimerIcon,
 } from 'lucide-react'
-import { use } from 'react'
 import { Button } from '@/components/ui/button'
+import { FundingRoundService } from '@/services'
+import prisma from '@/lib/prisma'
+import { notFound } from 'next/navigation'
 
-type StartedPhase = Exclude<FundingRoundPhase, 'UPCOMING'>
+export const dynamic = 'force-dynamic'
 
-const STARTED_PHASES: StartedPhase[] = [
+const FUNDING_ROUND_PHASES: FundingRoundPhase[] = [
+	'UPCOMING',
 	'SUBMISSION',
 	'CONSIDERATION',
 	'DELIBERATION',
@@ -36,10 +36,6 @@ const STARTED_PHASES: StartedPhase[] = [
 	'BETWEEN_PHASES',
 ]
 
-type StartedFundingRoundWithPhases = Omit<FundingRoundWithPhases, 'phase'> & {
-	phase: StartedPhase
-}
-
 type FundingRoundDashboardProps = {
 	params: Promise<{ id: string }>
 }
@@ -47,20 +43,27 @@ type FundingRoundDashboardProps = {
 const formatDate = (date: Date) =>
 	`${date.toLocaleString('default', { month: 'short' })} ${date.getDate()}, ${date.getFullYear()}`
 
-export default function FundingRoundDashboard({
+const getFundingRoundById = async (
+	id: string,
+): Promise<FundingRoundWithPhases | null> => {
+	const fundingRoundService = new FundingRoundService(prisma)
+	return await fundingRoundService.getFundingRoundById(id)
+}
+
+export default async function FundingRoundDashboard({
 	params,
 }: FundingRoundDashboardProps) {
-	const { id } = use(params)
-	const { data: untypedData, isLoading } = useFundingRound(id)
+	const { id } = await params
 
-	if (untypedData?.phase === 'UPCOMING') {
-		return <div>Upcoming</div>
+	const data = await getFundingRoundById(id)
+
+	if (!data) {
+		return notFound()
 	}
 
-	const data = untypedData as StartedFundingRoundWithPhases
-
-	if (isLoading || !data) {
-		return <FundingRoundDashboardSkeleton />
+	// TODO: This is a temporary fix to handle the case where the funding round is upcoming
+	if (data.phase === 'UPCOMING') {
+		return <div>Upcoming</div>
 	}
 
 	return (
@@ -115,7 +118,7 @@ export default function FundingRoundDashboard({
 function FundingRoundStatusOverviewCards({
 	data,
 }: {
-	data: StartedFundingRoundWithPhases
+	data: FundingRoundWithPhases
 }) {
 	const { nextPhase, previousPhase } = getPreviousAndNextForBetweenPhase(
 		data.phases,
@@ -192,8 +195,8 @@ function FundingRoundStatusOverviewCards({
 	)
 }
 
-function PhaseTimeline({ data }: { data: StartedFundingRoundWithPhases }) {
-	const timelinePhases = STARTED_PHASES.filter(
+function PhaseTimeline({ data }: { data: FundingRoundWithPhases }) {
+	const timelinePhases = FUNDING_ROUND_PHASES.filter(
 		phase => phase !== 'BETWEEN_PHASES',
 	)
 
@@ -209,7 +212,7 @@ function PhaseTimeline({ data }: { data: StartedFundingRoundWithPhases }) {
 				const isCompleted =
 					data.phase === 'COMPLETED' ||
 					(previousOrCurrentActivePhase &&
-						index <= STARTED_PHASES.indexOf(previousOrCurrentActivePhase))
+						index <= FUNDING_ROUND_PHASES.indexOf(previousOrCurrentActivePhase))
 
 				return (
 					<div key={phase as string} className="relative">
@@ -339,9 +342,13 @@ function getTimeSince(date: Date): string {
 const getPreviousAndNextForBetweenPhase = (
 	phases: FundingRoundPhases,
 ): {
-	nextPhase: { name: StartedPhase; startDate: string; endDate: string } | null
+	nextPhase: {
+		name: FundingRoundPhase
+		startDate: string
+		endDate: string
+	} | null
 	previousPhase: {
-		name: StartedPhase
+		name: FundingRoundPhase
 		startDate: string
 		endDate: string
 	} | null
@@ -368,71 +375,17 @@ const getPreviousAndNextForBetweenPhase = (
 	return {
 		nextPhase: nextPhase
 			? {
-					name: nextPhase.name as StartedPhase,
+					name: nextPhase.name as FundingRoundPhase,
 					startDate: nextPhase.startDate,
 					endDate: nextPhase.endDate,
 				}
 			: null,
 		previousPhase: previousPhase
 			? {
-					name: previousPhase.name as StartedPhase,
+					name: previousPhase.name as FundingRoundPhase,
 					startDate: previousPhase.startDate,
 					endDate: previousPhase.endDate,
 				}
 			: null,
 	}
-}
-
-function FundingRoundDashboardSkeleton() {
-	return (
-		<div className="container mx-auto max-w-7xl px-2 lg:px-6">
-			<div className="space-y-8">
-				<div className="space-y-4">
-					<div className="h-8 w-48 animate-pulse rounded-md bg-muted" />
-					<div className="h-20 w-96 max-w-full animate-pulse rounded bg-muted md:h-12" />
-					<div className="h-6 w-48 animate-pulse rounded bg-muted" />
-				</div>
-
-				{/* Status Overview */}
-				<div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-					{new Array(4).fill('').map((_, index) => (
-						<div
-							key={index}
-							className="animate h-20 animate-pulse rounded-md bg-muted p-2 md:p-4"
-						/>
-					))}
-				</div>
-
-				{/* Main Content */}
-				<div className="grid grid-cols-1 gap-8 lg:grid-cols-[200px,1fr]">
-					{/* Phase Progress */}
-					<div className="space-y-4">
-						{new Array(5).fill('').map((_, index) => (
-							<div
-								key={index}
-								className="h-12 rounded-md bg-muted font-medium"
-							/>
-						))}
-					</div>
-
-					{/* Content Area */}
-					<div className="space-y-4">
-						<div className="h-10 w-32 animate-pulse rounded bg-muted" />
-						<div className="h-6 w-48 animate-pulse rounded bg-muted" />
-						{new Array(2).fill('').map((_, index) => (
-							<div
-								key={index}
-								className="h-24 w-full animate-pulse rounded bg-muted"
-							/>
-						))}
-					</div>
-				</div>
-
-				{/* Help Link */}
-				<div className="flex justify-end">
-					<div className="h-6 w-32 animate-pulse rounded bg-muted" />
-				</div>
-			</div>
-		</div>
-	)
 }
