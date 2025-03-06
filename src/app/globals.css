@@ -46,6 +46,8 @@ body {
 		--muted: 0 0% 93%;
 		--muted-foreground: 0 0% 31%;
 
+		--success: 142.31 100% 33%;
+		--success-foreground: 0 0% 100%;
 		--destructive: 0 84.2% 60.2%;
 		--destructive-foreground: 0 0% 98%;
 		--border: 240 5.9% 90%;
