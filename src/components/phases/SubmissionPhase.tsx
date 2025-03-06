@@ -23,7 +23,7 @@ interface ExpandedState {
 	[key: number]: boolean
 }
 
-export function SubmissionProposalList({ fundingRoundId }: Props) {
+export function SubmissionPhase({ fundingRoundId }: Props) {
 	const { proposals, loading } = useSubmissionPhase(fundingRoundId)
 	const [expanded, setExpanded] = useState<ExpandedState>({})
 
