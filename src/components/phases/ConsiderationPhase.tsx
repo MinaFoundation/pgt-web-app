@@ -25,7 +25,6 @@ import {
 	HoverCardTrigger,
 } from '@/components/ui/hover-card'
 import { ConsiderationProposalResponseJson } from '@/app/api/funding-rounds/[id]/consideration-proposals/route'
-import { Icons } from '@/components/icons'
 
 interface Props {
 	fundingRoundId: string
