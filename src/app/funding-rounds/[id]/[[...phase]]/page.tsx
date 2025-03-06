@@ -102,12 +102,11 @@ export default async function FundingRoundDashboard({
 		!!phase &&
 		!!previousOrCurrentActivePhase &&
 		previousOrCurrentActivePhase !== 'UPCOMING' &&
-		FUNDING_ROUND_PHASES.indexOf(previousOrCurrentActivePhase) >=
-			FUNDING_ROUND_PHASES.indexOf(
-				phase.toUpperCase() as Exclude<FundingRoundPhase, 'UPCOMING'>,
-			)
-
-	console.log({ previousOrCurrentActivePhase, isPhaseActiveOrCompleted })
+		(phase === 'between_phases' ||
+			FUNDING_ROUND_PHASES.indexOf(previousOrCurrentActivePhase) >=
+				FUNDING_ROUND_PHASES.indexOf(
+					phase.toUpperCase() as Exclude<FundingRoundPhase, 'UPCOMING'>,
+				))
 
 	if (!isPhaseActiveOrCompleted) {
 		redirect(`/funding-rounds/${id}/${data.phase.toLowerCase()}`)
