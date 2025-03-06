@@ -1,4 +1,3 @@
-import { type FC } from 'react'
 import { notFound } from 'next/navigation'
 import { SubmissionPhaseSummary } from '@/components/phase-summary/SubmissionPhaseSummary'
 import { prisma } from '@/lib/prisma'

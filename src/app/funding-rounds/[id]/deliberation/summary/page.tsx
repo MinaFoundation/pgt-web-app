@@ -1,4 +1,3 @@
-import { type FC } from 'react'
 import { notFound } from 'next/navigation'
 import { DeliberationService } from '@/services/DeliberationService'
 import { prisma } from '@/lib/prisma'
