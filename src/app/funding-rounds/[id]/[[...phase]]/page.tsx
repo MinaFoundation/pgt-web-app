@@ -10,7 +10,7 @@ import { ArrowLeftIcon, CircleHelpIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { FundingRoundService } from '@/services'
 import prisma from '@/lib/prisma'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import {
 	formatDate,
 	getPreviousAndNextForBetweenPhase,
@@ -48,15 +48,25 @@ export async function generateMetadata({
 export default async function FundingRoundDashboard({
 	params,
 }: {
-	params: Promise<{ id: string }>
+	params: Promise<{ id: string; phase: string }>
 }) {
-	const { id } = await params
+	const { id, phase: phaseParams } = await params
+
+	if (phaseParams?.length > 1) {
+		return notFound()
+	}
+
+	const phase = phaseParams?.[0]
 
 	const data = await getFundingRoundById(id)
 
 	// TODO: This is a temporary fix to handle the case where the funding round is upcoming
 	if (data.phase === 'UPCOMING') {
 		return <div>Upcoming</div>
+	}
+
+	if (phase !== data.phase.toLowerCase()) {
+		redirect(`/funding-rounds/${id}/${data.phase.toLowerCase()}`)
 	}
 
 	return (
