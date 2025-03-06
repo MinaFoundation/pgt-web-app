@@ -76,6 +76,7 @@ export default async function FundingRoundDashboard({
 			'deliberation',
 			'voting',
 			'completed',
+			'between_phases',
 		])
 		.optional()
 		.safeParse(phaseParams?.[0])
