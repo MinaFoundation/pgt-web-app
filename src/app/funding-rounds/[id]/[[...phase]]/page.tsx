@@ -9,7 +9,12 @@ import { DeliberationPhase } from '@/components/phases/DeliberationPhase'
 import { ConsiderationPhase } from '@/components/phases/ConsiderationPhase'
 import { SubmissionPhase } from '@/components/phases/SubmissionPhase'
 import { BetweenPhases } from '@/components/phases/BetweenPhases'
-import { ArrowLeftIcon, CircleHelpIcon } from 'lucide-react'
+import {
+	ArrowLeftIcon,
+	ChartNoAxesCombined,
+	CheckCheckIcon,
+	CircleHelpIcon,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { FundingRoundService } from '@/services'
 import prisma from '@/lib/prisma'
@@ -22,6 +27,14 @@ import { PhaseTimeline } from '@/components/funding-rounds/PhaseTimeline'
 import { FundingRoundStatusOverviewCards } from '@/components/funding-rounds/FundingRoundOverviewCards'
 import { Metadata } from 'next'
 import { z } from 'zod'
+import { Badge } from '@/components/ui/badge'
+import {
+	Card,
+	CardDescription,
+	CardFooter,
+	CardHeader,
+	CardTitle,
+} from '@/components/ui/card'
 
 export const dynamic = 'force-dynamic'
 
@@ -98,17 +111,19 @@ export default async function FundingRoundDashboard({
 			: data.phase
 
 	// Check if the provided phase param is active or completed
-	const isPhaseActiveOrCompleted =
+	const isPhaseFinished =
 		!!phase &&
 		!!previousOrCurrentActivePhase &&
 		previousOrCurrentActivePhase !== 'UPCOMING' &&
 		(phase === 'between_phases' ||
-			FUNDING_ROUND_PHASES.indexOf(previousOrCurrentActivePhase) >=
+			FUNDING_ROUND_PHASES.indexOf(previousOrCurrentActivePhase) >
 				FUNDING_ROUND_PHASES.indexOf(
 					phase.toUpperCase() as Exclude<FundingRoundPhase, 'UPCOMING'>,
 				))
 
-	if (!isPhaseActiveOrCompleted) {
+	const isPhaseActive = data.phase.toLowerCase() === phase
+
+	if (!isPhaseFinished && !isPhaseActive) {
 		redirect(`/funding-rounds/${id}/${data.phase.toLowerCase()}`)
 	}
 
@@ -146,7 +161,11 @@ export default async function FundingRoundDashboard({
 					/>
 
 					{/* Content Area */}
-					<FundingRoundPhaseComponent data={data} />
+					{isPhaseFinished ? (
+						<FinishedPhase id={data.id} phase={phase} />
+					) : (
+						<FundingRoundPhaseComponent data={data} />
+					)}
 				</div>
 
 				{/* Help Link */}
@@ -160,6 +179,38 @@ export default async function FundingRoundDashboard({
 					</Link>
 				</footer>
 			</div>
+		</div>
+	)
+}
+
+function FinishedPhase({ id, phase }: { id: string; phase: string }) {
+	const capitalizedPhase =
+		phase.charAt(0).toUpperCase() + phase.slice(1).toLowerCase()
+
+	return (
+		<div className="space-y-8">
+			<div>
+				<h2 className="text-2xl font-bold">{capitalizedPhase} Phase</h2>
+				<Badge variant="success" className="mt-2">
+					Completed <CheckCheckIcon className="ml-1 h-4 w-4" />
+				</Badge>
+			</div>
+			<Card>
+				<CardHeader>
+					<CardTitle>{capitalizedPhase} Summary</CardTitle>
+					<CardDescription>
+						{capitalizedPhase} phase has been successfully completed.
+						Congratulations to all participants!
+					</CardDescription>
+				</CardHeader>
+				<CardFooter>
+					<Link href={`/funding-rounds/${id}/${phase.toLowerCase()}/summary`}>
+						<Button>
+							<ChartNoAxesCombined className="mr-1 h-4 w-4" /> View Summary
+						</Button>
+					</Link>
+				</CardFooter>
+			</Card>
 		</div>
 	)
 }
@@ -190,7 +241,7 @@ function FundingRoundPhaseComponent({
 	// Regular phase rendering
 	switch (data.phase) {
 		case 'SUBMISSION':
-			return <SubmissionProposalList fundingRoundId={data.id} />
+			return <SubmissionPhase fundingRoundId={data.id} />
 		case 'CONSIDERATION':
 			return (
 				<ConsiderationPhase
