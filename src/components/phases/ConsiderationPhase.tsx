@@ -364,12 +364,17 @@ export function ConsiderationPhase({
 					variant="default"
 					className="bg-green-600 hover:bg-green-700"
 					onClick={() => handleDecision(proposal.id, 'APPROVED')}
+					disabled={isVoting}
+					loading={isVoting}
 				>
 					✅ Approve for Deliberation
 				</Button>
+
 				<Button
 					variant="destructive"
 					onClick={() => handleDecision(proposal.id, 'REJECTED')}
+					disabled={isVoting}
+					loading={isVoting}
 				>
 					❌ Reject for Deliberation
 				</Button>
@@ -404,6 +409,7 @@ export function ConsiderationPhase({
 					className="bg-green-600 hover:bg-green-700"
 					onClick={() => submitNewDecision(proposal.id, 'APPROVED')}
 					disabled={isVoting}
+					loading={isVoting}
 				>
 					✅ Approve for Deliberation
 				</Button>
@@ -411,6 +417,7 @@ export function ConsiderationPhase({
 					variant="destructive"
 					onClick={() => submitNewDecision(proposal.id, 'REJECTED')}
 					disabled={isVoting}
+					loading={isVoting}
 				>
 					❌ Reject for Deliberation
 				</Button>
