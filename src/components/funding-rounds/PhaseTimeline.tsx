@@ -4,6 +4,8 @@ import {
 	FundingRoundPhase,
 	FundingRoundWithPhases,
 } from '@/types/funding-round'
+import { CheckCheckIcon, ClockIcon } from 'lucide-react'
+import Link from 'next/link'
 
 const FUNDING_ROUND_PHASES: Exclude<FundingRoundPhase, 'UPCOMING'>[] = [
 	'SUBMISSION',
@@ -14,7 +16,13 @@ const FUNDING_ROUND_PHASES: Exclude<FundingRoundPhase, 'UPCOMING'>[] = [
 	'BETWEEN_PHASES',
 ]
 
-export function PhaseTimeline({ data }: { data: FundingRoundWithPhases }) {
+export function PhaseTimeline({
+	data,
+	selectedPhase,
+}: {
+	data: FundingRoundWithPhases
+	selectedPhase: Exclude<FundingRoundPhase, 'UPCOMING'>
+}) {
 	const timelinePhases = FUNDING_ROUND_PHASES.filter(
 		phase => phase !== 'BETWEEN_PHASES',
 	)
@@ -28,11 +36,12 @@ export function PhaseTimeline({ data }: { data: FundingRoundWithPhases }) {
 		<div className="space-y-4">
 			{timelinePhases.map((phase, index) => {
 				const isActive = data.phase === phase
+				const isSelected = selectedPhase === phase
 				const isCompleted =
 					data.phase === 'COMPLETED' ||
 					(previousOrCurrentActivePhase &&
 						previousOrCurrentActivePhase !== 'UPCOMING' &&
-						index <= FUNDING_ROUND_PHASES.indexOf(previousOrCurrentActivePhase))
+						index < FUNDING_ROUND_PHASES.indexOf(previousOrCurrentActivePhase))
 
 				return (
 					<div key={phase as string} className="relative">
@@ -49,8 +58,10 @@ export function PhaseTimeline({ data }: { data: FundingRoundWithPhases }) {
 						<div
 							className={cn(
 								'relative rounded-md p-3 font-medium capitalize',
-								isCompleted && 'bg-secondary/10 text-secondary',
-								isActive && 'bg-secondary text-secondary-foreground',
+								(isCompleted || isActive) &&
+									'bg-secondary/10 text-secondary hover:bg-secondary/30',
+								isSelected &&
+									'bg-secondary text-secondary-foreground hover:bg-secondary',
 								!isActive && !isCompleted && 'text-muted-foreground',
 							)}
 						>
@@ -67,10 +78,26 @@ export function PhaseTimeline({ data }: { data: FundingRoundWithPhases }) {
 							{phase}
 
 							{/* Completion indicator */}
-							{isCompleted && (
-								<span className="absolute right-2 top-1/2 -translate-y-1/2 text-secondary">
-									✓
+							{(isCompleted || isActive) && (
+								<span
+									className={cn(
+										'absolute right-2 top-1/2 -translate-y-1/2',
+										isSelected ? 'text-secondary-foreground' : 'text-secondary',
+									)}
+								>
+									{isCompleted ? (
+										<CheckCheckIcon className="h-3 w-3" />
+									) : (
+										<ClockIcon className="h-3 w-3" />
+									)}
 								</span>
+							)}
+
+							{(isCompleted || isActive) && (
+								<Link
+									href={`/funding-rounds/${data.id}/${phase.toLowerCase()}`}
+									className="absolute inset-0"
+								/>
 							)}
 						</div>
 					</div>

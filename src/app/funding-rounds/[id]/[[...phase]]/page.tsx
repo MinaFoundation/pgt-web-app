@@ -1,5 +1,8 @@
 import Link from 'next/link'
-import { FundingRoundWithPhases } from '@/types/funding-round'
+import {
+	FundingRoundPhase,
+	FundingRoundWithPhases,
+} from '@/types/funding-round'
 import { CompletedPhase } from '@/components/phases/CompletedPhase'
 import { VotingPhase } from '@/components/phases/VotingPhase'
 import { DeliberationPhase } from '@/components/phases/DeliberationPhase'
@@ -18,8 +21,18 @@ import {
 import { PhaseTimeline } from '@/components/funding-rounds/PhaseTimeline'
 import { FundingRoundStatusOverviewCards } from '@/components/funding-rounds/FundingRoundOverviewCards'
 import { Metadata } from 'next'
+import { z } from 'zod'
 
 export const dynamic = 'force-dynamic'
+
+const FUNDING_ROUND_PHASES: Exclude<FundingRoundPhase, 'UPCOMING'>[] = [
+	'SUBMISSION',
+	'CONSIDERATION',
+	'DELIBERATION',
+	'VOTING',
+	'COMPLETED',
+	'BETWEEN_PHASES',
+]
 
 const getFundingRoundById = async (
 	id: string,
@@ -56,7 +69,20 @@ export default async function FundingRoundDashboard({
 		return notFound()
 	}
 
-	const phase = phaseParams?.[0]
+	const { data: phase, success } = z
+		.enum([
+			'submission',
+			'consideration',
+			'deliberation',
+			'voting',
+			'completed',
+		])
+		.optional()
+		.safeParse(phaseParams?.[0])
+
+	if (!success) {
+		return notFound()
+	}
 
 	const data = await getFundingRoundById(id)
 
@@ -65,7 +91,24 @@ export default async function FundingRoundDashboard({
 		return <div>Upcoming</div>
 	}
 
-	if (phase !== data.phase.toLowerCase()) {
+	const previousOrCurrentActivePhase =
+		data.phase === 'BETWEEN_PHASES'
+			? getPreviousAndNextForBetweenPhase(data.phases).previousPhase?.name
+			: data.phase
+
+	// Check if the provided phase param is active or completed
+	const isPhaseActiveOrCompleted =
+		!!phase &&
+		!!previousOrCurrentActivePhase &&
+		previousOrCurrentActivePhase !== 'UPCOMING' &&
+		FUNDING_ROUND_PHASES.indexOf(previousOrCurrentActivePhase) >=
+			FUNDING_ROUND_PHASES.indexOf(
+				phase.toUpperCase() as Exclude<FundingRoundPhase, 'UPCOMING'>,
+			)
+
+	console.log({ previousOrCurrentActivePhase, isPhaseActiveOrCompleted })
+
+	if (!isPhaseActiveOrCompleted) {
 		redirect(`/funding-rounds/${id}/${data.phase.toLowerCase()}`)
 	}
 
@@ -95,7 +138,12 @@ export default async function FundingRoundDashboard({
 				{/* Main Content */}
 				<div className="grid grid-cols-1 gap-8 lg:grid-cols-[200px,1fr]">
 					{/* Phase Progress */}
-					<PhaseTimeline data={data} />
+					<PhaseTimeline
+						data={data}
+						selectedPhase={
+							phase.toUpperCase() as Exclude<FundingRoundPhase, 'UPCOMING'>
+						}
+					/>
 
 					{/* Content Area */}
 					<FundingRoundPhaseComponent data={data} />
