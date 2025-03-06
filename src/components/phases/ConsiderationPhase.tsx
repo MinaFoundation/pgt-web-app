@@ -25,6 +25,7 @@ import {
 	HoverCardTrigger,
 } from '@/components/ui/hover-card'
 import { ConsiderationProposalResponseJson } from '@/app/api/funding-rounds/[id]/consideration-proposals/route'
+import { Icons } from '@/components/icons'
 
 interface Props {
 	fundingRoundId: string
@@ -365,13 +366,28 @@ export function ConsiderationPhase({
 					className="bg-green-600 hover:bg-green-700"
 					onClick={() => handleDecision(proposal.id, 'APPROVED')}
 				>
-					✅ Approve for Deliberation
+					{isVoting ? (
+						<>
+							<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+							Voting...
+						</>
+					) : (
+						'✅ Approve for Deliberation'
+					)}
 				</Button>
+
 				<Button
 					variant="destructive"
 					onClick={() => handleDecision(proposal.id, 'REJECTED')}
 				>
-					❌ Reject for Deliberation
+					{isVoting ? (
+						<>
+							<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+							Voting...
+						</>
+					) : (
+						'❌ Reject for Deliberation'
+					)}
 				</Button>
 			</>
 		)
