@@ -1,3 +1,5 @@
+'use client'
+
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
@@ -9,7 +11,6 @@ import {
 } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
-import { cn } from '@/lib/utils'
 import { useSubmissionPhase } from '@/hooks/use-submission-phase'
 import { ChevronRight, ChevronDown } from 'lucide-react'
 import { CardFooter } from '@/components/ui/card'
@@ -23,7 +24,7 @@ interface ExpandedState {
 }
 
 export function SubmissionProposalList({ fundingRoundId }: Props) {
-	const { proposals, loading, error } = useSubmissionPhase(fundingRoundId)
+	const { proposals, loading } = useSubmissionPhase(fundingRoundId)
 	const [expanded, setExpanded] = useState<ExpandedState>({})
 
 	const toggleExpanded = (proposalId: number) => {
