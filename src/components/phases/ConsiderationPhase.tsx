@@ -365,6 +365,7 @@ export function ConsiderationPhase({
 					variant="default"
 					className="bg-green-600 hover:bg-green-700"
 					onClick={() => handleDecision(proposal.id, 'APPROVED')}
+					disabled={isVoting}
 				>
 					{isVoting ? (
 						<>
@@ -379,6 +380,7 @@ export function ConsiderationPhase({
 				<Button
 					variant="destructive"
 					onClick={() => handleDecision(proposal.id, 'REJECTED')}
+					disabled={isVoting}
 				>
 					{isVoting ? (
 						<>
@@ -421,14 +423,28 @@ export function ConsiderationPhase({
 					onClick={() => submitNewDecision(proposal.id, 'APPROVED')}
 					disabled={isVoting}
 				>
-					✅ Approve for Deliberation
+					{isVoting ? (
+						<>
+							<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+							Voting...
+						</>
+					) : (
+						'✅ Approve for Deliberation'
+					)}
 				</Button>
 				<Button
 					variant="destructive"
 					onClick={() => submitNewDecision(proposal.id, 'REJECTED')}
 					disabled={isVoting}
 				>
-					❌ Reject for Deliberation
+					{isVoting ? (
+						<>
+							<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+							Voting...
+						</>
+					) : (
+						'❌ Reject for Deliberation'
+					)}
 				</Button>
 			</div>
 		)
