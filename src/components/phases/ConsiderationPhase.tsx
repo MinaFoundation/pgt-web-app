@@ -535,11 +535,7 @@ export function ConsiderationPhase({
 	}, [proposals])
 
 	if (loading) {
-		return (
-			<div className="flex items-center justify-center p-8">
-				<div className="h-8 w-8 animate-spin rounded-full border-b-2 border-gray-900" />
-			</div>
-		)
+		return <ConsiderationPhaseSkeleton />
 	}
 
 	return (
@@ -1456,6 +1452,34 @@ export function ConsiderationPhase({
 							</div>
 						</div>
 					)}
+				</div>
+			</div>
+		</div>
+	)
+}
+
+function ConsiderationPhaseSkeleton() {
+	return (
+		<div className="container mx-auto max-w-7xl px-2 md:px-6">
+			<div className="space-y-8">
+				<div>
+					<h2 className="text-2xl font-bold">Consideration Phase</h2>
+					<p>
+						Review submitted proposals and determine which ones you find
+						valuable enough to receive funding.
+					</p>
+				</div>
+
+				<div className="space-y-6">
+					{/* Consideration Phase Proposals */}
+					<div className="grid gap-4">
+						{new Array(2).fill('').map((_, index) => (
+							<div
+								key={index}
+								className="h-40 w-full animate-pulse rounded-md bg-muted"
+							/>
+						))}
+					</div>
 				</div>
 			</div>
 		</div>
