@@ -7,7 +7,7 @@ import {
 	CardTitle,
 } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
-import React from 'react'
+import React, { useState } from 'react'
 import { FundingRound, FundingRoundStatus } from '@/types/funding-round'
 import { Button } from '../ui/button'
 import Link from 'next/link'
@@ -80,6 +80,7 @@ export const FundingRoundCard = ({
 
 	const buttonLink = `/funding-rounds/${id}${linkType === 'summary' ? '/summaries' : ''}`
 	const buttonLabel = linkType === 'summary' ? 'View Summary' : 'View Details'
+	const [isLoading, setIsLoading] = useState(false)
 
 	return (
 		<Card
@@ -153,7 +154,12 @@ export const FundingRoundCard = ({
 			<CardFooter className="justify-end">
 				{phase !== 'UPCOMING' && (
 					<Link href={buttonLink}>
-						<Button size="lg" variant="secondary">
+						<Button
+							size="lg"
+							variant="secondary"
+							loading={isLoading}
+							onClick={() => setIsLoading(true)}
+						>
 							{buttonLabel}
 							<ArrowRightIcon className="h-4 w-4" />
 						</Button>
