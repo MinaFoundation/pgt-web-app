@@ -173,6 +173,7 @@ export default function CreateProposal({ mode = 'create', proposalId }: Props) {
 		otherLinks: '',
 	})
 	const [errors, setErrors] = useState<ValidationErrors>({})
+	const [isSaving, setIsSaving] = useState<boolean>(false)
 
 	useEffect(() => {
 		const fetchProposal = async () => {
@@ -274,7 +275,7 @@ export default function CreateProposal({ mode = 'create', proposalId }: Props) {
 
 	const onSubmit = async (e: React.FormEvent) => {
 		e.preventDefault()
-
+		setIsSaving(true)
 		// Validate all fields before submission
 		let hasErrors = false
 		Object.entries(formData).forEach(([key, value]) => {
@@ -299,6 +300,7 @@ export default function CreateProposal({ mode = 'create', proposalId }: Props) {
 				description: 'Please fix the errors before submitting.',
 				variant: 'destructive',
 			})
+			setIsSaving(false)
 			return
 		}
 
@@ -343,6 +345,7 @@ export default function CreateProposal({ mode = 'create', proposalId }: Props) {
 				variant: 'destructive',
 			})
 		}
+		setIsSaving(false)
 	}
 
 	const getRemainingChars = (field: string, maxLength: number) => {
@@ -415,7 +418,7 @@ export default function CreateProposal({ mode = 'create', proposalId }: Props) {
 	}
 
 	return (
-		<div className="mx-auto max-w-4xl rounded-lg bg-white p-4 shadow-md">
+		<div className="mx-auto w-full max-w-6xl rounded-lg bg-white p-6 shadow-md">
 			<h1 className="mb-6 text-2xl font-bold">
 				{mode === 'create' ? 'Create New Proposal' : 'Edit Proposal'}
 			</h1>
@@ -930,7 +933,7 @@ export default function CreateProposal({ mode = 'create', proposalId }: Props) {
 					>
 						Cancel
 					</Button>
-					<Button type="submit">
+					<Button type="submit" loading={isSaving}>
 						{mode === 'create' ? 'Create Draft' : 'Save Changes'}
 					</Button>
 				</div>
