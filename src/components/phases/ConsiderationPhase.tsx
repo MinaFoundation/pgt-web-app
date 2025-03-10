@@ -17,6 +17,9 @@ import {
 	ChevronDown,
 	NotepadTextIcon,
 	CircleDashedIcon,
+	ArrowDownNarrowWideIcon,
+	ArrowDownWideNarrowIcon,
+	SearchIcon,
 } from 'lucide-react'
 import { useConsiderationPhase } from '@/hooks/use-consideration-phase'
 import { useConsiderationVote } from '@/hooks/use-consideration-vote'
@@ -30,8 +33,39 @@ import {
 	HoverCardTrigger,
 } from '@/components/ui/hover-card'
 import { ConsiderationProposalResponseJson } from '@/app/api/funding-rounds/[id]/consideration-proposals/route'
+import {
+	Select,
+	SelectContent,
+	SelectGroup,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '../ui/select'
+import { Input } from '../ui/input'
+import { useQueryState } from 'nuqs'
+import { z } from 'zod'
 
 type ReviewState = 'initial' | 'decided' | 'editing'
+
+export const queryParamsSchema = z.object({
+	query: z.string().optional().nullable(),
+	filterBy: z
+		.enum(['all', 'approved', 'rejected', 'pending'])
+		.optional()
+		.nullable(),
+	sortBy: z.enum(['createdAt', 'status']).optional().nullable(),
+	sortOrder: z.enum(['asc', 'desc']).optional().nullable(),
+})
+
+export type QueryParams = z.infer<typeof queryParamsSchema>
+
+const SORT_OPTIONS: {
+	value: NonNullable<QueryParams['sortBy']>
+	label: string
+}[] = [
+	{ value: 'createdAt', label: 'Date' },
+	{ value: 'status', label: 'Status' },
+]
 
 export function ConsiderationPhase({
 	fundingRoundId,
@@ -50,6 +84,7 @@ export function ConsiderationPhase({
 	const [expanded, setExpanded] = useState<{
 		[key: number]: boolean
 	}>({})
+	const { filterBy, setFilterBy } = useConsiderationPhaseSearchParams()
 
 	const handleVoteSuccess = useCallback(
 		(proposalId: number, newStatus: ProposalStatus) => {
@@ -386,6 +421,44 @@ export function ConsiderationPhase({
 		return <ConsiderationPhaseSkeleton />
 	}
 
+	const tabs: {
+		label: string
+		count: number
+		icon: React.FC<{ className?: string }>
+		tab: QueryParams['filterBy']
+	}[] = [
+		{
+			label: 'Proposals',
+			count: proposals.length,
+			icon: NotepadTextIcon,
+			tab: 'all',
+		},
+		{
+			label: 'Approved',
+			count: proposals.filter(
+				(p: ConsiderationProposalResponseJson) => p.status === 'approved',
+			).length,
+			icon: ArrowDownNarrowWideIcon,
+			tab: 'approved',
+		},
+		{
+			label: 'Rejected',
+			count: proposals.filter(
+				(p: ConsiderationProposalResponseJson) => p.status === 'rejected',
+			).length,
+			icon: ArrowDownWideNarrowIcon,
+			tab: 'rejected',
+		},
+		{
+			label: 'Pending',
+			count: proposals.filter(
+				(p: ConsiderationProposalResponseJson) => p.status === 'pending',
+			).length,
+			icon: CircleDashedIcon,
+			tab: 'pending',
+		},
+	]
+
 	return (
 		<div className="space-y-8">
 			<header>
@@ -397,37 +470,47 @@ export function ConsiderationPhase({
 					enough to receive funding.
 				</p>
 				<div className="mt-2 flex gap-2">
-					<Badge variant="outline">
-						<NotepadTextIcon className="mr-1 h-3 w-3" />
-						{proposals.length} proposals
-					</Badge>
-					<Badge variant="outline">
-						<CircleDashedIcon className="mr-1 h-3 w-3" />
-						{
-							proposals.filter(
-								(p: ConsiderationProposalResponseJson) =>
-									p.status === 'pending',
-							).length
-						}{' '}
-						pending review
-					</Badge>
+					{tabs.map(tab => (
+						<Button
+							key={tab.tab}
+							variant={filterBy === tab.tab ? 'secondary' : 'outline'}
+							onClick={() => setFilterBy(tab.tab ?? null)}
+							className={cn(
+								'flex items-center gap-1',
+								filterBy !== tab.tab && 'hover:bg-secondary/30',
+							)}
+						>
+							<tab.icon className="h-4 w-4" />
+							{tab.count} {tab.label}
+						</Button>
+					))}
 				</div>
 			</header>
+
+			<FundingRoundsControls />
 
 			<div className="space-y-6">
 				{/* Consideration Phase Proposals */}
 				<div className="grid gap-4">
-					{groupedProposals.considerationProposals.map(proposal => (
+					{proposals.map(proposal => (
 						<Card
 							key={proposal.id}
 							className={cn(
-								'transition-all duration-200',
+								'relative transition-all duration-200',
 								proposal.status === 'approved' &&
 									'border-green-500/20 bg-green-50/50 dark:bg-green-900/10',
 								proposal.status === 'rejected' &&
 									'border-red-500/20 bg-red-50/50 dark:bg-red-900/10',
 							)}
 						>
+							{proposal.currentPhase === 'DELIBERATION' && (
+								<Badge
+									variant="secondary"
+									className="absolute right-4 top-4 bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100"
+								>
+									✨ Moving to Deliberation
+								</Badge>
+							)}
 							<CardHeader>
 								<div className="flex items-start justify-between">
 									<div>
@@ -1297,6 +1380,147 @@ export function ConsiderationPhase({
 				)}
 			</div>
 		</div>
+	)
+}
+
+function useConsiderationPhaseSearchParams() {
+	const [sortBy, setSortBy] = useQueryState<QueryParams['sortBy']>('sortBy', {
+		defaultValue: 'createdAt',
+		parse: value => queryParamsSchema.shape.sortBy.parse(value),
+	})
+	const [sortOrder, setSortOrder] = useQueryState<QueryParams['sortOrder']>(
+		'sortOrder',
+		{
+			defaultValue: 'desc',
+			parse: value => queryParamsSchema.shape.sortOrder.parse(value),
+		},
+	)
+	const [query, setQuery] = useQueryState('query')
+	const [filterBy, setFilterBy] = useQueryState<QueryParams['filterBy']>(
+		'filterBy',
+		{
+			defaultValue: 'all',
+			parse: value =>
+				z.enum(['all', 'pending', 'approved', 'rejected']).parse(value),
+		},
+	)
+
+	return {
+		filterBy,
+		setFilterBy,
+		sortBy,
+		setSortBy,
+		sortOrder,
+		setSortOrder,
+		query,
+		setQuery,
+	}
+}
+
+function FundingRoundsControls({ disabled }: { disabled?: boolean }) {
+	const { sortBy, sortOrder, query, setSortBy, setSortOrder, setQuery } =
+		useConsiderationPhaseSearchParams()
+
+	const [searchQuery, setSearchQuery] = useState(query || '')
+
+	const handleSearchKeyDown = useCallback(
+		(e: React.KeyboardEvent<HTMLInputElement>) => {
+			if (e.key === 'Enter') {
+				setQuery(e.currentTarget.value)
+			}
+		},
+		[setQuery],
+	)
+
+	const handleSortByChange = useCallback(
+		(value: NonNullable<QueryParams['sortBy']>) => {
+			setSortBy(value)
+		},
+		[setSortBy],
+	)
+
+	const handleSortOrderChange = useCallback(
+		(value: NonNullable<QueryParams['sortOrder']>) => {
+			setSortOrder(value)
+		},
+		[setSortOrder],
+	)
+
+	return (
+		<section className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+			{/* Search Form */}
+			<form
+				onSubmit={e => {
+					e.preventDefault()
+				}}
+				className="relative w-full md:max-w-md"
+				aria-label="Search funding rounds"
+			>
+				<label htmlFor="search-input" className="sr-only">
+					Search funding rounds
+				</label>
+				<SearchIcon
+					className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+					aria-hidden="true"
+				/>
+				<Input
+					id="search-input"
+					type="search"
+					placeholder="Search rounds..."
+					value={searchQuery}
+					onKeyDown={handleSearchKeyDown}
+					onChange={e => setSearchQuery(e.target.value)}
+					className="w- max-w-[420px] pl-9"
+					disabled={disabled}
+				/>
+			</form>
+
+			{/* Sorting Controls */}
+			<div className="flex gap-2">
+				{/* Sort by */}
+				<Select
+					value={sortBy || undefined}
+					onValueChange={handleSortByChange}
+					disabled={disabled}
+				>
+					<SelectTrigger className="w-[90px]" aria-label="Sort by">
+						<SelectValue placeholder="Sort by" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectGroup>
+							{SORT_OPTIONS.map(option => (
+								<SelectItem key={option.value} value={option.value}>
+									{option.label}
+								</SelectItem>
+							))}
+						</SelectGroup>
+					</SelectContent>
+				</Select>
+
+				{/* Sort order */}
+				<Select
+					value={sortOrder || undefined}
+					onValueChange={handleSortOrderChange}
+					disabled={disabled}
+				>
+					<SelectTrigger className="w-[50px]" aria-label="Sort order">
+						<SelectValue placeholder="Order" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectGroup>
+							<SelectItem value="asc">
+								<ArrowDownNarrowWideIcon className="mr-1 inline h-5 w-5" />
+								Asc
+							</SelectItem>
+							<SelectItem value="desc">
+								<ArrowDownWideNarrowIcon className="mr-1 inline h-5 w-5" />
+								Desc
+							</SelectItem>
+						</SelectGroup>
+					</SelectContent>
+				</Select>
+			</div>
+		</section>
 	)
 }
 
