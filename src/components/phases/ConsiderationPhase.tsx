@@ -20,6 +20,7 @@ import {
 	ArrowDownNarrowWideIcon,
 	ArrowDownWideNarrowIcon,
 	SearchIcon,
+	FilterIcon,
 } from 'lucide-react'
 import { useConsiderationPhase } from '@/hooks/use-consideration-phase'
 import { useConsiderationVote } from '@/hooks/use-consideration-vote'
@@ -426,12 +427,14 @@ export function ConsiderationPhase({
 		count: number
 		icon: React.FC<{ className?: string }>
 		tab: QueryParams['filterBy']
+		description: string
 	}[] = [
 		{
 			label: 'Proposals',
 			count: proposals.length,
 			icon: NotepadTextIcon,
 			tab: 'all',
+			description: 'All proposals submitted for consideration.',
 		},
 		{
 			label: 'Approved',
@@ -440,6 +443,8 @@ export function ConsiderationPhase({
 			).length,
 			icon: ArrowDownNarrowWideIcon,
 			tab: 'approved',
+			description:
+				'These proposals have reached the required approval threshold and are moving to deliberation. Reviewers can still modify their consideration votes.',
 		},
 		{
 			label: 'Rejected',
@@ -448,6 +453,8 @@ export function ConsiderationPhase({
 			).length,
 			icon: ArrowDownWideNarrowIcon,
 			tab: 'rejected',
+			description:
+				'These proposals have been rejected and will not receive funding.',
 		},
 		{
 			label: 'Pending',
@@ -456,20 +463,24 @@ export function ConsiderationPhase({
 			).length,
 			icon: CircleDashedIcon,
 			tab: 'pending',
+			description:
+				'These proposals are still pending review. Reviewers and Community can vote on these proposals.',
 		},
 	]
 
 	return (
 		<div className="space-y-8">
-			<header>
-				<h2 className="text-2xl font-bold tracking-tight">
-					Consideration Phase
-				</h2>
-				<p className="text-gray-700">
-					Review submitted proposals and determine which ones you find valuable
-					enough to receive funding.
-				</p>
-				<div className="mt-2 flex gap-2">
+			<header className="space-y-4">
+				<div>
+					<h2 className="text-2xl font-bold tracking-tight">
+						Consideration Phase
+					</h2>
+					<p className="text-gray-700">
+						Review submitted proposals and determine which ones you find
+						valuable enough to receive funding.
+					</p>
+				</div>
+				<div className="flex gap-2">
 					{tabs.map(tab => (
 						<Button
 							key={tab.tab}
@@ -485,9 +496,23 @@ export function ConsiderationPhase({
 						</Button>
 					))}
 				</div>
-			</header>
 
-			<FundingRoundsControls />
+				{filterBy !== 'all' && (
+					<div className="rounded-md border border-gray-200 p-4">
+						<h4 className="text-lg font-bold">
+							<span className="text-muted-foreground">
+								<FilterIcon className="inline h-4 w-4" /> Filtering by:
+							</span>{' '}
+							<span className="capitalize">{filterBy}</span>
+						</h4>
+						<p className="text-sm text-muted-foreground">
+							{tabs.find(tab => tab.tab === filterBy)?.description}
+						</p>
+					</div>
+				)}
+
+				<FundingRoundsControls />
+			</header>
 
 			<div className="space-y-6">
 				{/* Consideration Phase Proposals */}
