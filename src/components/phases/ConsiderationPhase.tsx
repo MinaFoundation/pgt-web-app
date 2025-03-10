@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -75,11 +75,20 @@ export function ConsiderationPhase({
 	fundingRoundId: string
 	fundingRoundMEFId: number
 }) {
-	const { proposals, loading, setProposals } =
-		useConsiderationPhase(fundingRoundId)
+	const [proposals, setProposals] = useState<
+		ConsiderationProposalResponseJson[]
+	>([])
+
+	const { data, isLoading } = useConsiderationPhase(fundingRoundId)
+
+	useEffect(() => {
+		data && setProposals(data)
+	}, [data])
+
 	const [reviewStates, setReviewStates] = useState<Record<number, ReviewState>>(
 		{},
 	)
+
 	const [decisions, setDecisions] = useState<Record<number, string>>({})
 	const [newDecision, setNewDecision] = useState<Record<number, string>>({})
 	const [expanded, setExpanded] = useState<{
@@ -407,7 +416,7 @@ export function ConsiderationPhase({
 		)
 	}
 
-	if (loading) {
+	if (isLoading) {
 		return <ConsiderationPhaseSkeleton />
 	}
 
