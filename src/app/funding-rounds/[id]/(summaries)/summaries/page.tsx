@@ -1,27 +1,10 @@
-import { type FC } from 'react'
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
-import { format } from 'date-fns'
 import { prisma } from '@/lib/prisma'
-import {
-	Card,
-	CardHeader,
-	CardTitle,
-	CardDescription,
-	CardContent,
-} from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import {
-	CalendarIcon,
-	FileTextIcon,
-	UsersIcon,
-	VoteIcon,
-	CoinsIcon,
-} from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { FileTextIcon, UsersIcon, VoteIcon, CoinsIcon } from 'lucide-react'
 import { getPhaseStatus } from '@/lib/phase-utils'
 import { type PhaseStatus } from '@/types/phase-summary'
 import { type Metadata } from 'next'
+import { PhaseSummaryCard } from '@/components/funding-rounds/PhaseSummaryCard'
 
 type MetadataProps = {
 	params: Promise<{
@@ -53,73 +36,6 @@ interface PhaseInfo {
 	startDate: Date
 	endDate: Date
 	href: string
-}
-
-const PhaseSummaryCard: FC<PhaseInfo> = ({
-	title,
-	description,
-	icon,
-	status,
-	startDate,
-	endDate,
-	href,
-}) => {
-	const isAccessible = status !== 'not-started'
-	const CardWrapper = isAccessible ? Link : 'div'
-
-	return (
-		<CardWrapper
-			href={href}
-			className={cn(
-				'block transition-all duration-200',
-				isAccessible && 'hover:shadow-md',
-			)}
-		>
-			<Card className={cn('relative', !isAccessible && 'opacity-75')}>
-				<CardHeader>
-					<div className="flex items-center justify-between">
-						<div className="flex items-center gap-2">
-							{icon}
-							<CardTitle className="text-lg">{title}</CardTitle>
-						</div>
-						<Badge
-							variant={
-								status === 'ended'
-									? 'default'
-									: status === 'ongoing'
-										? 'secondary'
-										: 'outline'
-							}
-							className={cn(
-								status === 'not-started' && 'bg-muted text-muted-foreground',
-							)}
-						>
-							{status === 'ended'
-								? 'Completed'
-								: status === 'ongoing'
-									? 'In Progress'
-									: 'Not Started'}
-						</Badge>
-					</div>
-					<CardDescription>{description}</CardDescription>
-				</CardHeader>
-				<CardContent>
-					<div className="flex items-center gap-2 text-sm text-muted-foreground">
-						<CalendarIcon className="h-4 w-4" />
-						<span>
-							{format(startDate, 'MMM dd, yyyy')} -{' '}
-							{format(endDate, 'MMM dd, yyyy')}
-						</span>
-					</div>
-					{!isAccessible && (
-						<div className="mt-4 text-sm text-muted-foreground">
-							Summary will be available when the phase starts
-						</div>
-					)}
-				</CardContent>
-			</Card>
-		</CardWrapper>
-	)
 }
 
 const getPhaseInfoWithFallback = (
