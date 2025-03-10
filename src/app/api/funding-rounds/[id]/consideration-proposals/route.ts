@@ -4,7 +4,6 @@ import { getOrCreateUserFromRequest } from '@/lib/auth'
 import type { UserMetadata } from '@/services/UserService'
 import type { JsonValue } from '@prisma/client/runtime/library'
 import logger from '@/logging'
-import { OCVVotesService } from '@/services/OCVVotesService'
 import { ProposalStatusMoveService } from '@/services/ProposalStatusMoveService'
 import type { OCVVoteData, OCVVote } from '@/types/consideration'
 import { UserService } from '@/services'
@@ -144,9 +143,6 @@ type JsonResponse<T> = {
 
 export type ConsiderationProposalResponseJson =
 	JsonResponse<ConsiderationProposalResponse>
-
-export type GET_RESPONSE_TYPE = ConsiderationProposalResponse[]
-export type GET_JSON_RESPONSE = ConsiderationProposalResponseJson[]
 
 class VoteStatsEmpty {
 	/**
