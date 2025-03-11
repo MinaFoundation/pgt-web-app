@@ -169,18 +169,25 @@ export default async function FundingRoundDashboard({
 				</div>
 
 				{/* Help Link */}
-				<footer className="flex justify-end">
+				<footer className="flex justify-center md:justify-end">
 					<Link
-						href="/how-it-works"
+						href={phase in faqLinks ? faqLinks[phase] : '/how-it-works'}
 						className="flex items-center gap-1 text-secondary hover:underline"
 					>
-						<CircleHelpIcon className="h-4 w-4" /> Feeling lost? Check How it
-						Works
+						<CircleHelpIcon className="h-4 w-4" />
+						Feeling lost? Check How it Works
 					</Link>
 				</footer>
 			</div>
 		</div>
 	)
+}
+
+const faqLinks: { [key: string]: string } = {
+	submission: '/how-it-works#proposal-creation-and-submission',
+	consideration: '/how-it-works#proposal-consideration-phase',
+	deliberation: '/how-it-works#proposal-deliberation-during-a-funding-round',
+	voting: '/how-it-works#proposal-voting-during-a-funding-round',
 }
 
 function FinishedPhase({ id, phase }: { id: string; phase: string }) {
