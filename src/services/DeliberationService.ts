@@ -8,6 +8,7 @@ import {
 	ReviewerDeliberationVote,
 	CommunityDeliberationVote,
 } from '@prisma/client'
+import { GptSurveySummary } from '@/types'
 
 type ReviewerDeliberationVoteWithUser = ReviewerDeliberationVote & {
 	user: {
@@ -24,7 +25,7 @@ type CommunityDeliberationVoteWithUser = CommunityDeliberationVote & {
 interface ProposalWithVotes extends CoreProposalData {
 	deliberationReviewerVotes: ReviewerDeliberationVoteWithUser[]
 	deliberationCommunityVotes: CommunityDeliberationVoteWithUser[]
-
+	GptSurveySummarizerProposal: GptSurveySummary | null
 	// Add funding round relation with nested topic and reviewer groups
 	fundingRound: {
 		topic: {
@@ -147,6 +148,12 @@ export class DeliberationService {
 						},
 					},
 				},
+				GptSurveySummarizerProposal: {
+					select: {
+						summary: true,
+						summary_updated_at: true,
+					},
+				},
 			},
 		})) as unknown as ProposalWithVotes[]
 
@@ -259,6 +266,7 @@ export class DeliberationService {
 						},
 						linkedAccounts: linkedAccountsMetadata,
 					},
+					gptSurveySummary: proposal.GptSurveySummarizerProposal,
 				}
 			}),
 		)

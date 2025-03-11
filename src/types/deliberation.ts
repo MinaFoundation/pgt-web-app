@@ -19,7 +19,6 @@ export interface DeliberationVote {
 }
 
 export interface GptSurveySummary {
-	proposalId: number
 	summary: string
 	summaryUpdatedAt: Date
 }
@@ -44,7 +43,7 @@ export interface DeliberationProposal extends ConsiderationProposal {
 			}
 		}>
 	}
-	gptSurveySummary?: GptSurveySummary
+	gptSurveySummary: GptSurveySummary | null
 }
 
 export interface ProposalComment {

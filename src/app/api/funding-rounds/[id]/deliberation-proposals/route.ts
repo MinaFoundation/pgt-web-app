@@ -21,6 +21,8 @@ export async function GET(
 	{ params }: { params: Promise<{ id: string }> },
 ) {
 	try {
+		const { id: fundingRoundId } = await params
+
 		const user = await getOrCreateUserFromRequest(request)
 		if (!user) {
 			return ApiResponse.unauthorized('Please log in to view proposals')
@@ -28,40 +30,20 @@ export async function GET(
 
 		// Get proposals first
 		const { proposals } = (await deliberationService.getDeliberationProposals(
-			(await params).id,
+			fundingRoundId,
 			user.id,
 		)) as ServiceResponse
 
-		// Get GPT summaries for each proposal
-		const proposalsWithSummaries = await Promise.all(
-			proposals.map(async (proposal: DeliberationProposal) => {
-				const gptSummary = await gptSurveyService.getProposalSummary(
-					proposal.id,
-				)
-				return {
-					...proposal,
-					gptSurveySummary:
-						gptSummary && gptSummary.summary && gptSummary.summary_updated_at
-							? {
-									proposalId: proposal.id,
-									summary: gptSummary.summary,
-									summaryUpdatedAt: gptSummary.summary_updated_at,
-								}
-							: undefined,
-				}
-			}),
-		)
-
-		const pendingCount = proposalsWithSummaries.reduce(
+		const pendingCount = proposals.reduce(
 			(count: number, p: DeliberationProposal) =>
 				!p.userDeliberation ? count + 1 : count,
 			0,
 		)
 
 		return ApiResponse.success({
-			proposals: proposalsWithSummaries,
+			proposals,
 			pendingCount,
-			totalCount: proposalsWithSummaries.length,
+			totalCount: proposals.length,
 		})
 	} catch (error) {
 		logger.error('Error fetching deliberation proposals:', error)
