@@ -470,7 +470,7 @@ export function ConsiderationPhase({
 						valuable enough to receive funding.
 					</p>
 				</div>
-				<div className="flex gap-2">
+				<div className="grid grid-cols-2 gap-2 md:grid-cols-4">
 					{tabs.map(tab => (
 						<Button
 							key={tab.tab}
