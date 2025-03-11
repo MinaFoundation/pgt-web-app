@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import {
 	Card,
 	CardHeader,
@@ -11,7 +11,12 @@ import {
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ChevronRight, ChevronDown } from 'lucide-react'
+import {
+	ChevronRight,
+	ChevronDown,
+	CircleDashedIcon,
+	NotepadTextIcon,
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useDeliberationPhase, useDeliberationVote } from '@/hooks'
 import { DeliberationDialog } from '@/components/dialogs/DeliberationDialog'
@@ -263,15 +268,20 @@ export function DeliberationPhase({ fundingRoundId }: Props) {
 		<div className="container mx-auto max-w-7xl px-2 md:px-6">
 			<div className="space-y-8">
 				<div>
-					<h2 className="text-3xl font-bold">
-						💭 Deliberation Phase:
-						<span className="ml-2 text-lg font-normal text-muted-foreground">
-							({pendingCount} pending, {totalCount} total)
-						</span>
-					</h2>
+					<h2 className="text-3xl font-bold">Deliberation Phase:</h2>
 					<p>
 						Discuss and refine proposals with the community before final voting.
 					</p>
+					<div className="mt-2 flex gap-2">
+						<Badge variant="outline" className="text-sm">
+							<NotepadTextIcon className="m-1 h-4 w-4" />
+							{totalCount} Proposals
+						</Badge>
+						<Badge variant="outline" className="text-sm">
+							<CircleDashedIcon className="mr-1 h-4 w-4" />
+							{pendingCount} Pending
+						</Badge>
+					</div>
 				</div>
 
 				<div className="space-y-6">
