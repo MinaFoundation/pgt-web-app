@@ -33,7 +33,7 @@ import {
 	HoverCardContent,
 	HoverCardTrigger,
 } from '@/components/ui/hover-card'
-import { ConsiderationProposalResponseJson } from '@/app/api/funding-rounds/[id]/consideration-proposals/route'
+import type { ConsiderationProposalResponseJson } from '@/app/api/funding-rounds/[id]/consideration-proposals/route'
 import {
 	Select,
 	SelectContent,
@@ -45,23 +45,15 @@ import {
 import { Input } from '../ui/input'
 import { useQueryState } from 'nuqs'
 import { z } from 'zod'
+import {
+	ConsiderationOptionsSchema,
+	considerationOptionsSchema,
+} from '@/schemas/consideration'
 
 type ReviewState = 'initial' | 'decided' | 'editing'
 
-export const queryParamsSchema = z.object({
-	query: z.string().optional().nullable(),
-	filterBy: z
-		.enum(['all', 'approved', 'rejected', 'pending'])
-		.optional()
-		.nullable(),
-	sortBy: z.enum(['createdAt', 'status']).optional().nullable(),
-	sortOrder: z.enum(['asc', 'desc']).optional().nullable(),
-})
-
-export type QueryParams = z.infer<typeof queryParamsSchema>
-
 const SORT_OPTIONS: {
-	value: NonNullable<QueryParams['sortBy']>
+	value: NonNullable<ConsiderationOptionsSchema['sortBy']>
 	label: string
 }[] = [
 	{ value: 'createdAt', label: 'Date' },
@@ -424,7 +416,7 @@ export function ConsiderationPhase({
 		label: string
 		count: number
 		icon: React.FC<{ className?: string }>
-		tab: QueryParams['filterBy']
+		tab: ConsiderationOptionsSchema['filterBy']
 		description: string
 	}[] = [
 		{
@@ -949,26 +941,26 @@ export function ConsiderationPhase({
 }
 
 function useConsiderationPhaseSearchParams() {
-	const [sortBy, setSortBy] = useQueryState<QueryParams['sortBy']>('sortBy', {
+	const [sortBy, setSortBy] = useQueryState<
+		ConsiderationOptionsSchema['sortBy']
+	>('sortBy', {
 		defaultValue: 'createdAt',
-		parse: value => queryParamsSchema.shape.sortBy.parse(value),
+		parse: value => considerationOptionsSchema.shape.sortBy.parse(value),
 	})
-	const [sortOrder, setSortOrder] = useQueryState<QueryParams['sortOrder']>(
-		'sortOrder',
-		{
-			defaultValue: 'desc',
-			parse: value => queryParamsSchema.shape.sortOrder.parse(value),
-		},
-	)
+	const [sortOrder, setSortOrder] = useQueryState<
+		ConsiderationOptionsSchema['sortOrder']
+	>('sortOrder', {
+		defaultValue: 'desc',
+		parse: value => considerationOptionsSchema.shape.sortOrder.parse(value),
+	})
 	const [query, setQuery] = useQueryState('query')
-	const [filterBy, setFilterBy] = useQueryState<QueryParams['filterBy']>(
-		'filterBy',
-		{
-			defaultValue: 'all',
-			parse: value =>
-				z.enum(['all', 'pending', 'approved', 'rejected']).parse(value),
-		},
-	)
+	const [filterBy, setFilterBy] = useQueryState<
+		ConsiderationOptionsSchema['filterBy']
+	>('filterBy', {
+		defaultValue: 'all',
+		parse: value =>
+			z.enum(['all', 'pending', 'approved', 'rejected']).parse(value),
+	})
 
 	return {
 		filterBy,
@@ -998,14 +990,14 @@ function FundingRoundsControls({ disabled }: { disabled?: boolean }) {
 	)
 
 	const handleSortByChange = useCallback(
-		(value: NonNullable<QueryParams['sortBy']>) => {
+		(value: NonNullable<ConsiderationOptionsSchema['sortBy']>) => {
 			setSortBy(value)
 		},
 		[setSortBy],
 	)
 
 	const handleSortOrderChange = useCallback(
-		(value: NonNullable<QueryParams['sortOrder']>) => {
+		(value: NonNullable<ConsiderationOptionsSchema['sortOrder']>) => {
 			setSortOrder(value)
 		},
 		[setSortOrder],
