@@ -77,7 +77,7 @@ export function ConsiderationPhase({
 	const { data, isLoading } = useConsiderationPhase(fundingRoundId)
 
 	useEffect(() => {
-		data && setProposals(data)
+		if (data) setProposals(data)
 	}, [data])
 
 	const [reviewStates, setReviewStates] = useState<Record<number, ReviewState>>(
