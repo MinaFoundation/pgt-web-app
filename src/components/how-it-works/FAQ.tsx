@@ -5,6 +5,7 @@ import {
 	AccordionItem,
 	AccordionTrigger,
 } from '@/components/ui/accordion'
+import { slugify } from '@/lib/utils'
 
 export interface FAQItem {
 	question: string
@@ -24,7 +25,11 @@ export const FAQ: FC<FAQProps> = ({ sections }) => {
 	return (
 		<Accordion type="single" collapsible className="w-full">
 			{sections.map((section, sectionIndex) => (
-				<AccordionItem key={sectionIndex} value={`item-${sectionIndex}`}>
+				<AccordionItem
+					key={sectionIndex}
+					value={`item-${sectionIndex}`}
+					id={slugify(section.title)}
+				>
 					<AccordionTrigger className="text-left text-xl font-semibold text-dark hover:text-primary md:text-2xl">
 						{section.title}
 					</AccordionTrigger>
