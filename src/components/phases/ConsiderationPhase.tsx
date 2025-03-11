@@ -477,11 +477,13 @@ export function ConsiderationPhase({
 					{tabs.map(tab => (
 						<Button
 							key={tab.tab}
-							variant={filterBy === tab.tab ? 'secondary' : 'outline'}
+							variant="outline"
 							onClick={() => setFilterBy(tab.tab ?? null)}
 							className={cn(
-								'flex items-center gap-1',
-								filterBy !== tab.tab && 'hover:bg-secondary/30',
+								'flex items-center gap-1 font-semibold hover:bg-secondary/10',
+								filterBy === tab.tab
+									? 'border border-secondary/40 bg-secondary/20 text-secondary-dark hover:bg-secondary/20 hover:text-secondary-dark'
+									: 'text-muted-foreground hover:text-muted-foreground',
 							)}
 						>
 							<tab.icon className="h-4 w-4" />
@@ -526,8 +528,8 @@ export function ConsiderationPhase({
 									<div className="flex flex-col-reverse items-center gap-2 md:flex-row md:justify-between">
 										<CardTitle className="text-2xl">{proposal.title}</CardTitle>
 										{proposal.currentPhase === 'DELIBERATION' && (
-											<div className="flex w-full items-center justify-center gap-1 rounded-full border border-green-900/30 bg-green-100 px-4 py-1 font-semibold text-green-900 md:w-fit">
-												<PartyPopper className="h-4 w-4" /> Moving to
+											<div className="flex w-full items-center justify-center gap-1 rounded-full border border-green-900/30 bg-green-100 px-4 py-1 text-sm font-semibold text-green-900 md:w-fit">
+												<PartyPopper className="h-3 w-3" /> Moving to
 												Deliberation
 											</div>
 										)}
