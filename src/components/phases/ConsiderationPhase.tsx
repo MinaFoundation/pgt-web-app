@@ -21,6 +21,9 @@ import {
 	ArrowDownWideNarrowIcon,
 	SearchIcon,
 	FilterIcon,
+	StarIcon,
+	ArrowBigRightDash,
+	PartyPopper,
 } from 'lucide-react'
 import { useConsiderationPhase } from '@/hooks/use-consideration-phase'
 import { useConsiderationVote } from '@/hooks/use-consideration-vote'
@@ -518,170 +521,166 @@ export function ConsiderationPhase({
 									'border-red-500/20 bg-red-50/50 dark:bg-red-900/10',
 							)}
 						>
-							{proposal.currentPhase === 'DELIBERATION' && (
-								<Badge
-									variant="secondary"
-									className="absolute right-4 top-4 bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100"
-								>
-									✨ Moving to Deliberation
-								</Badge>
-							)}
-							<CardHeader>
-								<div className="flex items-start justify-between">
-									<div>
+							<CardHeader className="flex items-start justify-between">
+								<div className="w-full">
+									<div className="flex flex-col-reverse items-center gap-2 md:flex-row md:justify-between">
 										<CardTitle className="text-2xl">{proposal.title}</CardTitle>
-										<CardDescription className="break-all">
-											👤 Submitted by {proposal.submitter}
-										</CardDescription>
-										<div className="mt-4">
-											<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-												{/* Reviewer Votes */}
-												<VoteStatusCard
-													icon="👥"
-													title="Reviewer Votes"
-													eligibilityStatus={
-														proposal.voteStats.reviewerEligible
-															? 'Eligible'
-															: `Need ${proposal.voteStats.requiredReviewerApprovals - proposal.voteStats.approved} more`
-													}
-													isEligible={proposal.voteStats.reviewerEligible}
-													stats={
-														<VoteProgress
-															approved={proposal.voteStats.approved}
-															rejected={proposal.voteStats.rejected}
-															total={proposal.voteStats.total}
-														/>
-													}
-												>
-													<div />
-												</VoteStatusCard>
-
-												{/* Community Votes */}
-												<VoteStatusCard
-													icon="🌍"
-													title="Community Votes"
-													eligibilityStatus={
-														proposal.voteStats.communityVotes.isEligible
-															? 'Eligible'
-															: 'Not Eligible'
-													}
-													isEligible={
-														proposal.voteStats.communityVotes.isEligible
-													}
-												>
-													<HoverCard>
-														<HoverCardTrigger asChild>
-															<div className="flex cursor-help items-center justify-between">
-																<div className="flex items-center gap-2">
-																	<span className="text-sm font-medium text-green-600">
-																		{proposal.voteStats.communityVotes.positive}{' '}
-																		votes
-																	</span>
-																	<span className="text-xs text-muted-foreground">
-																		(
-																		{
-																			proposal.voteStats.communityVotes
-																				.positiveStakeWeight
-																		}{' '}
-																		stake)
-																	</span>
-																</div>
-																<Button
-																	variant="ghost"
-																	size="sm"
-																	className="text-xs text-muted-foreground"
-																>
-																	View Voters ↗
-																</Button>
-															</div>
-														</HoverCardTrigger>
-														<HoverCardContent
-															className="w-full max-w-[340px]"
-															align="end"
-															side="left"
-														>
-															<div className="space-y-3">
-																<div className="flex items-center justify-between">
-																	<h4 className="text-sm font-semibold">
-																		Community Voters
-																	</h4>
-																	<Badge variant="outline" className="text-xs">
-																		{
-																			proposal.voteStats.communityVotes.voters
-																				.length
-																		}{' '}
-																		total
-																	</Badge>
-																</div>
-
-																<div className="rounded bg-muted/50 p-2 text-xs text-muted-foreground">
-																	Note: OCV votes may take up to 10 minutes to
-																	appear here. Don&apos;t worry if your vote
-																	doesn&apos;t show up immediately after voting.
-																</div>
-
-																{proposal.voteStats.communityVotes.voters
-																	.length > 0 ? (
-																	<div className="-mr-2 max-h-[240px] space-y-1.5 overflow-y-auto pr-2">
-																		{proposal.voteStats.communityVotes.voters.map(
-																			(voter, i) => (
-																				<div
-																					key={i}
-																					className="flex items-center justify-between rounded-md p-1.5 transition-colors hover:bg-muted"
-																				>
-																					<div className="flex min-w-0 flex-1 items-center gap-2">
-																						<span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs text-primary">
-																							{i + 1}
-																						</span>
-																						<VoterAddress
-																							address={voter.address}
-																						/>
-																					</div>
-																					<div className="flex-shrink-0 pl-2">
-																						<FormattedTimestamp
-																							timestamp={voter.timestamp}
-																						/>
-																					</div>
-																				</div>
-																			),
-																		)}
-																	</div>
-																) : (
-																	<div className="py-4 text-center text-sm text-muted-foreground">
-																		No votes yet
-																	</div>
-																)}
-
-																<div className="border-t pt-2">
-																	<p className="text-xs text-muted-foreground">
-																		Total Stake Weight:{' '}
-																		{
-																			proposal.voteStats.communityVotes
-																				.positiveStakeWeight
-																		}
-																	</p>
-																</div>
-															</div>
-														</HoverCardContent>
-													</HoverCard>
-												</VoteStatusCard>
+										{proposal.currentPhase === 'DELIBERATION' && (
+											<div className="flex w-full items-center justify-center gap-1 rounded-full border border-green-900/30 bg-green-100 px-4 py-1 font-semibold text-green-900 md:w-fit">
+												<PartyPopper className="h-4 w-4" /> Moving to
+												Deliberation
 											</div>
+										)}
+									</div>
+									<CardDescription className="break-all">
+										👤 Submitted by {proposal.submitter}
+									</CardDescription>
+									<div className="mt-4">
+										<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+											{/* Reviewer Votes */}
+											<VoteStatusCard
+												icon="👥"
+												title="Reviewer Votes"
+												eligibilityStatus={
+													proposal.voteStats.reviewerEligible
+														? 'Eligible'
+														: `Need ${proposal.voteStats.requiredReviewerApprovals - proposal.voteStats.approved} more`
+												}
+												isEligible={proposal.voteStats.reviewerEligible}
+												stats={
+													<VoteProgress
+														approved={proposal.voteStats.approved}
+														rejected={proposal.voteStats.rejected}
+														total={proposal.voteStats.total}
+													/>
+												}
+											>
+												<div />
+											</VoteStatusCard>
+
+											{/* Community Votes */}
+											<VoteStatusCard
+												icon="🌍"
+												title="Community Votes"
+												eligibilityStatus={
+													proposal.voteStats.communityVotes.isEligible
+														? 'Eligible'
+														: 'Not Eligible'
+												}
+												isEligible={
+													proposal.voteStats.communityVotes.isEligible
+												}
+											>
+												<HoverCard>
+													<HoverCardTrigger asChild>
+														<div className="flex cursor-help items-center justify-between">
+															<div className="flex items-center gap-2">
+																<span className="text-sm font-medium text-green-600">
+																	{proposal.voteStats.communityVotes.positive}{' '}
+																	votes
+																</span>
+																<span className="text-xs text-muted-foreground">
+																	(
+																	{
+																		proposal.voteStats.communityVotes
+																			.positiveStakeWeight
+																	}{' '}
+																	stake)
+																</span>
+															</div>
+															<Button
+																variant="ghost"
+																size="sm"
+																className="text-xs text-muted-foreground"
+															>
+																View Voters ↗
+															</Button>
+														</div>
+													</HoverCardTrigger>
+													<HoverCardContent
+														className="w-full max-w-[340px]"
+														align="end"
+														side="left"
+													>
+														<div className="space-y-3">
+															<div className="flex items-center justify-between">
+																<h4 className="text-sm font-semibold">
+																	Community Voters
+																</h4>
+																<Badge variant="outline" className="text-xs">
+																	{
+																		proposal.voteStats.communityVotes.voters
+																			.length
+																	}{' '}
+																	total
+																</Badge>
+															</div>
+
+															<div className="rounded bg-muted/50 p-2 text-xs text-muted-foreground">
+																Note: OCV votes may take up to 10 minutes to
+																appear here. Don&apos;t worry if your vote
+																doesn&apos;t show up immediately after voting.
+															</div>
+
+															{proposal.voteStats.communityVotes.voters.length >
+															0 ? (
+																<div className="-mr-2 max-h-[240px] space-y-1.5 overflow-y-auto pr-2">
+																	{proposal.voteStats.communityVotes.voters.map(
+																		(voter, i) => (
+																			<div
+																				key={i}
+																				className="flex items-center justify-between rounded-md p-1.5 transition-colors hover:bg-muted"
+																			>
+																				<div className="flex min-w-0 flex-1 items-center gap-2">
+																					<span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs text-primary">
+																						{i + 1}
+																					</span>
+																					<VoterAddress
+																						address={voter.address}
+																					/>
+																				</div>
+																				<div className="flex-shrink-0 pl-2">
+																					<FormattedTimestamp
+																						timestamp={voter.timestamp}
+																					/>
+																				</div>
+																			</div>
+																		),
+																	)}
+																</div>
+															) : (
+																<div className="py-4 text-center text-sm text-muted-foreground">
+																	No votes yet
+																</div>
+															)}
+
+															<div className="border-t pt-2">
+																<p className="text-xs text-muted-foreground">
+																	Total Stake Weight:{' '}
+																	{
+																		proposal.voteStats.communityVotes
+																			.positiveStakeWeight
+																	}
+																</p>
+															</div>
+														</div>
+													</HoverCardContent>
+												</HoverCard>
+											</VoteStatusCard>
 										</div>
 									</div>
-									{proposal.status !== 'pending' && (
-										<Badge
-											variant={
-												proposal.status === 'approved'
-													? 'default'
-													: 'destructive'
-											}
-										>
-											{proposal.status === 'approved'
-												? '✅ Approved'
-												: '❌ Rejected'}
-										</Badge>
-									)}
 								</div>
+								{proposal.status !== 'pending' && (
+									<Badge
+										variant={
+											proposal.status === 'approved' ? 'default' : 'destructive'
+										}
+									>
+										{proposal.status === 'approved'
+											? '✅ Approved'
+											: '❌ Rejected'}
+									</Badge>
+								)}
 							</CardHeader>
 							<CardContent className="space-y-4">
 								<div>
