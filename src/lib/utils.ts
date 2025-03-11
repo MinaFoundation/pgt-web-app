@@ -24,3 +24,14 @@ export function truncateWallet(wallet: string, maxLength: number = 14): string {
 	const end = wallet.length - start
 	return `${wallet.slice(0, start)}...${wallet.slice(end)}`
 }
+
+export const slugify = (str: string): string => {
+	return str
+		.normalize('NFD') // Normalize diacritics (accents).
+		.replace(/[\u0300-\u036f]/g, '') // Remove diacritics (accents).
+		.replace(/[_\.\s]+/g, '-') // Replace spaces, dots and underscores with dashes.
+		.replace(/[^a-zA-Z0-9-]/g, '') // Ensure only alphanumeric characters and dashes.
+		.replace(/-+$/g, '') // Remove trailing dashes.
+		.slice(0, 80) // Limit the length of the slug.
+		.toLowerCase() // Lowercase the slug.
+}

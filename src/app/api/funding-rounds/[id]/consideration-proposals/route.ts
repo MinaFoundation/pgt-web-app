@@ -1,16 +1,16 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { getOrCreateUserFromRequest } from '@/lib/auth'
 import type { UserMetadata } from '@/services/UserService'
 import type { JsonValue } from '@prisma/client/runtime/library'
 import logger from '@/logging'
-import { OCVVotesService } from '@/services/OCVVotesService'
 import { ProposalStatusMoveService } from '@/services/ProposalStatusMoveService'
 import type { OCVVoteData, OCVVote } from '@/types/consideration'
 import { UserService } from '@/services'
 import { ConsiderationDecision, ProposalStatus } from '@prisma/client'
 import { CoreProposalData } from '@/types/proposals'
 import { Decimal } from 'decimal.js'
+import { considerationOptionsSchema } from '@/schemas/consideration'
 
 function parseOCVVoteData(data: JsonValue | null | undefined): OCVVoteData {
 	const defaultData: OCVVoteData = {
@@ -145,9 +145,6 @@ type JsonResponse<T> = {
 export type ConsiderationProposalResponseJson =
 	JsonResponse<ConsiderationProposalResponse>
 
-export type GET_RESPONSE_TYPE = ConsiderationProposalResponse[]
-export type GET_JSON_RESPONSE = ConsiderationProposalResponseJson[]
-
 class VoteStatsEmpty {
 	/**
 	 * Returns default vote statistics when actual data is not available
@@ -189,10 +186,22 @@ class VoteStatsEmpty {
 }
 
 export async function GET(
-	request: Request,
+	request: NextRequest,
 	{ params }: { params: Promise<{ id: string }> },
 ) {
 	try {
+		// TODO: implement filters and sorting
+		const { data: { query, filterBy, sortBy, sortOrder } = {}, error } =
+			considerationOptionsSchema.safeParse({
+				filterName: request.nextUrl.searchParams.get('filterName'),
+				sortBy: request.nextUrl.searchParams.get('sortBy'),
+				sortOrder: request.nextUrl.searchParams.get('sortOrder'),
+			})
+
+		if (error) {
+			return NextResponse.json({ error: error.message }, { status: 400 })
+		}
+
 		const user = await getOrCreateUserFromRequest(request)
 		if (!user) {
 			return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
