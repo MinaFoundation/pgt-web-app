@@ -50,7 +50,9 @@ export function PhaseTimeline({
 							<div
 								className={cn(
 									'absolute -top-4 left-4 h-4 w-0.5',
-									isCompleted ? 'bg-secondary' : 'bg-muted-foreground/20',
+									isCompleted || isActive
+										? 'bg-secondary'
+										: 'bg-muted-foreground/20',
 								)}
 							/>
 						)}
