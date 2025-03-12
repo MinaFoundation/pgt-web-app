@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import {
 	Card,
 	CardHeader,
@@ -50,15 +50,16 @@ interface DialogState {
 
 export function DeliberationPhase({ fundingRoundId }: Props) {
 	const { user } = useAuth()
-	const {
-		proposals,
-		loading,
-		setProposals,
-		pendingCount,
-		totalCount,
-		setPendingCount,
-		setTotalCount,
-	} = useDeliberationPhase(fundingRoundId)
+
+	const [proposals, setProposals] = useState([] as DeliberationProposal[])
+
+	const { data, isLoading } = useDeliberationPhase(fundingRoundId)
+
+	useEffect(() => {
+		if (!data) return
+		setProposals(data.proposals)
+	}, [data])
+
 	const [expanded, setExpanded] = useState<Record<number, boolean>>({})
 	const [dialogProps, setDialogProps] = useState<DialogState>({ open: false })
 
@@ -69,7 +70,7 @@ export function DeliberationPhase({ fundingRoundId }: Props) {
 		}))
 	}
 
-	const { submitVote, isLoading } = useDeliberationVote()
+	const { submitVote } = useDeliberationVote()
 
 	// Sort proposals - pending first, then voted
 	const sortedProposals = useMemo(() => {
@@ -252,7 +253,7 @@ export function DeliberationPhase({ fundingRoundId }: Props) {
 		)
 	}
 
-	if (loading) {
+	if (isLoading) {
 		return (
 			<div className="container mx-auto max-w-7xl p-6">
 				<Card>

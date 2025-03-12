@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useToast } from '@/hooks/use-toast'
 import type { DeliberationProposal } from '@/types/deliberation'
+import { useQuery } from '@tanstack/react-query'
+import logger from '@/logging'
+import { GetDeliberationProposalsOptions } from '@/schemas/deliberation'
 
 interface DeliberationPhaseResponse {
 	proposals: DeliberationProposal[]
@@ -10,63 +11,30 @@ interface DeliberationPhaseResponse {
 	totalCount: number
 }
 
-interface UseDeliberationPhaseResult {
-	proposals: DeliberationProposal[]
-	loading: boolean
-	setProposals: React.Dispatch<React.SetStateAction<DeliberationProposal[]>>
-	pendingCount: number
-	totalCount: number
-	setPendingCount: React.Dispatch<React.SetStateAction<number>>
-	setTotalCount: React.Dispatch<React.SetStateAction<number>>
-}
-
 export function useDeliberationPhase(
 	fundingRoundId: string,
-): UseDeliberationPhaseResult {
-	const [proposals, setProposals] = useState<DeliberationProposal[]>([])
-	const [pendingCount, setPendingCount] = useState(0)
-	const [totalCount, setTotalCount] = useState(0)
-	const [loading, setLoading] = useState(true)
-	const { toast } = useToast()
-
-	useEffect(() => {
-		async function fetchProposals() {
-			try {
-				const response = await fetch(
-					`/api/funding-rounds/${fundingRoundId}/deliberation-proposals`,
-				)
-
-				if (!response.ok) {
-					throw new Error('Failed to fetch proposals')
-				}
-
-				const data: DeliberationPhaseResponse = await response.json()
-				setProposals(data.proposals)
-				setPendingCount(data.pendingCount)
-				setTotalCount(data.totalCount)
-			} catch (err) {
-				const message =
-					err instanceof Error ? err.message : 'Failed to fetch proposals'
-				toast({
-					title: 'Error',
-					description: message,
-					variant: 'destructive',
-				})
-			} finally {
-				setLoading(false)
-			}
-		}
-
-		fetchProposals()
-	}, [fundingRoundId, toast])
-
-	return {
-		proposals,
-		loading,
-		setProposals,
-		pendingCount,
-		totalCount,
-		setPendingCount,
-		setTotalCount,
+	options: GetDeliberationProposalsOptions = {},
+) {
+	let url = `/api/funding-rounds/${fundingRoundId}/deliberation-proposals`
+	if (options) {
+		const searchParams = new URLSearchParams()
+		if (options.query) searchParams.set('query', options.query)
+		if (options.filterBy) searchParams.set('filterBy', options.filterBy)
+		if (options.sortBy) searchParams.set('sortBy', options.sortBy)
+		if (options.sortOrder) searchParams.set('sortOrder', options.sortOrder)
+		url += `?${searchParams.toString()}`
 	}
+
+	return useQuery<DeliberationPhaseResponse>({
+		queryKey: [url],
+		queryFn: async () => {
+			const response = await fetch(url)
+			if (!response.ok) {
+				logger.error('Failed to fetch deliberation proposals', response)
+				const errorMessage = 'Failed to fetch proposals'
+				throw new Error(errorMessage)
+			}
+			return response.json()
+		},
+	})
 }
