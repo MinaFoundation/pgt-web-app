@@ -8,7 +8,7 @@ import {
 	ReviewerDeliberationVote,
 	CommunityDeliberationVote,
 } from '@prisma/client'
-import { GptSurveySummary } from '@/types'
+import { DeliberationProposal, GptSurveySummary } from '@/types'
 import {
 	GetDeliberationProposalsOptions,
 	getDeliberationProposalsOptionsSchema,
@@ -66,6 +66,14 @@ export interface DeliberationPhaseSummary {
 	}>
 }
 
+export interface DeliberationPhaseProposalsResponse {
+	proposals: DeliberationProposal[]
+	pendingRecommendationCount: number
+	recommendedCount: number
+	notRecommendedCount: number
+	totalCount: number
+}
+
 const DEFAULT_ORDER_BY: Prisma.ProposalOrderByWithRelationInput[] = [
 	{ createdAt: 'desc' },
 	{ status: 'asc' },
@@ -82,7 +90,7 @@ export class DeliberationService {
 		fundingRoundId: string,
 		userId: string,
 		options: GetDeliberationProposalsOptions = {},
-	) {
+	): Promise<DeliberationPhaseProposalsResponse> {
 		if (options) {
 			getDeliberationProposalsOptionsSchema.parse(options)
 		}
@@ -299,7 +307,7 @@ export class DeliberationService {
 								feedback: userDeliberation.feedback,
 								recommendation:
 									'recommendation' in userDeliberation
-										? userDeliberation.recommendation
+										? (userDeliberation.recommendation as boolean)
 										: undefined,
 								createdAt: userDeliberation.createdAt,
 								isReviewerVote: 'recommendation' in userDeliberation,
@@ -344,7 +352,13 @@ export class DeliberationService {
 
 		return {
 			proposals: filteredProposals,
-			pendingCount: transformedProposals.filter(p => !p.hasVoted).length,
+			pendingRecommendationCount: transformedProposals.filter(
+				p => p.isPendingRecommendation,
+			).length,
+			recommendedCount: transformedProposals.filter(p => p.isRecommended)
+				.length,
+			notRecommendedCount: transformedProposals.filter(p => p.isNotRecommended)
+				.length,
 			totalCount: transformedProposals.length,
 		}
 	}
