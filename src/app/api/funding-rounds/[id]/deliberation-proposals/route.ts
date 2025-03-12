@@ -34,23 +34,13 @@ export async function GET(
 		}
 
 		// Get proposals first
-		const { proposals } = await deliberationService.getDeliberationProposals(
+		const data = await deliberationService.getDeliberationProposals(
 			fundingRoundId,
 			user.id,
 			queryOptions,
 		)
 
-		const pendingCount = proposals.reduce(
-			(count: number, p: DeliberationProposal) =>
-				!p.userDeliberation ? count + 1 : count,
-			0,
-		)
-
-		return ApiResponse.success({
-			proposals,
-			pendingCount,
-			totalCount: proposals.length,
-		})
+		return ApiResponse.success(data)
 	} catch (error) {
 		logger.error('Error fetching deliberation proposals:', error)
 		return ApiResponse.error(error)
