@@ -22,7 +22,7 @@ export async function GET(
 	try {
 		const { id: fundingRoundId } = await params
 
-		const { data: { query, filterBy, sortBy, sortOrder } = {}, error } =
+		const { data: queryOptions = {}, error } =
 			getDeliberationProposalsOptionsSchema.safeParse({
 				filterName: request.nextUrl.searchParams.get('filterName'),
 				sortBy: request.nextUrl.searchParams.get('sortBy'),
@@ -42,6 +42,7 @@ export async function GET(
 		const { proposals } = (await deliberationService.getDeliberationProposals(
 			fundingRoundId,
 			user.id,
+			queryOptions,
 		)) as ServiceResponse
 
 		const pendingCount = proposals.reduce(
