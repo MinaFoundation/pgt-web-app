@@ -1,14 +1,13 @@
-import { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { getOrCreateUserFromRequest } from '@/lib/auth'
 import { DeliberationService } from '@/services/DeliberationService'
-import { GptSurveyService } from '@/services/GptSurveyService'
 import { ApiResponse } from '@/lib/api-response'
 import prisma from '@/lib/prisma'
 import logger from '@/logging'
 import type { DeliberationProposal } from '@/types/deliberation'
+import { getDeliberationProposalsOptionsSchema } from '@/schemas/deliberation'
 
 const deliberationService = new DeliberationService(prisma)
-const gptSurveyService = new GptSurveyService(prisma)
 
 type ServiceResponse = {
 	proposals: Array<DeliberationProposal>
@@ -22,6 +21,17 @@ export async function GET(
 ) {
 	try {
 		const { id: fundingRoundId } = await params
+
+		const { data: { query, filterBy, sortBy, sortOrder } = {}, error } =
+			getDeliberationProposalsOptionsSchema.safeParse({
+				filterName: request.nextUrl.searchParams.get('filterName'),
+				sortBy: request.nextUrl.searchParams.get('sortBy'),
+				sortOrder: request.nextUrl.searchParams.get('sortOrder'),
+			})
+
+		if (error) {
+			return NextResponse.json({ error: error.message }, { status: 400 })
+		}
 
 		const user = await getOrCreateUserFromRequest(request)
 		if (!user) {

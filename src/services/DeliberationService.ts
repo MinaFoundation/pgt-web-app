@@ -9,6 +9,10 @@ import {
 	CommunityDeliberationVote,
 } from '@prisma/client'
 import { GptSurveySummary } from '@/types'
+import {
+	GetDeliberationProposalsOptions,
+	getDeliberationProposalsOptionsSchema,
+} from '@/schemas/deliberation'
 
 type ReviewerDeliberationVoteWithUser = ReviewerDeliberationVote & {
 	user: {
@@ -62,6 +66,11 @@ export interface DeliberationPhaseSummary {
 	}>
 }
 
+const DEFAULT_ORDER_BY: Prisma.ProposalOrderByWithRelationInput[] = [
+	{ createdAt: 'desc' },
+	{ status: 'asc' },
+]
+
 export class DeliberationService {
 	private userService: UserService
 
@@ -69,13 +78,41 @@ export class DeliberationService {
 		this.userService = new UserService(prisma)
 	}
 
-	async getDeliberationProposals(fundingRoundId: string, userId: string) {
-		if (!fundingRoundId) {
-			throw new AppError('Funding round ID is required', 400)
+	async getDeliberationProposals(
+		fundingRoundId: string,
+		userId: string,
+		options: GetDeliberationProposalsOptions = {},
+	) {
+		if (options) {
+			getDeliberationProposalsOptionsSchema.parse(options)
+		}
+
+		const buildOrderBy = (
+			userGetPublicFundingRoundOptions?: GetDeliberationProposalsOptions,
+		): Prisma.FundingRoundOrderByWithRelationInput[] => {
+			if (!userGetPublicFundingRoundOptions?.sortBy) {
+				return DEFAULT_ORDER_BY
+			}
+
+			// If there is a user sort, put it first, then follow with the default array.
+			const filteredDefault = DEFAULT_ORDER_BY.filter(orderItem => {
+				const key = Object.keys(orderItem)[0]
+				return key !== userGetPublicFundingRoundOptions.sortBy
+			})
+
+			return [
+				{
+					[userGetPublicFundingRoundOptions.sortBy]:
+						userGetPublicFundingRoundOptions.sortOrder,
+				},
+				...filteredDefault,
+			]
 		}
 
 		const fundingRound = await this.prisma.fundingRound.findUnique({
-			where: { id: fundingRoundId },
+			where: {
+				id: fundingRoundId,
+			},
 			include: {
 				deliberationPhase: true,
 				topic: {
@@ -105,6 +142,14 @@ export class DeliberationService {
 			where: {
 				fundingRoundId,
 				status: 'DELIBERATION' as ProposalStatus,
+				...(options.query
+					? {
+							name: {
+								contains: options.query,
+								mode: 'insensitive',
+							},
+						}
+					: {}),
 			},
 			include: {
 				deliberationReviewerVotes: {
@@ -155,6 +200,7 @@ export class DeliberationService {
 					},
 				},
 			},
+			orderBy: buildOrderBy(options.sortBy ? options : undefined),
 		})) as unknown as ProposalWithVotes[]
 
 		// Transform the proposals
@@ -211,6 +257,11 @@ export class DeliberationService {
 					},
 				}))
 
+				const votes = proposal.deliberationReviewerVotes
+				const yesVotes = votes.filter(v => v.recommendation).length
+				const noVotes = votes.filter(v => !v.recommendation).length
+				const isPendingRecommendation = yesVotes == 0 && noVotes == 0
+
 				return {
 					id: proposal.id,
 					title: proposal.title,
@@ -266,13 +317,30 @@ export class DeliberationService {
 						},
 						linkedAccounts: linkedAccountsMetadata,
 					},
+					isPendingRecommendation,
+					isRecommended: yesVotes > noVotes,
 					gptSurveySummary: proposal.GptSurveySummarizerProposal,
 				}
 			}),
 		)
 
+		// TODO: remember to move filters to the database query when pagination is implemented
+		const filteredProposals = transformedProposals.filter(proposal => {
+			switch (options.filterBy) {
+				case 'pending':
+					return proposal.isPendingRecommendation
+				case 'recommended':
+					return proposal.isRecommended
+				case 'not-recommended':
+					return !proposal.isPendingRecommendation && !proposal.isRecommended
+				case 'all':
+				default:
+					return true
+			}
+		})
+
 		return {
-			proposals: transformedProposals,
+			proposals: filteredProposals,
 			pendingCount: transformedProposals.filter(p => !p.hasVoted).length,
 			totalCount: transformedProposals.length,
 		}
