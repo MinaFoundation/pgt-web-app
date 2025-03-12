@@ -506,7 +506,7 @@ export function ConsiderationPhase({
 					</div>
 				)}
 
-				<FundingRoundsControls />
+				<ConsiderationPhaseControls />
 			</header>
 
 			<div className="space-y-6">
@@ -975,7 +975,7 @@ function useConsiderationPhaseSearchParams() {
 	}
 }
 
-function FundingRoundsControls({ disabled }: { disabled?: boolean }) {
+function ConsiderationPhaseControls({ disabled }: { disabled?: boolean }) {
 	const { sortBy, sortOrder, query, setSortBy, setSortOrder, setQuery } =
 		useConsiderationPhaseSearchParams()
 
