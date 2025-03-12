@@ -16,6 +16,9 @@ import {
 	ChevronDown,
 	CircleDashedIcon,
 	NotepadTextIcon,
+	ThumbsUpIcon,
+	ThumbsDownIcon,
+	FilterIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useDeliberationPhase, useDeliberationVote } from '@/hooks'
@@ -36,6 +39,11 @@ import {
 } from '@/components/ui/accordion'
 import { MessageSquare, ExternalLink, Clock } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
+import {
+	GetDeliberationProposalsOptions,
+	getDeliberationProposalsOptionsSchema,
+} from '@/schemas/deliberation'
+import { useQueryState } from 'nuqs'
 
 interface Props {
 	fundingRoundId: string
@@ -51,9 +59,13 @@ interface DialogState {
 export function DeliberationPhase({ fundingRoundId }: Props) {
 	const { user } = useAuth()
 
+	const { filterBy, setFilterBy } = useDeliberationPhaseSearchParams()
+
 	const [proposals, setProposals] = useState([] as DeliberationProposal[])
 
-	const { data, isLoading } = useDeliberationPhase(fundingRoundId)
+	const { data, isLoading } = useDeliberationPhase(fundingRoundId, {
+		filterBy,
+	})
 
 	useEffect(() => {
 		if (!data) return
@@ -265,25 +277,91 @@ export function DeliberationPhase({ fundingRoundId }: Props) {
 		)
 	}
 
+	const tabs: {
+		label: string
+		count: number
+		icon: React.FC<{ className?: string }>
+		tab: GetDeliberationProposalsOptions['filterBy']
+		description: string
+	}[] = [
+		{
+			label: 'Proposals',
+			count: proposals.length,
+			icon: NotepadTextIcon,
+			tab: 'all',
+			description: 'All proposals moved to deliberation.',
+		},
+		{
+			label: 'Recommended',
+			count: proposals.filter(p => p.isRecommended).length,
+			icon: ThumbsUpIcon,
+			tab: 'recommended',
+			description:
+				'These proposals are recommended by reviwers. Community can still vote on these proposals.',
+		},
+		{
+			label: 'Not Recommended',
+			count: proposals.filter(p => p.status === 'rejected').length,
+			icon: ThumbsDownIcon,
+			tab: 'not-recommended',
+			description:
+				'These proposals are not recommended by reviewers. Community can still vote on these proposals.',
+		},
+		{
+			label: 'Pending',
+			count: proposals.filter(p => p.status === 'pending').length,
+			icon: CircleDashedIcon,
+			tab: 'pending',
+			description:
+				'These proposals are still pending reviewers recommendation. Community can still vote on these proposals.',
+		},
+	]
+
 	return (
 		<div className="container mx-auto max-w-7xl px-2 md:px-6">
 			<div className="space-y-8">
-				<div>
-					<h2 className="text-3xl font-bold">Deliberation Phase:</h2>
-					<p>
-						Discuss and refine proposals with the community before final voting.
-					</p>
-					<div className="mt-2 flex gap-2">
-						<Badge variant="outline" className="text-sm">
-							<NotepadTextIcon className="m-1 h-4 w-4" />
-							{totalCount} Proposals
-						</Badge>
-						<Badge variant="outline" className="text-sm">
-							<CircleDashedIcon className="mr-1 h-4 w-4" />
-							{pendingCount} Pending
-						</Badge>
+				<header className="space-y-4">
+					<div>
+						<h2 className="text-3xl font-bold">Deliberation Phase:</h2>
+						<p>
+							Discuss and refine proposals with the community before final
+							voting.
+						</p>
 					</div>
-				</div>
+
+					<div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+						{tabs.map(tab => (
+							<Button
+								key={tab.tab}
+								variant="outline"
+								onClick={() => setFilterBy(tab.tab ?? null)}
+								className={cn(
+									'flex items-center gap-1 font-semibold hover:bg-secondary/10',
+									filterBy === tab.tab
+										? 'border border-secondary/40 bg-secondary/20 text-secondary-dark hover:bg-secondary/20 hover:text-secondary-dark'
+										: 'text-muted-foreground hover:text-muted-foreground',
+								)}
+							>
+								<tab.icon className="h-4 w-4" />
+								{tab.count} {tab.label}
+							</Button>
+						))}
+					</div>
+
+					{filterBy !== 'all' && (
+						<div className="rounded-md border border-gray-200 p-4">
+							<h4 className="text-lg font-bold">
+								<span className="text-muted-foreground">
+									<FilterIcon className="inline h-4 w-4" /> Filtering by:
+								</span>{' '}
+								<span className="capitalize">{filterBy}</span>
+							</h4>
+							<p className="text-sm text-muted-foreground">
+								{tabs.find(tab => tab.tab === filterBy)?.description}
+							</p>
+						</div>
+					)}
+				</header>
 
 				<div className="space-y-6">
 					{sortedProposals.map((proposal: DeliberationProposal) => (
@@ -592,4 +670,40 @@ export function DeliberationPhase({ fundingRoundId }: Props) {
 			/>
 		</div>
 	)
+}
+
+function useDeliberationPhaseSearchParams() {
+	const [sortBy, setSortBy] = useQueryState<
+		GetDeliberationProposalsOptions['sortBy']
+	>('sortBy', {
+		defaultValue: 'createdAt',
+		parse: value =>
+			getDeliberationProposalsOptionsSchema.shape.sortBy.parse(value),
+	})
+	const [sortOrder, setSortOrder] = useQueryState<
+		GetDeliberationProposalsOptions['sortOrder']
+	>('sortOrder', {
+		defaultValue: 'desc',
+		parse: value =>
+			getDeliberationProposalsOptionsSchema.shape.sortOrder.parse(value),
+	})
+	const [query, setQuery] = useQueryState('query')
+	const [filterBy, setFilterBy] = useQueryState<
+		GetDeliberationProposalsOptions['filterBy']
+	>('filterBy', {
+		defaultValue: 'all',
+		parse: value =>
+			getDeliberationProposalsOptionsSchema.shape.filterBy.parse(value),
+	})
+
+	return {
+		filterBy,
+		setFilterBy,
+		sortBy,
+		setSortBy,
+		sortOrder,
+		setSortOrder,
+		query,
+		setQuery,
+	}
 }
