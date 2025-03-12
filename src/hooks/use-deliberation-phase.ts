@@ -1,15 +1,9 @@
 'use client'
 
-import type { DeliberationProposal } from '@/types/deliberation'
 import { useQuery } from '@tanstack/react-query'
 import logger from '@/logging'
 import { GetDeliberationProposalsOptions } from '@/schemas/deliberation'
-
-interface DeliberationPhaseResponse {
-	proposals: DeliberationProposal[]
-	pendingCount: number
-	totalCount: number
-}
+import { DeliberationPhaseProposalsResponse } from '@/services'
 
 export function useDeliberationPhase(
 	fundingRoundId: string,
@@ -25,7 +19,7 @@ export function useDeliberationPhase(
 		url += `?${searchParams.toString()}`
 	}
 
-	return useQuery<DeliberationPhaseResponse>({
+	return useQuery<DeliberationPhaseProposalsResponse>({
 		queryKey: [url],
 		queryFn: async () => {
 			const response = await fetch(url)
