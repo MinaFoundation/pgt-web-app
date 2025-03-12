@@ -196,18 +196,6 @@ export function DeliberationPhase({ fundingRoundId }: Props) {
 		})
 	}
 
-	if (isLoading) {
-		return (
-			<div className="container mx-auto max-w-7xl p-6">
-				<Card>
-					<CardContent className="p-6">
-						<div className="text-center">Loading proposals...</div>
-					</CardContent>
-				</Card>
-			</div>
-		)
-	}
-
 	return (
 		<div className="container mx-auto max-w-7xl px-2 md:px-6">
 			<div className="space-y-8">
@@ -219,34 +207,38 @@ export function DeliberationPhase({ fundingRoundId }: Props) {
 				/>
 
 				<div className="space-y-6">
-					{sortedProposals.map((proposal: DeliberationProposal) => (
-						<DeliberationProposalCard
-							key={proposal.id}
-							proposal={proposal}
-							onEdit={() => openEditDialog(proposal)}
-							onReviewerRecommend={() =>
-								setDialogProps({
-									open: true,
-									proposalId: proposal.id,
-									mode: 'recommend',
-								})
-							}
-							onReviewerNotRecommend={() =>
-								setDialogProps({
-									open: true,
-									proposalId: proposal.id,
-									mode: 'not-recommend',
-								})
-							}
-							onCommunityDeliberate={() =>
-								setDialogProps({
-									open: true,
-									proposalId: proposal.id,
-									mode: 'community',
-								})
-							}
-						/>
-					))}
+					{isLoading ? (
+						<DeliberationProposalsSkeleton />
+					) : (
+						sortedProposals.map((proposal: DeliberationProposal) => (
+							<DeliberationProposalCard
+								key={proposal.id}
+								proposal={proposal}
+								onEdit={() => openEditDialog(proposal)}
+								onReviewerRecommend={() =>
+									setDialogProps({
+										open: true,
+										proposalId: proposal.id,
+										mode: 'recommend',
+									})
+								}
+								onReviewerNotRecommend={() =>
+									setDialogProps({
+										open: true,
+										proposalId: proposal.id,
+										mode: 'not-recommend',
+									})
+								}
+								onCommunityDeliberate={() =>
+									setDialogProps({
+										open: true,
+										proposalId: proposal.id,
+										mode: 'community',
+									})
+								}
+							/>
+						))
+					)}
 				</div>
 			</div>
 
@@ -871,4 +863,17 @@ function DeliberationPhaseControls({ disabled }: { disabled?: boolean }) {
 			</div>
 		</section>
 	)
+}
+
+function DeliberationProposalsSkeleton() {
+	return new Array(2).fill(null).map((_, index) => (
+		<Card key={index} className="animate-pulse">
+			<CardContent className="p-6">
+				<div className="animate-pulse space-y-4">
+					<div className="h-6 w-1/2 animate-pulse rounded bg-gray-200"></div>
+					<div className="h-4 w-1/4 animate-pulse rounded bg-gray-200"></div>
+				</div>
+			</CardContent>
+		</Card>
+	))
 }
