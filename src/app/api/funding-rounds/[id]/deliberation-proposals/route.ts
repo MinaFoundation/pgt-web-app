@@ -9,12 +9,6 @@ import { getDeliberationProposalsOptionsSchema } from '@/schemas/deliberation'
 
 const deliberationService = new DeliberationService(prisma)
 
-type ServiceResponse = {
-	proposals: Array<DeliberationProposal>
-	pendingCount: number
-	totalCount: number
-}
-
 export async function GET(
 	request: NextRequest,
 	{ params }: { params: Promise<{ id: string }> },
@@ -40,11 +34,11 @@ export async function GET(
 		}
 
 		// Get proposals first
-		const { proposals } = (await deliberationService.getDeliberationProposals(
+		const { proposals } = await deliberationService.getDeliberationProposals(
 			fundingRoundId,
 			user.id,
 			queryOptions,
-		)) as ServiceResponse
+		)
 
 		const pendingCount = proposals.reduce(
 			(count: number, p: DeliberationProposal) =>
