@@ -286,14 +286,14 @@ export function DeliberationPhase({ fundingRoundId }: Props) {
 	}[] = [
 		{
 			label: 'Proposals',
-			count: proposals.length,
+			count: data!.totalCount,
 			icon: NotepadTextIcon,
 			tab: 'all',
 			description: 'All proposals moved to deliberation.',
 		},
 		{
 			label: 'Recommended',
-			count: proposals.filter(p => p.isRecommended).length,
+			count: data!.recommendedCount,
 			icon: ThumbsUpIcon,
 			tab: 'recommended',
 			description:
@@ -301,7 +301,7 @@ export function DeliberationPhase({ fundingRoundId }: Props) {
 		},
 		{
 			label: 'Not Recommended',
-			count: proposals.filter(p => p.status === 'rejected').length,
+			count: data!.notRecommendedCount,
 			icon: ThumbsDownIcon,
 			tab: 'not-recommended',
 			description:
@@ -309,7 +309,7 @@ export function DeliberationPhase({ fundingRoundId }: Props) {
 		},
 		{
 			label: 'Pending',
-			count: proposals.filter(p => p.status === 'pending').length,
+			count: data!.pendingRecommendationCount,
 			icon: CircleDashedIcon,
 			tab: 'pending',
 			description:
