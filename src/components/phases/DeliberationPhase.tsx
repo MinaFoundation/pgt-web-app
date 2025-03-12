@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import {
 	Card,
 	CardHeader,
@@ -19,6 +19,9 @@ import {
 	ThumbsUpIcon,
 	ThumbsDownIcon,
 	FilterIcon,
+	SearchIcon,
+	ArrowDownNarrowWideIcon,
+	ArrowDownWideNarrowIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useDeliberationPhase, useDeliberationVote } from '@/hooks'
@@ -44,6 +47,15 @@ import {
 	getDeliberationProposalsOptionsSchema,
 } from '@/schemas/deliberation'
 import { useQueryState } from 'nuqs'
+import { Input } from '../ui/input'
+import {
+	Select,
+	SelectContent,
+	SelectGroup,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '../ui/select'
 
 interface Props {
 	fundingRoundId: string
@@ -59,12 +71,16 @@ interface DialogState {
 export function DeliberationPhase({ fundingRoundId }: Props) {
 	const { user } = useAuth()
 
-	const { filterBy, setFilterBy } = useDeliberationPhaseSearchParams()
+	const { query, sortBy, sortOrder, filterBy, setFilterBy } =
+		useDeliberationPhaseSearchParams()
 
 	const [proposals, setProposals] = useState([] as DeliberationProposal[])
 
 	const { data, isLoading } = useDeliberationPhase(fundingRoundId, {
+		query,
 		filterBy,
+		sortBy,
+		sortOrder,
 	})
 
 	useEffect(() => {
@@ -361,6 +377,8 @@ export function DeliberationPhase({ fundingRoundId }: Props) {
 							</p>
 						</div>
 					)}
+
+					<DeliberationPhaseControls />
 				</header>
 
 				<div className="space-y-6">
@@ -706,4 +724,119 @@ function useDeliberationPhaseSearchParams() {
 		query,
 		setQuery,
 	}
+}
+
+const SORT_OPTIONS: {
+	value: NonNullable<GetDeliberationProposalsOptions['sortBy']>
+	label: string
+}[] = [
+	{ value: 'createdAt', label: 'Date' },
+	{ value: 'status', label: 'Status' },
+]
+
+function DeliberationPhaseControls({ disabled }: { disabled?: boolean }) {
+	const { sortBy, sortOrder, query, setSortBy, setSortOrder, setQuery } =
+		useDeliberationPhaseSearchParams()
+
+	const [searchQuery, setSearchQuery] = useState(query || '')
+
+	const handleSearchKeyDown = useCallback(
+		(e: React.KeyboardEvent<HTMLInputElement>) => {
+			if (e.key === 'Enter') {
+				setQuery(e.currentTarget.value)
+			}
+		},
+		[setQuery],
+	)
+
+	const handleSortByChange = useCallback(
+		(value: NonNullable<GetDeliberationProposalsOptions['sortBy']>) => {
+			setSortBy(value)
+		},
+		[setSortBy],
+	)
+
+	const handleSortOrderChange = useCallback(
+		(value: NonNullable<GetDeliberationProposalsOptions['sortOrder']>) => {
+			setSortOrder(value)
+		},
+		[setSortOrder],
+	)
+
+	return (
+		<section className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+			{/* Search Form */}
+			<form
+				onSubmit={e => {
+					e.preventDefault()
+				}}
+				className="relative w-full md:max-w-md"
+				aria-label="Search funding rounds"
+			>
+				<label htmlFor="search-input" className="sr-only">
+					Search funding rounds
+				</label>
+				<SearchIcon
+					className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+					aria-hidden="true"
+				/>
+				<Input
+					id="search-input"
+					type="search"
+					placeholder="Search rounds..."
+					value={searchQuery}
+					onKeyDown={handleSearchKeyDown}
+					onChange={e => setSearchQuery(e.target.value)}
+					className="w- max-w-[420px] pl-9"
+					disabled={disabled}
+				/>
+			</form>
+
+			{/* Sorting Controls */}
+			<div className="flex gap-2">
+				{/* Sort by */}
+				<Select
+					value={sortBy || undefined}
+					onValueChange={handleSortByChange}
+					disabled={disabled}
+				>
+					<SelectTrigger className="w-[90px]" aria-label="Sort by">
+						<SelectValue placeholder="Sort by" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectGroup>
+							{SORT_OPTIONS.map(option => (
+								<SelectItem key={option.value} value={option.value}>
+									{option.label}
+								</SelectItem>
+							))}
+						</SelectGroup>
+					</SelectContent>
+				</Select>
+
+				{/* Sort order */}
+				<Select
+					value={sortOrder || undefined}
+					onValueChange={handleSortOrderChange}
+					disabled={disabled}
+				>
+					<SelectTrigger className="w-[50px]" aria-label="Sort order">
+						<SelectValue placeholder="Order" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectGroup>
+							<SelectItem value="asc">
+								<ArrowDownNarrowWideIcon className="mr-1 inline h-5 w-5" />
+								Asc
+							</SelectItem>
+							<SelectItem value="desc">
+								<ArrowDownWideNarrowIcon className="mr-1 inline h-5 w-5" />
+								Desc
+							</SelectItem>
+						</SelectGroup>
+					</SelectContent>
+				</Select>
+			</div>
+		</section>
+	)
 }
