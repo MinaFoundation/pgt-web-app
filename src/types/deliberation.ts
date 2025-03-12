@@ -23,7 +23,8 @@ export interface GptSurveySummary {
 	summaryUpdatedAt: Date
 }
 
-export interface DeliberationProposal extends ConsiderationProposal {
+export interface DeliberationProposal
+	extends Omit<ConsiderationProposal, 'status' | 'currentPhase' | 'voteStats'> {
 	reviewerComments: DeliberationComment[]
 	userDeliberation?: DeliberationVote
 	hasVoted: boolean
