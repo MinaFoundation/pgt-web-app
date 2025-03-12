@@ -24,7 +24,8 @@ export async function GET(
 
 		const { data: queryOptions = {}, error } =
 			getDeliberationProposalsOptionsSchema.safeParse({
-				filterName: request.nextUrl.searchParams.get('filterName'),
+				query: request.nextUrl.searchParams.get('query'),
+				filterBy: request.nextUrl.searchParams.get('filterBy'),
 				sortBy: request.nextUrl.searchParams.get('sortBy'),
 				sortOrder: request.nextUrl.searchParams.get('sortOrder'),
 			})
