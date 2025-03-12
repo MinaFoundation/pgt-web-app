@@ -3,6 +3,8 @@
 import { Icons } from '@/components/ui/icons'
 import { Card } from '@/components/ui/card'
 import Link from 'next/link'
+import { useState } from 'react'
+import { Loader2 } from 'lucide-react' // Import a spinner icon
 
 interface AdminOption {
 	title: string
@@ -79,6 +81,12 @@ const adminOptions: AdminOption[] = [
 ]
 
 export function AdminDashboardComponent() {
+	const [loadingHref, setLoadingHref] = useState<string | null>(null)
+
+	const handleClick = (href: string) => {
+		setLoadingHref(href) // Set loading state for clicked card
+	}
+
 	return (
 		<div className="container mx-auto max-w-7xl space-y-8 p-6">
 			<div className="space-y-2">
@@ -91,13 +99,27 @@ export function AdminDashboardComponent() {
 			<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
 				{adminOptions.map(option => {
 					const Icon = Icons[option.icon]
+					const isLoading = loadingHref === option.href
+
 					return (
-						<Link key={option.href} href={option.href}>
-							<Card className="h-full cursor-pointer p-6 transition-all hover:scale-[1.02] hover:shadow-md">
+						<Link
+							key={option.href}
+							href={option.href}
+							onClick={() => handleClick(option.href)}
+						>
+							<Card
+								className={`relative h-full cursor-pointer p-6 transition-all hover:scale-[1.02] hover:shadow-md ${
+									isLoading ? 'pointer-events-none opacity-70' : ''
+								}`}
+							>
 								<div className="flex h-full flex-col space-y-4">
 									<div className="flex items-center gap-4">
 										<div className={`rounded-lg p-2 ${option.color}`}>
-											<Icon className="h-5 w-5" />
+											{isLoading ? (
+												<Loader2 className="h-5 w-5 animate-spin" />
+											) : (
+												<Icon className="h-5 w-5" />
+											)}
 										</div>
 										<div className="space-y-1">
 											<h2 className="text-xl font-semibold tracking-tight">
