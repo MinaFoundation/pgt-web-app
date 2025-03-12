@@ -260,6 +260,8 @@ export class DeliberationService {
 				const votes = proposal.deliberationReviewerVotes
 				const yesVotes = votes.filter(v => v.recommendation).length
 				const noVotes = votes.filter(v => !v.recommendation).length
+				const isRecommended = yesVotes > noVotes
+				const isNotRecommended = noVotes > yesVotes
 				const isPendingRecommendation = yesVotes == 0 && noVotes == 0
 
 				return {
@@ -318,7 +320,8 @@ export class DeliberationService {
 						linkedAccounts: linkedAccountsMetadata,
 					},
 					isPendingRecommendation,
-					isRecommended: yesVotes > noVotes,
+					isRecommended,
+					isNotRecommended,
 					gptSurveySummary: proposal.GptSurveySummarizerProposal,
 				}
 			}),

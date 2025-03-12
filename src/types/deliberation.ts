@@ -44,6 +44,9 @@ export interface DeliberationProposal extends ConsiderationProposal {
 		}>
 	}
 	gptSurveySummary: GptSurveySummary | null
+	isRecommended: boolean
+	isNotRecommended: boolean
+	isPendingRecommendation: boolean
 }
 
 export interface ProposalComment {
