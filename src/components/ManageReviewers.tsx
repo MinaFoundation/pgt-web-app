@@ -37,6 +37,7 @@ interface ReviewerGroup {
 
 export function ManageReviewersComponent() {
 	const [groups, setGroups] = useState<ReviewerGroup[]>([])
+	const [loading, setLoading] = useState(true)
 	const { toast } = useToast()
 
 	const fetchGroups = useCallback(async () => {
@@ -51,6 +52,8 @@ export function ManageReviewersComponent() {
 				description: 'Failed to load reviewer groups',
 				variant: 'destructive',
 			})
+		} finally {
+			setLoading(false)
 		}
 	}, [toast])
 
@@ -58,7 +61,6 @@ export function ManageReviewersComponent() {
 		fetchGroups()
 	}, [fetchGroups])
 
-	// Flatten all members from all groups for display
 	const allMembers = groups.flatMap(group =>
 		group.members.map(member => ({
 			...member.user,
@@ -89,67 +91,54 @@ export function ManageReviewersComponent() {
 							</TableRow>
 						</TableHeader>
 						<TableBody>
-							{allMembers.map(member => (
-								<TableRow key={member.id}>
-									<TableCell className="font-medium">
-										<div className="flex items-center gap-2">
-											<span>{member.metadata.username}</span>
-										</div>
-									</TableCell>
-									<TableCell>{member.metadata.username}</TableCell>
-									<TableCell>{member.metadata.username}@example.com</TableCell>
-									<TableCell>
-										<Badge variant="secondary">Pending Implementation</Badge>
-									</TableCell>
-									<TableCell>
-										<Badge variant="outline">{member.groupName}</Badge>
-									</TableCell>
-									<TableCell className="text-right">
-										<Button variant="ghost" size="sm" disabled>
-											Edit Profile
-										</Button>
+							{loading ? (
+								<TableRow>
+									<TableCell colSpan={6} className="py-4 text-center">
+										Loading reviewers...
 									</TableCell>
 								</TableRow>
-							))}
+							) : (
+								allMembers.map((member, index) => (
+									<TableRow key={`${member.id}-${index}`}>
+										<TableCell className="font-medium">
+											<div className="flex items-center gap-2">
+												<span>{member.metadata.username}</span>
+											</div>
+										</TableCell>
+										<TableCell>{member.metadata.username}</TableCell>
+										<TableCell>
+											{member.metadata.username}@example.com
+										</TableCell>
+										<TableCell>
+											<Badge variant="secondary">Pending Implementation</Badge>
+										</TableCell>
+										<TableCell>
+											<Badge variant="outline">{member.groupName}</Badge>
+										</TableCell>
+										<TableCell className="text-right">
+											<Button variant="ghost" size="sm" disabled>
+												Edit Profile
+											</Button>
+										</TableCell>
+									</TableRow>
+								))
+							)}
 						</TableBody>
 					</Table>
 				</div>
 
 				<div className="flex flex-wrap gap-4">
-					<Button variant="outline" className="gap-2" disabled>
+					<Button variant="outline" className="gap-2" disabled={loading}>
 						<UserPlus className="h-4 w-4" />
 						Add Reviewer
 					</Button>
 
 					<Link href="/admin/reviewers/group/new">
-						<Button variant="outline" className="gap-2">
+						<Button variant="outline" className="gap-2" disabled={loading}>
 							<Users className="h-4 w-4" />
 							Add Group
 						</Button>
 					</Link>
-
-					<DropdownMenu>
-						<DropdownMenuTrigger asChild>
-							<Button variant="secondary" className="gap-2">
-								Edit a Group
-								<ChevronDown className="h-4 w-4" />
-							</Button>
-						</DropdownMenuTrigger>
-						<DropdownMenuContent align="end">
-							{groups.map(group => (
-								<DropdownMenuItem key={group.id} asChild>
-									<Link href={`/admin/reviewers/group/${group.id}`}>
-										{group.name}
-									</Link>
-								</DropdownMenuItem>
-							))}
-							{groups.length === 0 && (
-								<DropdownMenuItem disabled>
-									No groups available
-								</DropdownMenuItem>
-							)}
-						</DropdownMenuContent>
-					</DropdownMenu>
 				</div>
 
 				<div>
