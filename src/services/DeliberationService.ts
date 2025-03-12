@@ -152,7 +152,7 @@ export class DeliberationService {
 				status: 'DELIBERATION' as ProposalStatus,
 				...(options.query
 					? {
-							name: {
+							title: {
 								contains: options.query,
 								mode: 'insensitive',
 							},
