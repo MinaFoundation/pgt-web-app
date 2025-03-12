@@ -57,10 +57,6 @@ import {
 	SelectValue,
 } from '../ui/select'
 
-interface Props {
-	fundingRoundId: string
-}
-
 interface DialogState {
 	open: boolean
 	proposalId?: number
@@ -68,7 +64,11 @@ interface DialogState {
 	existingVote?: DeliberationVote
 }
 
-export function DeliberationPhase({ fundingRoundId }: Props) {
+export function DeliberationPhase({
+	fundingRoundId,
+}: {
+	fundingRoundId: string
+}) {
 	const { user } = useAuth()
 
 	const { query, sortBy, sortOrder, filterBy, setFilterBy } =
@@ -197,49 +197,47 @@ export function DeliberationPhase({ fundingRoundId }: Props) {
 	}
 
 	return (
-		<div className="container mx-auto max-w-7xl px-2 md:px-6">
-			<div className="space-y-8">
-				<DeliberationPhaseHeader
-					totalCount={data?.totalCount}
-					recommendedCount={data?.recommendedCount}
-					notRecommendedCount={data?.notRecommendedCount}
-					pendingRecommendationCount={data?.pendingRecommendationCount}
-				/>
+		<div className="space-y-8">
+			<DeliberationPhaseHeader
+				totalCount={data?.totalCount}
+				recommendedCount={data?.recommendedCount}
+				notRecommendedCount={data?.notRecommendedCount}
+				pendingRecommendationCount={data?.pendingRecommendationCount}
+			/>
 
-				<div className="space-y-6">
-					{isLoading ? (
-						<DeliberationProposalsSkeleton />
-					) : (
-						sortedProposals.map((proposal: DeliberationProposal) => (
-							<DeliberationProposalCard
-								key={proposal.id}
-								proposal={proposal}
-								onEdit={() => openEditDialog(proposal)}
-								onReviewerRecommend={() =>
-									setDialogProps({
-										open: true,
-										proposalId: proposal.id,
-										mode: 'recommend',
-									})
-								}
-								onReviewerNotRecommend={() =>
-									setDialogProps({
-										open: true,
-										proposalId: proposal.id,
-										mode: 'not-recommend',
-									})
-								}
-								onCommunityDeliberate={() =>
-									setDialogProps({
-										open: true,
-										proposalId: proposal.id,
-										mode: 'community',
-									})
-								}
-							/>
-						))
-					)}
-				</div>
+			<div className="space-y-6">
+				{isLoading ? (
+					<DeliberationProposalsSkeleton />
+				) : (
+					sortedProposals.map((proposal: DeliberationProposal) => (
+						<DeliberationProposalCard
+							key={proposal.id}
+							proposal={proposal}
+							onEdit={() => openEditDialog(proposal)}
+							onReviewerRecommend={() =>
+								setDialogProps({
+									open: true,
+									proposalId: proposal.id,
+									mode: 'recommend',
+								})
+							}
+							onReviewerNotRecommend={() =>
+								setDialogProps({
+									open: true,
+									proposalId: proposal.id,
+									mode: 'not-recommend',
+								})
+							}
+							onCommunityDeliberate={() =>
+								setDialogProps({
+									open: true,
+									proposalId: proposal.id,
+									mode: 'community',
+								})
+							}
+						/>
+					))
+				)}
 			</div>
 
 			<DeliberationDialog
