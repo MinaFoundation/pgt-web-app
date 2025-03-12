@@ -1,6 +1,6 @@
 'use client'
 import { type PhaseStatus } from '@/types/phase-summary'
-import { Suspense, useState, type FC } from 'react'
+import { useState, type FC } from 'react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import {
@@ -38,7 +38,7 @@ export const PhaseSummaryCard: FC<PhaseInfo> = ({
 	const CardWrapper = isAccessible ? Link : 'div'
 	const [isLoading, setIsLoading] = useState(false)
 
-	const handleClick = (e: React.MouseEvent<HTMLElement>) => {
+	const handleClick = () => {
 		setIsLoading(true)
 	}
 
@@ -47,18 +47,23 @@ export const PhaseSummaryCard: FC<PhaseInfo> = ({
 			href={href}
 			onClick={handleClick}
 			className={cn(
-				'block transition-all duration-200',
+				'relative block transition-all duration-200',
 				isAccessible && 'hover:shadow-md',
+				isLoading && 'pointer-events-none', // Prevents multiple clicks
 			)}
 		>
-			<Card className={cn('relative', !isAccessible && 'opacity-75')}>
+			<Card
+				className={cn(
+					'relative overflow-hidden',
+					!isAccessible && 'opacity-75',
+				)}
+			>
 				<CardHeader>
 					<div className="flex items-center justify-between">
 						<div className="flex items-center gap-2">
 							{icon}
 							<CardTitle className="text-lg">{title}</CardTitle>
 						</div>
-						{isLoading && <Icons.spinner className="h-4 w-4 animate-spin" />}
 						<Badge
 							variant={
 								status === 'ended'
@@ -94,6 +99,13 @@ export const PhaseSummaryCard: FC<PhaseInfo> = ({
 						</div>
 					)}
 				</CardContent>
+
+				{/* Loading Overlay */}
+				{isLoading && (
+					<div className="absolute inset-0 flex items-center justify-center bg-white/70 backdrop-blur-sm">
+						<Icons.spinner className="h-6 w-6 animate-spin text-gray-600" />
+					</div>
+				)}
 			</Card>
 		</CardWrapper>
 	)
