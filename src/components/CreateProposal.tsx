@@ -363,7 +363,7 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 			<Form {...form}>
 				<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
 					{/* Section 1: Proposal Title */}
-					<section className="rounded-lg border border-gray-200 bg-card/50 p-8">
+					<section className="rounded-lg border border-gray-200 bg-card/50 p-4 md:p-8">
 						<h2 className="mb-4 text-xl font-semibold">1. Proposal Title</h2>
 						<div className="space-y-4">
 							<FormField
@@ -393,7 +393,7 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 					</section>
 
 					{/* Section 2: Overview */}
-					<section className="rounded-lg border border-gray-200 bg-card/50 p-8">
+					<section className="rounded-lg border border-gray-200 bg-card/50 p-4 md:p-8">
 						<h2 className="mb-4 text-xl font-semibold">2. Overview</h2>
 						<div className="space-y-4">
 							<FormField
@@ -453,7 +453,7 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 					</section>
 
 					{/* Section 3: Problem Statement */}
-					<section className="rounded-lg border border-gray-200 bg-card/50 p-8">
+					<section className="rounded-lg border border-gray-200 bg-card/50 p-4 md:p-8">
 						<h2 className="mb-4 text-xl font-semibold">3. Problem Statement</h2>
 						<div className="space-y-4">
 							<FormField
@@ -513,7 +513,7 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 					</section>
 
 					{/* Section 4: Proposed Solution */}
-					<section className="rounded-lg border border-gray-200 bg-card/50 p-8">
+					<section className="rounded-lg border border-gray-200 bg-card/50 p-4 md:p-8">
 						<h2 className="mb-4 text-xl font-semibold">4. Proposed Solution</h2>
 						<div className="space-y-4">
 							<FormField
@@ -573,7 +573,7 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 					</section>
 
 					{/* Section 5: Expected Impact */}
-					<section className="rounded-lg border border-gray-200 bg-card/50 p-8">
+					<section className="rounded-lg border border-gray-200 bg-card/50 p-4 md:p-8">
 						<h2 className="mb-4 text-xl font-semibold">5. Expected Impact</h2>
 						<div className="space-y-4">
 							<FormField
@@ -633,7 +633,7 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 					</section>
 
 					{/* Section 6: Budget Request */}
-					<section className="rounded-lg border border-gray-200 bg-card/50 p-8">
+					<section className="rounded-lg border border-gray-200 bg-card/50 p-4 md:p-8">
 						<h2 className="mb-4 text-xl font-semibold">6. Budget Request</h2>
 						<div className="space-y-4">
 							<FormField
@@ -696,7 +696,7 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 					</section>
 
 					{/* Section 7: Milestones and Timeline */}
-					<section className="rounded-lg border border-gray-200 bg-card/50 p-8">
+					<section className="rounded-lg border border-gray-200 bg-card/50 p-4 md:p-8">
 						<h2 className="mb-4 text-xl font-semibold">
 							7. Milestones and Timeline
 						</h2>
@@ -775,7 +775,7 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 					</section>
 
 					{/* Section 8: Team Information */}
-					<section className="rounded-lg border border-gray-200 bg-card/50 p-8">
+					<section className="rounded-lg border border-gray-200 bg-card/50 p-4 md:p-8">
 						<h2 className="mb-4 text-xl font-semibold">8. Team Information</h2>
 						<div className="space-y-4">
 							<FormField
@@ -835,7 +835,7 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 					</section>
 
 					{/* Section 9: Risks and Mitigation */}
-					<section className="rounded-lg border border-gray-200 bg-card/50 p-8">
+					<section className="rounded-lg border border-gray-200 bg-card/50 p-4 md:p-8">
 						<h2 className="mb-4 text-xl font-semibold">
 							9. Risks and Mitigation
 						</h2>
@@ -897,7 +897,7 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 					</section>
 
 					{/* Section 10: Contact Information */}
-					<section className="rounded-lg border border-gray-200 bg-card/50 p-8">
+					<section className="rounded-lg border border-gray-200 bg-card/50 p-4 md:p-8">
 						<h2 className="mb-4 text-xl font-semibold">
 							10. About the Submitter
 						</h2>
