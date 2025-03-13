@@ -649,13 +649,17 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 												className="bg-white"
 												type="text"
 												{...field}
+												value={formatNumberWithCommas(field.value)}
+												onChange={e =>
+													field.onChange(parseNumber(e.target.value))
+												}
 												invalid={fieldState.invalid}
 											/>
 										</FormControl>
 										<FormDescription className="flex flex-col md:flex-row md:justify-between">
 											<FormMessage />
 											<div className="flex flex-1 justify-end">
-												Enter amount in MINA (e.g., 10000)
+												Enter amount in MINA (e.g., 10,000)
 											</div>
 										</FormDescription>
 									</FormItem>
@@ -715,7 +719,8 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 										<FormDescription className="flex flex-col md:flex-row md:justify-between">
 											<FormMessage />
 											<div className="flex flex-1 justify-end">
-												{getMaxLengthForField('milestones') - field.value.length}{' '}
+												{getMaxLengthForField('milestones') -
+													field.value.length}{' '}
 												characters remaining
 											</div>
 										</FormDescription>
@@ -791,7 +796,8 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 										<FormDescription className="flex flex-col md:flex-row md:justify-between">
 											<FormMessage />
 											<div className="flex flex-1 justify-end">
-												{getMaxLengthForField('teamMembers') - field.value.length}{' '}
+												{getMaxLengthForField('teamMembers') -
+													field.value.length}{' '}
 												characters remaining
 											</div>
 										</FormDescription>
@@ -1003,7 +1009,8 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 										<FormDescription className="flex flex-col md:flex-row md:justify-between">
 											<FormMessage />
 											<div className="flex flex-1 justify-end">
-												{getMaxLengthForField('otherLinks') - field.value.length}{' '}
+												{getMaxLengthForField('otherLinks') -
+													field.value.length}{' '}
 												characters remaining
 											</div>
 										</FormDescription>
@@ -1033,4 +1040,20 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 			</Form>
 		</div>
 	)
+}
+
+// Function to format number with commas
+const formatNumberWithCommas = (value: number | string) => {
+	// Remove non-numeric characters except for the decimal point
+	const numericValue = value.toString().replace(/[^0-9.]/g, '')
+	const parts = numericValue.split('.')
+	// Add commas to the integer part
+	parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+	// Join back with decimal part if it exists
+	return parts.join('.')
+}
+
+// Function to parse formatted number back to raw value
+const parseNumber = (value: string) => {
+	return value.replace(/,/g, '') // Remove commas for raw numeric value
 }
