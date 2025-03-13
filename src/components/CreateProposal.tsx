@@ -369,11 +369,15 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 							<FormField
 								control={form.control}
 								name="title"
-								render={({ field }) => (
+								render={({ field, fieldState }) => (
 									<FormItem>
 										<FormLabel className="text-lg font-medium">Title</FormLabel>
 										<FormControl>
-											<Input className="bg-white" {...field} />
+											<Input
+												className="bg-white"
+												{...field}
+												invalid={fieldState.invalid}
+											/>
 										</FormControl>
 										<FormDescription className="flex justify-end">
 											{getMaxLengthForField('title') - field.value.length}{' '}
@@ -393,13 +397,17 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 							<FormField
 								control={form.control}
 								name="proposalSummary"
-								render={({ field }) => (
+								render={({ field, fieldState }) => (
 									<FormItem>
 										<FormLabel className="text-lg font-medium">
 											Proposal Summary
 										</FormLabel>
 										<FormControl>
-											<Textarea className="min-h-[100px] bg-white" {...field} />
+											<Textarea
+												className="min-h-[100px] bg-white"
+												{...field}
+												invalid={fieldState.invalid}
+											/>
 										</FormControl>
 										<FormDescription className="flex justify-end">
 											{getMaxLengthForField('proposalSummary') -
@@ -414,13 +422,17 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 							<FormField
 								control={form.control}
 								name="keyObjectives"
-								render={({ field }) => (
+								render={({ field, fieldState }) => (
 									<FormItem>
 										<FormLabel className="text-lg font-medium">
 											Key Objectives
 										</FormLabel>
 										<FormControl>
-											<Textarea className="min-h-[100px] bg-white" {...field} />
+											<Textarea
+												className="min-h-[100px] bg-white"
+												{...field}
+												invalid={fieldState.invalid}
+											/>
 										</FormControl>
 										<FormDescription className="flex justify-end">
 											{getMaxLengthForField('keyObjectives') -
@@ -441,13 +453,17 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 							<FormField
 								control={form.control}
 								name="problemStatement"
-								render={({ field }) => (
+								render={({ field, fieldState }) => (
 									<FormItem>
 										<FormLabel className="text-lg font-medium">
 											What is the problem?
 										</FormLabel>
 										<FormControl>
-											<Textarea className="min-h-[100px] bg-white" {...field} />
+											<Textarea
+												className="min-h-[100px] bg-white"
+												{...field}
+												invalid={fieldState.invalid}
+											/>
 										</FormControl>
 										<FormDescription className="flex justify-end">
 											{getMaxLengthForField('problemStatement') -
@@ -462,13 +478,17 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 							<FormField
 								control={form.control}
 								name="problemImportance"
-								render={({ field }) => (
+								render={({ field, fieldState }) => (
 									<FormItem>
 										<FormLabel className="text-lg font-medium">
 											Why does it matter?
 										</FormLabel>
 										<FormControl>
-											<Textarea className="min-h-[100px] bg-white" {...field} />
+											<Textarea
+												className="min-h-[100px] bg-white"
+												{...field}
+												invalid={fieldState.invalid}
+											/>
 										</FormControl>
 										<FormDescription className="flex justify-end">
 											{getMaxLengthForField('problemImportance') -
@@ -489,13 +509,17 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 							<FormField
 								control={form.control}
 								name="proposedSolution"
-								render={({ field }) => (
+								render={({ field, fieldState }) => (
 									<FormItem>
 										<FormLabel className="text-lg font-medium">
 											What will you do?
 										</FormLabel>
 										<FormControl>
-											<Textarea className="min-h-[150px] bg-white" {...field} />
+											<Textarea
+												className="min-h-[150px] bg-white"
+												{...field}
+												invalid={fieldState.invalid}
+											/>
 										</FormControl>
 										<FormDescription className="flex justify-end">
 											{getMaxLengthForField('proposedSolution') -
@@ -510,13 +534,17 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 							<FormField
 								control={form.control}
 								name="implementationDetails"
-								render={({ field }) => (
+								render={({ field, fieldState }) => (
 									<FormItem>
 										<FormLabel className="text-lg font-medium">
 											How will it work?
 										</FormLabel>
 										<FormControl>
-											<Textarea className="min-h-[150px] bg-white" {...field} />
+											<Textarea
+												className="min-h-[150px] bg-white"
+												{...field}
+												invalid={fieldState.invalid}
+											/>
 										</FormControl>
 										<FormDescription className="flex justify-end">
 											{getMaxLengthForField('implementationDetails') -
@@ -537,13 +565,17 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 							<FormField
 								control={form.control}
 								name="communityBenefits"
-								render={({ field }) => (
+								render={({ field, fieldState }) => (
 									<FormItem>
 										<FormLabel className="text-lg font-medium">
 											Community Benefits
 										</FormLabel>
 										<FormControl>
-											<Textarea className="min-h-[100px] bg-white" {...field} />
+											<Textarea
+												className="min-h-[100px] bg-white"
+												{...field}
+												invalid={fieldState.invalid}
+											/>
 										</FormControl>
 										<FormDescription className="flex justify-end">
 											{getMaxLengthForField('communityBenefits') -
@@ -558,13 +590,17 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 							<FormField
 								control={form.control}
 								name="keyPerformanceIndicators"
-								render={({ field }) => (
+								render={({ field, fieldState }) => (
 									<FormItem>
 										<FormLabel className="text-lg font-medium">
 											Key Performance Indicators (KPIs)
 										</FormLabel>
 										<FormControl>
-											<Textarea className="min-h-[100px] bg-white" {...field} />
+											<Textarea
+												className="min-h-[100px] bg-white"
+												{...field}
+												invalid={fieldState.invalid}
+											/>
 										</FormControl>
 										<FormDescription className="flex justify-end">
 											{getMaxLengthForField('keyPerformanceIndicators') -
@@ -585,13 +621,18 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 							<FormField
 								control={form.control}
 								name="totalFundingRequired"
-								render={({ field }) => (
+								render={({ field, fieldState }) => (
 									<FormItem>
 										<FormLabel className="text-lg font-medium">
 											Total Funding Required (MINA)
 										</FormLabel>
 										<FormControl>
-											<Input className="bg-white" type="text" {...field} />
+											<Input
+												className="bg-white"
+												type="text"
+												{...field}
+												invalid={fieldState.invalid}
+											/>
 										</FormControl>
 										<FormDescription className="flex justify-end">
 											Enter amount in MINA (e.g., 10000)
@@ -604,13 +645,17 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 							<FormField
 								control={form.control}
 								name="budgetBreakdown"
-								render={({ field }) => (
+								render={({ field, fieldState }) => (
 									<FormItem>
 										<FormLabel className="text-lg font-medium">
 											Breakdown of Costs
 										</FormLabel>
 										<FormControl>
-											<Textarea className="min-h-[100px] bg-white" {...field} />
+											<Textarea
+												className="min-h-[100px] bg-white"
+												{...field}
+												invalid={fieldState.invalid}
+											/>
 										</FormControl>
 										<FormDescription className="flex justify-end">
 											{getMaxLengthForField('budgetBreakdown') -
@@ -633,13 +678,17 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 							<FormField
 								control={form.control}
 								name="milestones"
-								render={({ field }) => (
+								render={({ field, fieldState }) => (
 									<FormItem>
 										<FormLabel className="text-lg font-medium">
 											Key Milestones
 										</FormLabel>
 										<FormControl>
-											<Textarea className="min-h-[100px] bg-white" {...field} />
+											<Textarea
+												className="min-h-[100px] bg-white"
+												{...field}
+												invalid={fieldState.invalid}
+											/>
 										</FormControl>
 										<FormDescription className="flex justify-end">
 											{getMaxLengthForField('milestones') - field.value.length}{' '}
@@ -653,7 +702,7 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 							<FormField
 								control={form.control}
 								name="estimatedCompletionDate"
-								render={({ field }) => (
+								render={({ field, fieldState }) => (
 									<FormItem className="flex flex-col">
 										<FormLabel className="text-lg font-medium">
 											Estimated Completion Date
@@ -701,13 +750,17 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 							<FormField
 								control={form.control}
 								name="teamMembers"
-								render={({ field }) => (
+								render={({ field, fieldState }) => (
 									<FormItem>
 										<FormLabel className="text-lg font-medium">
 											Team Members
 										</FormLabel>
 										<FormControl>
-											<Textarea className="min-h-[100px] bg-white" {...field} />
+											<Textarea
+												className="min-h-[100px] bg-white"
+												{...field}
+												invalid={fieldState.invalid}
+											/>
 										</FormControl>
 										<FormDescription className="flex justify-end">
 											{getMaxLengthForField('teamMembers') - field.value.length}{' '}
@@ -721,13 +774,17 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 							<FormField
 								control={form.control}
 								name="relevantExperience"
-								render={({ field }) => (
+								render={({ field, fieldState }) => (
 									<FormItem>
 										<FormLabel className="text-lg font-medium">
 											Relevant Experience
 										</FormLabel>
 										<FormControl>
-											<Textarea className="min-h-[100px] bg-white" {...field} />
+											<Textarea
+												className="min-h-[100px] bg-white"
+												{...field}
+												invalid={fieldState.invalid}
+											/>
 										</FormControl>
 										<FormDescription className="flex justify-end">
 											{getMaxLengthForField('relevantExperience') -
@@ -750,13 +807,17 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 							<FormField
 								control={form.control}
 								name="potentialRisks"
-								render={({ field }) => (
+								render={({ field, fieldState }) => (
 									<FormItem>
 										<FormLabel className="text-lg font-medium">
 											Potential Risks
 										</FormLabel>
 										<FormControl>
-											<Textarea className="min-h-[100px] bg-white" {...field} />
+											<Textarea
+												className="min-h-[100px] bg-white"
+												{...field}
+												invalid={fieldState.invalid}
+											/>
 										</FormControl>
 										<FormDescription className="flex justify-end">
 											{getMaxLengthForField('potentialRisks') -
@@ -771,13 +832,17 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 							<FormField
 								control={form.control}
 								name="mitigationPlans"
-								render={({ field }) => (
+								render={({ field, fieldState }) => (
 									<FormItem>
 										<FormLabel className="text-lg font-medium">
 											Mitigation Plans
 										</FormLabel>
 										<FormControl>
-											<Textarea className="min-h-[100px] bg-white" {...field} />
+											<Textarea
+												className="min-h-[100px] bg-white"
+												{...field}
+												invalid={fieldState.invalid}
+											/>
 										</FormControl>
 										<FormDescription className="flex justify-end">
 											{getMaxLengthForField('mitigationPlans') -
@@ -800,11 +865,16 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 							<FormField
 								control={form.control}
 								name="email"
-								render={({ field }) => (
+								render={({ field, fieldState }) => (
 									<FormItem>
 										<FormLabel className="text-lg font-medium">Email</FormLabel>
 										<FormControl>
-											<Input className="bg-white" type="email" {...field} />
+											<Input
+												className="bg-white"
+												type="email"
+												{...field}
+												invalid={fieldState.invalid}
+											/>
 										</FormControl>
 										<FormMessage />
 									</FormItem>
@@ -814,13 +884,17 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 							<FormField
 								control={form.control}
 								name="discordHandle"
-								render={({ field }) => (
+								render={({ field, fieldState }) => (
 									<FormItem>
 										<FormLabel className="text-lg font-medium">
 											Discord Handle
 										</FormLabel>
 										<FormControl>
-											<Input className="bg-white" {...field} />
+											<Input
+												className="bg-white"
+												{...field}
+												invalid={fieldState.invalid}
+											/>
 										</FormControl>
 										<FormMessage />
 									</FormItem>
@@ -830,7 +904,7 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 							<FormField
 								control={form.control}
 								name="website"
-								render={({ field }) => (
+								render={({ field, fieldState }) => (
 									<FormItem>
 										<FormLabel className="text-lg font-medium">
 											Website (Optional)
@@ -850,7 +924,7 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 							<FormField
 								control={form.control}
 								name="githubProfile"
-								render={({ field }) => (
+								render={({ field, fieldState }) => (
 									<FormItem>
 										<FormLabel className="text-lg font-medium">
 											GitHub Profile (Optional)
@@ -870,7 +944,7 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 							<FormField
 								control={form.control}
 								name="otherLinks"
-								render={({ field }) => (
+								render={({ field, fieldState }) => (
 									<FormItem>
 										<FormLabel className="text-lg font-medium">
 											Other Relevant Links (Optional)
