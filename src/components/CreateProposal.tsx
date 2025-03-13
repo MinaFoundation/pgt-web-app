@@ -64,7 +64,7 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 			keyPerformanceIndicators: '',
 			totalFundingRequired: '',
 			budgetBreakdown: '',
-			estimatedCompletionDate: new Date(),
+			estimatedCompletionDate: new Date().toISOString(),
 			milestones: '',
 			teamMembers: '',
 			relevantExperience: '',
@@ -155,8 +155,8 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 						'',
 					budgetBreakdown: data.budgetBreakdown || '',
 					estimatedCompletionDate: data.estimatedCompletionDate
-						? new Date(data.estimatedCompletionDate)
-						: new Date(),
+						? new Date(data.estimatedCompletionDate).toISOString()
+						: new Date().toISOString(),
 					milestones: data.milestones || '',
 					teamMembers: data.teamMembers || '',
 					relevantExperience: data.relevantExperience || '',
@@ -193,7 +193,7 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 			// Format the data for submission
 			const submissionData = {
 				...values,
-				estimatedCompletionDate: values.estimatedCompletionDate.toISOString(),
+				estimatedCompletionDate: values.estimatedCompletionDate,
 			}
 
 			// Submit the proposal
@@ -647,8 +647,8 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 											<PopoverContent className="w-auto p-0" align="start">
 												<Calendar
 													mode="single"
-													selected={field.value}
-													onSelect={field.onChange}
+													selected={new Date(field.value)}
+													onSelect={date => field.onChange(date?.toISOString())}
 													disabled={date => date < new Date()}
 													initialFocus
 												/>
