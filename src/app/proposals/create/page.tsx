@@ -6,5 +6,9 @@ export const metadata: Metadata = {
 }
 
 export default function CreateProposalPage() {
-	return <CreateProposalComponent />
+	return (
+		<div className="mx-auto w-full max-w-5xl p-4 sm:px-6 lg:px-8">
+			<CreateProposalComponent />
+		</div>
+	)
 }

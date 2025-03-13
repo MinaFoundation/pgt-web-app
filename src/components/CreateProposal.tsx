@@ -9,7 +9,6 @@ import { useToast } from '@/hooks/use-toast'
 import { z } from 'zod'
 import { ProposalValidation as PV } from '@/constants/validation'
 import { useRouter } from 'next/navigation'
-import { useFormFeedback } from '@/hooks/use-form-feedback'
 import { Calendar } from '@/components/ui/calendar'
 import {
 	Popover,
@@ -19,6 +18,7 @@ import {
 import { format } from 'date-fns'
 import { Calendar as CalendarIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import Link from 'next/link'
 
 // Define the valid field names
 type ProposalField = keyof typeof proposalSchema.shape
@@ -418,8 +418,8 @@ export default function CreateProposal({ mode = 'create', proposalId }: Props) {
 	}
 
 	return (
-		<div className="mx-auto w-full max-w-6xl rounded-lg bg-white p-6 shadow-md">
-			<h1 className="mb-6 text-2xl font-bold">
+		<div className="w-full">
+			<h1 className="mb-6 text-3xl font-bold">
 				{mode === 'create' ? 'Create New Proposal' : 'Edit Proposal'}
 			</h1>
 
@@ -926,14 +926,12 @@ export default function CreateProposal({ mode = 'create', proposalId }: Props) {
 				</div>
 
 				<div className="flex justify-end space-x-4">
-					<Button
-						type="button"
-						variant="outline"
-						onClick={() => router.push('/proposals')}
-					>
-						Cancel
-					</Button>
-					<Button type="submit" loading={isSaving}>
+					<Link href="/proposals">
+						<Button type="button" variant="outline">
+							Cancel
+						</Button>
+					</Link>
+					<Button className="button-3d" type="submit" loading={isSaving}>
 						{mode === 'create' ? 'Create Draft' : 'Save Changes'}
 					</Button>
 				</div>
