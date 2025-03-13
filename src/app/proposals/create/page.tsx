@@ -1,5 +1,14 @@
-import CreateProposalComponent from '@/components/CreateProposal'
+import { CreateProposal } from '@/components/CreateProposal'
+import { Metadata } from 'next'
+
+export const metadata: Metadata = {
+	title: 'Create Proposal | MEF',
+}
 
 export default function CreateProposalPage() {
-	return <CreateProposalComponent />
+	return (
+		<div className="mx-auto w-full max-w-5xl p-4 sm:px-6 lg:px-8">
+			<CreateProposal />
+		</div>
+	)
 }

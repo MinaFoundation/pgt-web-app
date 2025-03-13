@@ -57,10 +57,6 @@ import {
 	SelectValue,
 } from '../ui/select'
 
-interface Props {
-	fundingRoundId: string
-}
-
 interface DialogState {
 	open: boolean
 	proposalId?: number
@@ -68,7 +64,11 @@ interface DialogState {
 	existingVote?: DeliberationVote
 }
 
-export function DeliberationPhase({ fundingRoundId }: Props) {
+export function DeliberationPhase({
+	fundingRoundId,
+}: {
+	fundingRoundId: string
+}) {
 	const { user } = useAuth()
 
 	const { query, sortBy, sortOrder, filterBy, setFilterBy } =
@@ -88,15 +88,7 @@ export function DeliberationPhase({ fundingRoundId }: Props) {
 		setProposals(data.proposals)
 	}, [data])
 
-	const [expanded, setExpanded] = useState<Record<number, boolean>>({})
 	const [dialogProps, setDialogProps] = useState<DialogState>({ open: false })
-
-	const toggleExpanded = (proposalId: number) => {
-		setExpanded(prev => ({
-			...prev,
-			[proposalId]: !prev[proposalId],
-		}))
-	}
 
 	const { submitVote } = useDeliberationVote()
 
@@ -204,6 +196,190 @@ export function DeliberationPhase({ fundingRoundId }: Props) {
 		})
 	}
 
+	return (
+		<div className="space-y-8">
+			<DeliberationPhaseHeader
+				totalCount={data?.totalCount}
+				recommendedCount={data?.recommendedCount}
+				notRecommendedCount={data?.notRecommendedCount}
+				pendingRecommendationCount={data?.pendingRecommendationCount}
+			/>
+
+			<div className="space-y-6">
+				{isLoading ? (
+					<DeliberationProposalsSkeleton />
+				) : (
+					sortedProposals.map((proposal: DeliberationProposal) => (
+						<DeliberationProposalCard
+							key={proposal.id}
+							proposal={proposal}
+							onEdit={() => openEditDialog(proposal)}
+							onReviewerRecommend={() =>
+								setDialogProps({
+									open: true,
+									proposalId: proposal.id,
+									mode: 'recommend',
+								})
+							}
+							onReviewerNotRecommend={() =>
+								setDialogProps({
+									open: true,
+									proposalId: proposal.id,
+									mode: 'not-recommend',
+								})
+							}
+							onCommunityDeliberate={() =>
+								setDialogProps({
+									open: true,
+									proposalId: proposal.id,
+									mode: 'community',
+								})
+							}
+						/>
+					))
+				)}
+			</div>
+
+			<DeliberationDialog
+				open={dialogProps.open}
+				onOpenChange={(open: boolean) =>
+					setDialogProps({ ...dialogProps, open })
+				}
+				proposalId={dialogProps.proposalId!}
+				isReviewer={
+					proposals.find(
+						(p: DeliberationProposal) => p.id === dialogProps.proposalId,
+					)?.isReviewerEligible ?? false
+				}
+				mode={dialogProps.mode!}
+				existingVote={dialogProps.existingVote}
+				onSubmit={handleSubmit}
+			/>
+		</div>
+	)
+}
+
+function DeliberationPhaseHeader({
+	totalCount,
+	recommendedCount,
+	notRecommendedCount,
+	pendingRecommendationCount,
+}: {
+	totalCount?: number
+	recommendedCount?: number
+	notRecommendedCount?: number
+	pendingRecommendationCount?: number
+}) {
+	const tabs: {
+		label: string
+		count?: number
+		icon: React.FC<{ className?: string }>
+		tab: GetDeliberationProposalsOptions['filterBy']
+		description: string
+	}[] = [
+		{
+			label: 'Proposals',
+			count: totalCount,
+			icon: NotepadTextIcon,
+			tab: 'all',
+			description: 'All proposals moved to deliberation.',
+		},
+		{
+			label: 'Recommended',
+			count: recommendedCount,
+			icon: ThumbsUpIcon,
+			tab: 'recommended',
+			description:
+				'These proposals are recommended by reviwers. Community can still vote on these proposals.',
+		},
+		{
+			label: 'Not Recommended',
+			count: notRecommendedCount,
+			icon: ThumbsDownIcon,
+			tab: 'not-recommended',
+			description:
+				'These proposals are not recommended by reviewers. Community can still vote on these proposals.',
+		},
+		{
+			label: 'Pending',
+			count: pendingRecommendationCount,
+			icon: CircleDashedIcon,
+			tab: 'pending',
+			description:
+				'These proposals are still pending reviewers recommendation. Community can still vote on these proposals.',
+		},
+	]
+
+	const { filterBy, setFilterBy } = useDeliberationPhaseSearchParams()
+
+	return (
+		<header className="space-y-4">
+			<div>
+				<h2 className="text-3xl font-bold">Deliberation Phase:</h2>
+				<p>
+					Discuss and refine proposals with the community before final voting.
+				</p>
+			</div>
+
+			<div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+				{tabs.map(tab => (
+					<Button
+						key={tab.tab}
+						variant="outline"
+						onClick={() => setFilterBy(tab.tab ?? null)}
+						className={cn(
+							'flex items-center gap-1 font-semibold hover:bg-secondary/10',
+							filterBy === tab.tab
+								? 'border border-secondary/40 bg-secondary/20 text-secondary-dark hover:bg-secondary/20 hover:text-secondary-dark'
+								: 'text-muted-foreground hover:text-muted-foreground',
+						)}
+					>
+						<tab.icon className="h-4 w-4" />
+						{tab.count} {tab.label}
+					</Button>
+				))}
+			</div>
+
+			{filterBy !== 'all' && (
+				<div className="rounded-md border border-gray-200 p-4">
+					<h4 className="text-lg font-bold">
+						<span className="text-muted-foreground">
+							<FilterIcon className="inline h-4 w-4" /> Filtering by:
+						</span>{' '}
+						<span className="capitalize">{filterBy}</span>
+					</h4>
+					<p className="text-sm text-muted-foreground">
+						{tabs.find(tab => tab.tab === filterBy)?.description}
+					</p>
+				</div>
+			)}
+
+			<DeliberationPhaseControls />
+		</header>
+	)
+}
+
+function DeliberationProposalCard({
+	proposal,
+	onEdit,
+	onReviewerRecommend,
+	onReviewerNotRecommend,
+	onCommunityDeliberate,
+}: {
+	proposal: DeliberationProposal
+	onEdit: () => void
+	onReviewerRecommend: () => void
+	onReviewerNotRecommend: () => void
+	onCommunityDeliberate: () => void
+}) {
+	const [expanded, setExpanded] = useState<Record<number, boolean>>({})
+	const toggleExpanded = (proposalId: number) => {
+		setExpanded(prev => ({
+			...prev,
+			[proposalId]: !prev[proposalId],
+		}))
+	}
+
 	const renderVoteStatus = (proposal: DeliberationProposal) => {
 		if (!proposal.userDeliberation) return null
 
@@ -227,7 +403,7 @@ export function DeliberationPhase({ fundingRoundId }: Props) {
 	const renderActionButtons = (proposal: DeliberationProposal) => {
 		if (proposal.userDeliberation) {
 			return (
-				<Button variant="outline" onClick={() => openEditDialog(proposal)}>
+				<Button variant="outline" onClick={onEdit}>
 					✏️ Edit {proposal.isReviewerEligible ? 'Review' : 'Deliberation'}
 				</Button>
 			)
@@ -239,26 +415,11 @@ export function DeliberationPhase({ fundingRoundId }: Props) {
 					<Button
 						variant="default"
 						className="bg-green-600 hover:bg-green-700"
-						onClick={() =>
-							setDialogProps({
-								open: true,
-								proposalId: proposal.id,
-								mode: 'recommend',
-							})
-						}
+						onClick={onReviewerRecommend}
 					>
 						✅ Recommend for Vote
 					</Button>
-					<Button
-						variant="destructive"
-						onClick={() =>
-							setDialogProps({
-								open: true,
-								proposalId: proposal.id,
-								mode: 'not-recommend',
-							})
-						}
-					>
+					<Button variant="destructive" onClick={onReviewerNotRecommend}>
 						❌ Not Recommend
 					</Button>
 				</>
@@ -266,427 +427,288 @@ export function DeliberationPhase({ fundingRoundId }: Props) {
 		}
 
 		return (
-			<Button
-				variant="secondary"
-				onClick={() =>
-					setDialogProps({
-						open: true,
-						proposalId: proposal.id,
-						mode: 'community',
-					})
-				}
-			>
+			<Button variant="secondary" onClick={onCommunityDeliberate}>
 				💭 Deliberate
 			</Button>
 		)
 	}
 
-	if (isLoading) {
-		return (
-			<div className="container mx-auto max-w-7xl p-6">
-				<Card>
-					<CardContent className="p-6">
-						<div className="text-center">Loading proposals...</div>
-					</CardContent>
-				</Card>
-			</div>
-		)
-	}
-
-	const tabs: {
-		label: string
-		count: number
-		icon: React.FC<{ className?: string }>
-		tab: GetDeliberationProposalsOptions['filterBy']
-		description: string
-	}[] = [
-		{
-			label: 'Proposals',
-			count: data!.totalCount,
-			icon: NotepadTextIcon,
-			tab: 'all',
-			description: 'All proposals moved to deliberation.',
-		},
-		{
-			label: 'Recommended',
-			count: data!.recommendedCount,
-			icon: ThumbsUpIcon,
-			tab: 'recommended',
-			description:
-				'These proposals are recommended by reviwers. Community can still vote on these proposals.',
-		},
-		{
-			label: 'Not Recommended',
-			count: data!.notRecommendedCount,
-			icon: ThumbsDownIcon,
-			tab: 'not-recommended',
-			description:
-				'These proposals are not recommended by reviewers. Community can still vote on these proposals.',
-		},
-		{
-			label: 'Pending',
-			count: data!.pendingRecommendationCount,
-			icon: CircleDashedIcon,
-			tab: 'pending',
-			description:
-				'These proposals are still pending reviewers recommendation. Community can still vote on these proposals.',
-		},
-	]
-
 	return (
-		<div className="container mx-auto max-w-7xl px-2 md:px-6">
-			<div className="space-y-8">
-				<header className="space-y-4">
+		<Card
+			key={proposal.id}
+			className={cn(
+				'transition-colors hover:bg-muted/50',
+				proposal.userDeliberation && 'bg-muted/10',
+			)}
+		>
+			<CardHeader>
+				<div className="flex items-start justify-between">
 					<div>
-						<h2 className="text-3xl font-bold">Deliberation Phase:</h2>
-						<p>
-							Discuss and refine proposals with the community before final
-							voting.
+						<CardTitle className="text-2xl">{proposal.title}</CardTitle>
+						<CardDescription className="break-all">
+							👤 Submitted by {proposal.submitter}
+						</CardDescription>
+					</div>
+					{renderVoteStatus(proposal)}
+				</div>
+			</CardHeader>
+
+			<CardContent className="space-y-4">
+				<div>
+					<h3 className="mb-2 text-xl font-semibold">Summary</h3>
+					{expanded[proposal.id] ? (
+						<>
+							<p className="mb-4 text-muted-foreground">
+								{proposal.proposalSummary}
+							</p>
+							<div className="space-y-4">
+								<div>
+									<h3 className="mb-2 text-xl font-semibold">Key Objectives</h3>
+									<p className="text-muted-foreground">
+										{proposal.keyObjectives}
+									</p>
+								</div>
+								<div>
+									<h3 className="mb-2 text-xl font-semibold">
+										Problem Statement
+									</h3>
+									<p className="text-muted-foreground">
+										{proposal.problemStatement}
+									</p>
+								</div>
+								<div>
+									<h3 className="mb-2 text-xl font-semibold">
+										Problem Importance
+									</h3>
+									<p className="text-muted-foreground">
+										{proposal.problemImportance}
+									</p>
+								</div>
+								<div>
+									<h3 className="mb-2 text-xl font-semibold">
+										Proposed Solution
+									</h3>
+									<p className="text-muted-foreground">
+										{proposal.proposedSolution}
+									</p>
+								</div>
+								<div>
+									<h3 className="mb-2 text-xl font-semibold">
+										Implementation Details
+									</h3>
+									<p className="text-muted-foreground">
+										{proposal.implementationDetails}
+									</p>
+								</div>
+								<div>
+									<h3 className="mb-2 text-xl font-semibold">
+										Total Funding Required
+									</h3>
+									<p className="text-muted-foreground">
+										{proposal.totalFundingRequired.toString()} MINA
+									</p>
+								</div>
+								<div>
+									<h3 className="mb-2 text-xl font-semibold">
+										Community Benefits
+									</h3>
+									<p className="text-muted-foreground">
+										{proposal.communityBenefits}
+									</p>
+								</div>
+								<div>
+									<h3 className="mb-2 text-xl font-semibold">
+										Key Performance Indicators
+									</h3>
+									<p className="text-muted-foreground">
+										{proposal.keyPerformanceIndicators}
+									</p>
+								</div>
+								<div>
+									<h3 className="mb-2 text-xl font-semibold">
+										Budget Breakdown
+									</h3>
+									<p className="text-muted-foreground">
+										{proposal.budgetBreakdown}
+									</p>
+								</div>
+								<div>
+									<h3 className="mb-2 text-xl font-semibold">Milestones</h3>
+									<p className="text-muted-foreground">{proposal.milestones}</p>
+								</div>
+								<div>
+									<h3 className="mb-2 text-xl font-semibold">
+										Estimated Completion Date
+									</h3>
+									<p className="text-muted-foreground">
+										{new Date(
+											proposal.estimatedCompletionDate,
+										).toLocaleDateString()}
+									</p>
+								</div>
+								<div>
+									<h3 className="mb-2 text-xl font-semibold">Team Members</h3>
+									<p className="text-muted-foreground">
+										{proposal.teamMembers}
+									</p>
+								</div>
+								<div>
+									<h3 className="mb-2 text-xl font-semibold">
+										Relevant Experience
+									</h3>
+									<p className="text-muted-foreground">
+										{proposal.relevantExperience}
+									</p>
+								</div>
+								<div>
+									<h3 className="mb-2 text-xl font-semibold">
+										Potential Risks
+									</h3>
+									<p className="text-muted-foreground">
+										{proposal.potentialRisks}
+									</p>
+								</div>
+								<div>
+									<h3 className="mb-2 text-xl font-semibold">
+										Mitigation Plans
+									</h3>
+									<p className="text-muted-foreground">
+										{proposal.mitigationPlans}
+									</p>
+								</div>
+								<div>
+									<h3 className="mb-2 text-xl font-semibold">
+										Contact Information
+									</h3>
+									<div className="space-y-2">
+										<p className="text-muted-foreground">
+											Discord: {proposal.discordHandle}
+										</p>
+										<p className="text-muted-foreground">
+											Email: {proposal.email}
+										</p>
+										{proposal.website && (
+											<p className="text-muted-foreground">
+												Website:{' '}
+												<a
+													href={proposal.website}
+													target="_blank"
+													rel="noopener noreferrer"
+													className="text-primary hover:underline"
+												>
+													{proposal.website}
+												</a>
+											</p>
+										)}
+										{proposal.githubProfile && (
+											<p className="text-muted-foreground">
+												GitHub:{' '}
+												<a
+													href={proposal.githubProfile}
+													target="_blank"
+													rel="noopener noreferrer"
+													className="text-primary hover:underline"
+												>
+													{proposal.githubProfile}
+												</a>
+											</p>
+										)}
+										{proposal.otherLinks && (
+											<p className="text-muted-foreground">
+												Other Links:{' '}
+												<span className="text-primary">
+													{proposal.otherLinks}
+												</span>
+											</p>
+										)}
+									</div>
+								</div>
+							</div>
+						</>
+					) : (
+						<p className="line-clamp-3 text-muted-foreground">
+							{proposal.proposalSummary}
+						</p>
+					)}
+				</div>
+
+				{proposal.userDeliberation && (
+					<div className="rounded-lg bg-muted p-4">
+						<h4 className="mb-2 font-medium">Your Deliberation:</h4>
+						<p className="text-muted-foreground">
+							{proposal.userDeliberation.feedback}
 						</p>
 					</div>
+				)}
+				{proposal.gptSurveySummary && (
+					<Accordion type="single" collapsible>
+						<AccordionItem value="summary">
+							<AccordionTrigger className="flex items-center gap-2">
+								<MessageSquare className="h-4 w-4" />
+								<span className="font-semibold">
+									Community Deliberation Summary
+								</span>
+							</AccordionTrigger>
+							<AccordionContent>
+								<div className="space-y-4 rounded-lg bg-muted/50 p-4">
+									<div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+										<Clock className="h-3.5 w-3.5" />
+										Last updated:{' '}
+										{new Date(
+											proposal.gptSurveySummary.summaryUpdatedAt,
+										).toLocaleString()}
+									</div>
+									<div className="prose prose-sm dark:prose-invert max-w-none">
+										<ReactMarkdown>
+											{proposal.gptSurveySummary.summary}
+										</ReactMarkdown>
+									</div>
+								</div>
+							</AccordionContent>
+						</AccordionItem>
+					</Accordion>
+				)}
+				{expanded[proposal.id] && proposal.reviewerComments.length > 0 && (
+					<ReviewerComments comments={proposal.reviewerComments} />
+				)}
+			</CardContent>
 
-					<div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-						{tabs.map(tab => (
-							<Button
-								key={tab.tab}
-								variant="outline"
-								onClick={() => setFilterBy(tab.tab ?? null)}
-								className={cn(
-									'flex items-center gap-1 font-semibold hover:bg-secondary/10',
-									filterBy === tab.tab
-										? 'border border-secondary/40 bg-secondary/20 text-secondary-dark hover:bg-secondary/20 hover:text-secondary-dark'
-										: 'text-muted-foreground hover:text-muted-foreground',
-								)}
-							>
-								<tab.icon className="h-4 w-4" />
-								{tab.count} {tab.label}
-							</Button>
-						))}
-					</div>
-
-					{filterBy !== 'all' && (
-						<div className="rounded-md border border-gray-200 p-4">
-							<h4 className="text-lg font-bold">
-								<span className="text-muted-foreground">
-									<FilterIcon className="inline h-4 w-4" /> Filtering by:
-								</span>{' '}
-								<span className="capitalize">{filterBy}</span>
-							</h4>
-							<p className="text-sm text-muted-foreground">
-								{tabs.find(tab => tab.tab === filterBy)?.description}
-							</p>
-						</div>
-					)}
-
-					<DeliberationPhaseControls />
-				</header>
-
-				<div className="space-y-6">
-					{sortedProposals.map((proposal: DeliberationProposal) => (
-						<Card
-							key={proposal.id}
-							className={cn(
-								'transition-colors hover:bg-muted/50',
-								proposal.userDeliberation && 'bg-muted/10',
-							)}
+			<CardFooter className="flex items-center justify-between">
+				<div className="flex items-center gap-4">
+					<Button
+						variant="ghost"
+						className="gap-2"
+						onClick={() => toggleExpanded(proposal.id)}
+					>
+						{expanded[proposal.id] ? (
+							<>
+								See less
+								<ChevronDown className="h-4 w-4" />
+							</>
+						) : (
+							<>
+								See more
+								<ChevronRight className="h-4 w-4" />
+							</>
+						)}
+					</Button>
+					<Button variant="ghost" size="sm" className="gap-2" asChild>
+						<Link
+							href={`/proposals/${proposal.id}`}
+							target="_blank"
+							rel="noopener noreferrer"
 						>
-							<CardHeader>
-								<div className="flex items-start justify-between">
-									<div>
-										<CardTitle className="text-2xl">{proposal.title}</CardTitle>
-										<CardDescription className="break-all">
-											👤 Submitted by {proposal.submitter}
-										</CardDescription>
-									</div>
-									{renderVoteStatus(proposal)}
-								</div>
-							</CardHeader>
-
-							<CardContent className="space-y-4">
-								<div>
-									<h3 className="mb-2 text-xl font-semibold">Summary</h3>
-									{expanded[proposal.id] ? (
-										<>
-											<p className="mb-4 text-muted-foreground">
-												{proposal.proposalSummary}
-											</p>
-											<div className="space-y-4">
-												<div>
-													<h3 className="mb-2 text-xl font-semibold">
-														Key Objectives
-													</h3>
-													<p className="text-muted-foreground">
-														{proposal.keyObjectives}
-													</p>
-												</div>
-												<div>
-													<h3 className="mb-2 text-xl font-semibold">
-														Problem Statement
-													</h3>
-													<p className="text-muted-foreground">
-														{proposal.problemStatement}
-													</p>
-												</div>
-												<div>
-													<h3 className="mb-2 text-xl font-semibold">
-														Problem Importance
-													</h3>
-													<p className="text-muted-foreground">
-														{proposal.problemImportance}
-													</p>
-												</div>
-												<div>
-													<h3 className="mb-2 text-xl font-semibold">
-														Proposed Solution
-													</h3>
-													<p className="text-muted-foreground">
-														{proposal.proposedSolution}
-													</p>
-												</div>
-												<div>
-													<h3 className="mb-2 text-xl font-semibold">
-														Implementation Details
-													</h3>
-													<p className="text-muted-foreground">
-														{proposal.implementationDetails}
-													</p>
-												</div>
-												<div>
-													<h3 className="mb-2 text-xl font-semibold">
-														Total Funding Required
-													</h3>
-													<p className="text-muted-foreground">
-														{proposal.totalFundingRequired.toString()} MINA
-													</p>
-												</div>
-												<div>
-													<h3 className="mb-2 text-xl font-semibold">
-														Community Benefits
-													</h3>
-													<p className="text-muted-foreground">
-														{proposal.communityBenefits}
-													</p>
-												</div>
-												<div>
-													<h3 className="mb-2 text-xl font-semibold">
-														Key Performance Indicators
-													</h3>
-													<p className="text-muted-foreground">
-														{proposal.keyPerformanceIndicators}
-													</p>
-												</div>
-												<div>
-													<h3 className="mb-2 text-xl font-semibold">
-														Budget Breakdown
-													</h3>
-													<p className="text-muted-foreground">
-														{proposal.budgetBreakdown}
-													</p>
-												</div>
-												<div>
-													<h3 className="mb-2 text-xl font-semibold">
-														Milestones
-													</h3>
-													<p className="text-muted-foreground">
-														{proposal.milestones}
-													</p>
-												</div>
-												<div>
-													<h3 className="mb-2 text-xl font-semibold">
-														Estimated Completion Date
-													</h3>
-													<p className="text-muted-foreground">
-														{new Date(
-															proposal.estimatedCompletionDate,
-														).toLocaleDateString()}
-													</p>
-												</div>
-												<div>
-													<h3 className="mb-2 text-xl font-semibold">
-														Team Members
-													</h3>
-													<p className="text-muted-foreground">
-														{proposal.teamMembers}
-													</p>
-												</div>
-												<div>
-													<h3 className="mb-2 text-xl font-semibold">
-														Relevant Experience
-													</h3>
-													<p className="text-muted-foreground">
-														{proposal.relevantExperience}
-													</p>
-												</div>
-												<div>
-													<h3 className="mb-2 text-xl font-semibold">
-														Potential Risks
-													</h3>
-													<p className="text-muted-foreground">
-														{proposal.potentialRisks}
-													</p>
-												</div>
-												<div>
-													<h3 className="mb-2 text-xl font-semibold">
-														Mitigation Plans
-													</h3>
-													<p className="text-muted-foreground">
-														{proposal.mitigationPlans}
-													</p>
-												</div>
-												<div>
-													<h3 className="mb-2 text-xl font-semibold">
-														Contact Information
-													</h3>
-													<div className="space-y-2">
-														<p className="text-muted-foreground">
-															Discord: {proposal.discordHandle}
-														</p>
-														<p className="text-muted-foreground">
-															Email: {proposal.email}
-														</p>
-														{proposal.website && (
-															<p className="text-muted-foreground">
-																Website:{' '}
-																<a
-																	href={proposal.website}
-																	target="_blank"
-																	rel="noopener noreferrer"
-																	className="text-primary hover:underline"
-																>
-																	{proposal.website}
-																</a>
-															</p>
-														)}
-														{proposal.githubProfile && (
-															<p className="text-muted-foreground">
-																GitHub:{' '}
-																<a
-																	href={proposal.githubProfile}
-																	target="_blank"
-																	rel="noopener noreferrer"
-																	className="text-primary hover:underline"
-																>
-																	{proposal.githubProfile}
-																</a>
-															</p>
-														)}
-														{proposal.otherLinks && (
-															<p className="text-muted-foreground">
-																Other Links:{' '}
-																<span className="text-primary">
-																	{proposal.otherLinks}
-																</span>
-															</p>
-														)}
-													</div>
-												</div>
-											</div>
-										</>
-									) : (
-										<p className="line-clamp-3 text-muted-foreground">
-											{proposal.proposalSummary}
-										</p>
-									)}
-								</div>
-
-								{proposal.userDeliberation && (
-									<div className="rounded-lg bg-muted p-4">
-										<h4 className="mb-2 font-medium">Your Deliberation:</h4>
-										<p className="text-muted-foreground">
-											{proposal.userDeliberation.feedback}
-										</p>
-									</div>
-								)}
-								{proposal.gptSurveySummary && (
-									<Accordion type="single" collapsible>
-										<AccordionItem value="summary">
-											<AccordionTrigger className="flex items-center gap-2">
-												<MessageSquare className="h-4 w-4" />
-												<span className="font-semibold">
-													Community Deliberation Summary
-												</span>
-											</AccordionTrigger>
-											<AccordionContent>
-												<div className="space-y-4 rounded-lg bg-muted/50 p-4">
-													<div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-														<Clock className="h-3.5 w-3.5" />
-														Last updated:{' '}
-														{new Date(
-															proposal.gptSurveySummary.summaryUpdatedAt,
-														).toLocaleString()}
-													</div>
-													<div className="prose prose-sm dark:prose-invert max-w-none">
-														<ReactMarkdown>
-															{proposal.gptSurveySummary.summary}
-														</ReactMarkdown>
-													</div>
-												</div>
-											</AccordionContent>
-										</AccordionItem>
-									</Accordion>
-								)}
-								{expanded[proposal.id] &&
-									proposal.reviewerComments.length > 0 && (
-										<ReviewerComments comments={proposal.reviewerComments} />
-									)}
-							</CardContent>
-
-							<CardFooter className="flex items-center justify-between">
-								<div className="flex items-center gap-4">
-									<Button
-										variant="ghost"
-										className="gap-2"
-										onClick={() => toggleExpanded(proposal.id)}
-									>
-										{expanded[proposal.id] ? (
-											<>
-												See less
-												<ChevronDown className="h-4 w-4" />
-											</>
-										) : (
-											<>
-												See more
-												<ChevronRight className="h-4 w-4" />
-											</>
-										)}
-									</Button>
-									<Button variant="ghost" size="sm" className="gap-2" asChild>
-										<Link
-											href={`/proposals/${proposal.id}`}
-											target="_blank"
-											rel="noopener noreferrer"
-										>
-											View Proposal Page
-											<ExternalLink className="h-4 w-4" />
-										</Link>
-									</Button>
-								</div>
-
-								<div className="flex items-center gap-4">
-									{renderActionButtons(proposal)}
-								</div>
-							</CardFooter>
-						</Card>
-					))}
+							View Proposal Page
+							<ExternalLink className="h-4 w-4" />
+						</Link>
+					</Button>
 				</div>
-			</div>
 
-			<DeliberationDialog
-				open={dialogProps.open}
-				onOpenChange={(open: boolean) =>
-					setDialogProps({ ...dialogProps, open })
-				}
-				proposalId={dialogProps.proposalId!}
-				isReviewer={
-					proposals.find(
-						(p: DeliberationProposal) => p.id === dialogProps.proposalId,
-					)?.isReviewerEligible ?? false
-				}
-				mode={dialogProps.mode!}
-				existingVote={dialogProps.existingVote}
-				onSubmit={handleSubmit}
-			/>
-		</div>
+				<div className="flex items-center gap-4">
+					{renderActionButtons(proposal)}
+				</div>
+			</CardFooter>
+		</Card>
 	)
 }
 
@@ -839,4 +861,17 @@ function DeliberationPhaseControls({ disabled }: { disabled?: boolean }) {
 			</div>
 		</section>
 	)
+}
+
+function DeliberationProposalsSkeleton() {
+	return new Array(2).fill(null).map((_, index) => (
+		<Card key={index} className="animate-pulse">
+			<CardContent className="p-6">
+				<div className="animate-pulse space-y-4">
+					<div className="h-6 w-1/2 animate-pulse rounded bg-gray-200"></div>
+					<div className="h-4 w-1/4 animate-pulse rounded bg-gray-200"></div>
+				</div>
+			</CardContent>
+		</Card>
+	))
 }
