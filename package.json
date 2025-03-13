@@ -22,6 +22,7 @@
 		"admin:status": "npx tsx src/scripts/toggle-admin-status.ts"
 	},
 	"dependencies": {
+		"@hookform/resolvers": "^3.3.4",
 		"@ladjs/graceful": "^4.1.0",
 		"@prisma/client": "^5.22.0",
 		"@radix-ui/react-accordion": "^1.2.1",
@@ -68,6 +69,7 @@
 		"react-dnd-html5-backend": "^16.0.1",
 		"react-dnd-touch-backend": "^16.0.1",
 		"react-dom": "18.3.1",
+		"react-hook-form": "^7.51.2",
 		"react-markdown": "^9.0.3",
 		"recharts": "^2.15.0",
 		"sharp": "^0.33.5",
