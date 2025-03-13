@@ -379,11 +379,13 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 												invalid={fieldState.invalid}
 											/>
 										</FormControl>
-										<FormDescription className="flex justify-end">
-											{getMaxLengthForField('title') - field.value.length}{' '}
-											characters remaining
+										<FormDescription className="flex flex-col md:flex-row md:justify-between">
+											<FormMessage />
+											<div className="flex flex-1 justify-end">
+												{getMaxLengthForField('title') - field.value.length}{' '}
+												characters remaining
+											</div>
 										</FormDescription>
-										<FormMessage />
 									</FormItem>
 								)}
 							/>
@@ -409,12 +411,14 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 												invalid={fieldState.invalid}
 											/>
 										</FormControl>
-										<FormDescription className="flex justify-end">
-											{getMaxLengthForField('proposalSummary') -
-												field.value.length}{' '}
-											characters remaining
+										<FormDescription className="flex flex-col md:flex-row md:justify-between">
+											<FormMessage />
+											<div className="flex flex-1 justify-end">
+												{getMaxLengthForField('proposalSummary') -
+													field.value.length}{' '}
+												characters remaining
+											</div>
 										</FormDescription>
-										<FormMessage />
 									</FormItem>
 								)}
 							/>
@@ -434,12 +438,14 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 												invalid={fieldState.invalid}
 											/>
 										</FormControl>
-										<FormDescription className="flex justify-end">
-											{getMaxLengthForField('keyObjectives') -
-												field.value.length}{' '}
-											characters remaining
+										<FormDescription className="flex flex-col md:flex-row md:justify-between">
+											<FormMessage />
+											<div className="flex flex-1 justify-end">
+												{getMaxLengthForField('keyObjectives') -
+													field.value.length}{' '}
+												characters remaining
+											</div>
 										</FormDescription>
-										<FormMessage />
 									</FormItem>
 								)}
 							/>
@@ -465,12 +471,14 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 												invalid={fieldState.invalid}
 											/>
 										</FormControl>
-										<FormDescription className="flex justify-end">
-											{getMaxLengthForField('problemStatement') -
-												field.value.length}{' '}
-											characters remaining
+										<FormDescription className="flex flex-col md:flex-row md:justify-between">
+											<FormMessage />
+											<div className="flex flex-1 justify-end">
+												{getMaxLengthForField('problemStatement') -
+													field.value.length}{' '}
+												characters remaining
+											</div>
 										</FormDescription>
-										<FormMessage />
 									</FormItem>
 								)}
 							/>
@@ -490,12 +498,14 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 												invalid={fieldState.invalid}
 											/>
 										</FormControl>
-										<FormDescription className="flex justify-end">
-											{getMaxLengthForField('problemImportance') -
-												field.value.length}{' '}
-											characters remaining
+										<FormDescription className="flex flex-col md:flex-row md:justify-between">
+											<FormMessage />
+											<div className="flex flex-1 justify-end">
+												{getMaxLengthForField('problemImportance') -
+													field.value.length}{' '}
+												characters remaining
+											</div>
 										</FormDescription>
-										<FormMessage />
 									</FormItem>
 								)}
 							/>
@@ -521,12 +531,14 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 												invalid={fieldState.invalid}
 											/>
 										</FormControl>
-										<FormDescription className="flex justify-end">
-											{getMaxLengthForField('proposedSolution') -
-												field.value.length}{' '}
-											characters remaining
+										<FormDescription className="flex flex-col md:flex-row md:justify-between">
+											<FormMessage />
+											<div className="flex flex-1 justify-end">
+												{getMaxLengthForField('proposedSolution') -
+													field.value.length}{' '}
+												characters remaining
+											</div>
 										</FormDescription>
-										<FormMessage />
 									</FormItem>
 								)}
 							/>
@@ -546,12 +558,14 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 												invalid={fieldState.invalid}
 											/>
 										</FormControl>
-										<FormDescription className="flex justify-end">
-											{getMaxLengthForField('implementationDetails') -
-												field.value.length}{' '}
-											characters remaining
+										<FormDescription className="flex flex-col md:flex-row md:justify-between">
+											<FormMessage />
+											<div className="flex flex-1 justify-end">
+												{getMaxLengthForField('implementationDetails') -
+													field.value.length}{' '}
+												characters remaining
+											</div>
 										</FormDescription>
-										<FormMessage />
 									</FormItem>
 								)}
 							/>
@@ -577,12 +591,14 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 												invalid={fieldState.invalid}
 											/>
 										</FormControl>
-										<FormDescription className="flex justify-end">
-											{getMaxLengthForField('communityBenefits') -
-												field.value.length}{' '}
-											characters remaining
+										<FormDescription className="flex flex-col md:flex-row md:justify-between">
+											<FormMessage />
+											<div className="flex flex-1 justify-end">
+												{getMaxLengthForField('communityBenefits') -
+													field.value.length}{' '}
+												characters remaining
+											</div>
 										</FormDescription>
-										<FormMessage />
 									</FormItem>
 								)}
 							/>
@@ -602,12 +618,14 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 												invalid={fieldState.invalid}
 											/>
 										</FormControl>
-										<FormDescription className="flex justify-end">
-											{getMaxLengthForField('keyPerformanceIndicators') -
-												field.value.length}{' '}
-											characters remaining
+										<FormDescription className="flex flex-col md:flex-row md:justify-between">
+											<FormMessage />
+											<div className="flex flex-1 justify-end">
+												{getMaxLengthForField('keyPerformanceIndicators') -
+													field.value.length}{' '}
+												characters remaining
+											</div>
 										</FormDescription>
-										<FormMessage />
 									</FormItem>
 								)}
 							/>
@@ -634,10 +652,12 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 												invalid={fieldState.invalid}
 											/>
 										</FormControl>
-										<FormDescription className="flex justify-end">
-											Enter amount in MINA (e.g., 10000)
+										<FormDescription className="flex flex-col md:flex-row md:justify-between">
+											<FormMessage />
+											<div className="flex flex-1 justify-end">
+												Enter amount in MINA (e.g., 10000)
+											</div>
 										</FormDescription>
-										<FormMessage />
 									</FormItem>
 								)}
 							/>
@@ -657,12 +677,14 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 												invalid={fieldState.invalid}
 											/>
 										</FormControl>
-										<FormDescription className="flex justify-end">
-											{getMaxLengthForField('budgetBreakdown') -
-												field.value.length}{' '}
-											characters remaining
+										<FormDescription className="flex flex-col md:flex-row md:justify-between">
+											<FormMessage />
+											<div className="flex flex-1 justify-end">
+												{getMaxLengthForField('budgetBreakdown') -
+													field.value.length}{' '}
+												characters remaining
+											</div>
 										</FormDescription>
-										<FormMessage />
 									</FormItem>
 								)}
 							/>
@@ -690,11 +712,13 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 												invalid={fieldState.invalid}
 											/>
 										</FormControl>
-										<FormDescription className="flex justify-end">
-											{getMaxLengthForField('milestones') - field.value.length}{' '}
-											characters remaining
+										<FormDescription className="flex flex-col md:flex-row md:justify-between">
+											<FormMessage />
+											<div className="flex flex-1 justify-end">
+												{getMaxLengthForField('milestones') - field.value.length}{' '}
+												characters remaining
+											</div>
 										</FormDescription>
-										<FormMessage />
 									</FormItem>
 								)}
 							/>
@@ -736,7 +760,9 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 												/>
 											</PopoverContent>
 										</Popover>
-										<FormMessage />
+										<FormDescription className="flex flex-col md:flex-row md:justify-between">
+											<FormMessage />
+										</FormDescription>
 									</FormItem>
 								)}
 							/>
@@ -762,11 +788,13 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 												invalid={fieldState.invalid}
 											/>
 										</FormControl>
-										<FormDescription className="flex justify-end">
-											{getMaxLengthForField('teamMembers') - field.value.length}{' '}
-											characters remaining
+										<FormDescription className="flex flex-col md:flex-row md:justify-between">
+											<FormMessage />
+											<div className="flex flex-1 justify-end">
+												{getMaxLengthForField('teamMembers') - field.value.length}{' '}
+												characters remaining
+											</div>
 										</FormDescription>
-										<FormMessage />
 									</FormItem>
 								)}
 							/>
@@ -786,12 +814,14 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 												invalid={fieldState.invalid}
 											/>
 										</FormControl>
-										<FormDescription className="flex justify-end">
-											{getMaxLengthForField('relevantExperience') -
-												field.value.length}{' '}
-											characters remaining
+										<FormDescription className="flex flex-col md:flex-row md:justify-between">
+											<FormMessage />
+											<div className="flex flex-1 justify-end">
+												{getMaxLengthForField('relevantExperience') -
+													field.value.length}{' '}
+												characters remaining
+											</div>
 										</FormDescription>
-										<FormMessage />
 									</FormItem>
 								)}
 							/>
@@ -819,12 +849,14 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 												invalid={fieldState.invalid}
 											/>
 										</FormControl>
-										<FormDescription className="flex justify-end">
-											{getMaxLengthForField('potentialRisks') -
-												field.value.length}{' '}
-											characters remaining
+										<FormDescription className="flex flex-col md:flex-row md:justify-between">
+											<FormMessage />
+											<div className="flex flex-1 justify-end">
+												{getMaxLengthForField('potentialRisks') -
+													field.value.length}{' '}
+												characters remaining
+											</div>
 										</FormDescription>
-										<FormMessage />
 									</FormItem>
 								)}
 							/>
@@ -844,12 +876,14 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 												invalid={fieldState.invalid}
 											/>
 										</FormControl>
-										<FormDescription className="flex justify-end">
-											{getMaxLengthForField('mitigationPlans') -
-												field.value.length}{' '}
-											characters remaining
+										<FormDescription className="flex flex-col md:flex-row md:justify-between">
+											<FormMessage />
+											<div className="flex flex-1 justify-end">
+												{getMaxLengthForField('mitigationPlans') -
+													field.value.length}{' '}
+												characters remaining
+											</div>
 										</FormDescription>
-										<FormMessage />
 									</FormItem>
 								)}
 							/>
@@ -876,7 +910,9 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 												invalid={fieldState.invalid}
 											/>
 										</FormControl>
-										<FormMessage />
+										<FormDescription className="flex flex-col md:flex-row md:justify-between">
+											<FormMessage />
+										</FormDescription>
 									</FormItem>
 								)}
 							/>
@@ -896,7 +932,9 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 												invalid={fieldState.invalid}
 											/>
 										</FormControl>
-										<FormMessage />
+										<FormDescription className="flex flex-col md:flex-row md:justify-between">
+											<FormMessage />
+										</FormDescription>
 									</FormItem>
 								)}
 							/>
@@ -914,9 +952,12 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 												className="bg-white"
 												placeholder="https://example.com"
 												{...field}
+												invalid={fieldState.invalid}
 											/>
 										</FormControl>
-										<FormMessage />
+										<FormDescription className="flex flex-col md:flex-row md:justify-between">
+											<FormMessage />
+										</FormDescription>
 									</FormItem>
 								)}
 							/>
@@ -934,9 +975,12 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 												className="bg-white"
 												placeholder="https://github.com/username"
 												{...field}
+												invalid={fieldState.invalid}
 											/>
 										</FormControl>
-										<FormMessage />
+										<FormDescription className="flex flex-col md:flex-row md:justify-between">
+											<FormMessage />
+										</FormDescription>
 									</FormItem>
 								)}
 							/>
@@ -956,11 +1000,13 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 												{...field}
 											/>
 										</FormControl>
-										<FormDescription className="flex justify-end">
-											{getMaxLengthForField('otherLinks') - field.value.length}{' '}
-											characters remaining
+										<FormDescription className="flex flex-col md:flex-row md:justify-between">
+											<FormMessage />
+											<div className="flex flex-1 justify-end">
+												{getMaxLengthForField('otherLinks') - field.value.length}{' '}
+												characters remaining
+											</div>
 										</FormDescription>
-										<FormMessage />
 									</FormItem>
 								)}
 							/>
