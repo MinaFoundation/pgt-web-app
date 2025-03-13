@@ -20,6 +20,7 @@ import {
 	Calendar as CalendarIcon,
 	FilePenIcon,
 	FilePlus2Icon,
+	InfoIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
@@ -1035,6 +1036,13 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 								'Save Changes'
 							)}
 						</Button>
+					</div>
+					<div className="flex justify-end">
+						<p className="text-sm text-gray-600">
+							<InfoIcon className="mr-1 inline h-4 w-3" />
+							After drafting your proposal, you can submit it for an active
+							funding round.
+						</p>
 					</div>
 				</form>
 			</Form>
