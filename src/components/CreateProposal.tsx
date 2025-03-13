@@ -151,7 +151,7 @@ interface Props {
 	proposalId?: string
 }
 
-export default function CreateProposal({ mode = 'create', proposalId }: Props) {
+export function CreateProposal({ mode = 'create', proposalId }: Props) {
 	const { toast } = useToast()
 	const router = useRouter()
 	const [isSaving, setIsSaving] = useState<boolean>(false)
@@ -854,6 +854,3 @@ export default function CreateProposal({ mode = 'create', proposalId }: Props) {
 		</div>
 	)
 }
-
-// Change the export to named export
-export { CreateProposal }
