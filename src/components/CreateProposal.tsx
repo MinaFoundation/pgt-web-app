@@ -16,7 +16,11 @@ import {
 	PopoverTrigger,
 } from '@/components/ui/popover'
 import { format } from 'date-fns'
-import { Calendar as CalendarIcon } from 'lucide-react'
+import {
+	Calendar as CalendarIcon,
+	FilePenIcon,
+	FilePlus2Icon,
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
@@ -342,14 +346,24 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 
 	return (
 		<div className="w-full">
-			<h1 className="mb-6 text-3xl font-bold">
-				{mode === 'create' ? 'Create New Proposal' : 'Edit Proposal'}
+			<h1 className="mb-6 flex items-center gap-2 text-3xl font-bold">
+				{mode === 'create' ? (
+					<>
+						<FilePlus2Icon className="h-6 w-6" />
+						Create New Proposal
+					</>
+				) : (
+					<>
+						<FilePenIcon className="h-6 w-6" />
+						Edit Proposal
+					</>
+				)}
 			</h1>
 
 			<Form {...form}>
-				<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+				<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
 					{/* Section 1: Proposal Title */}
-					<div className="mb-8">
+					<section className="rounded-lg border border-gray-200 bg-card/50 p-8">
 						<h2 className="mb-4 text-xl font-semibold">1. Proposal Title</h2>
 						<div className="space-y-4">
 							<FormField
@@ -357,11 +371,11 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 								name="title"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>Title</FormLabel>
+										<FormLabel className="text-lg font-medium">Title</FormLabel>
 										<FormControl>
-											<Input {...field} />
+											<Input className="bg-white" {...field} />
 										</FormControl>
-										<FormDescription>
+										<FormDescription className="flex justify-end">
 											{getMaxLengthForField('title') - field.value.length}{' '}
 											characters remaining
 										</FormDescription>
@@ -370,10 +384,10 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 								)}
 							/>
 						</div>
-					</div>
+					</section>
 
 					{/* Section 2: Overview */}
-					<div className="mb-8">
+					<section className="rounded-lg border border-gray-200 bg-card/50 p-8">
 						<h2 className="mb-4 text-xl font-semibold">2. Overview</h2>
 						<div className="space-y-4">
 							<FormField
@@ -381,11 +395,13 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 								name="proposalSummary"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>Proposal Summary</FormLabel>
+										<FormLabel className="text-lg font-medium">
+											Proposal Summary
+										</FormLabel>
 										<FormControl>
-											<Textarea className="min-h-[100px]" {...field} />
+											<Textarea className="min-h-[100px] bg-white" {...field} />
 										</FormControl>
-										<FormDescription>
+										<FormDescription className="flex justify-end">
 											{getMaxLengthForField('proposalSummary') -
 												field.value.length}{' '}
 											characters remaining
@@ -400,11 +416,13 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 								name="keyObjectives"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>Key Objectives</FormLabel>
+										<FormLabel className="text-lg font-medium">
+											Key Objectives
+										</FormLabel>
 										<FormControl>
-											<Textarea className="min-h-[100px]" {...field} />
+											<Textarea className="min-h-[100px] bg-white" {...field} />
 										</FormControl>
-										<FormDescription>
+										<FormDescription className="flex justify-end">
 											{getMaxLengthForField('keyObjectives') -
 												field.value.length}{' '}
 											characters remaining
@@ -414,10 +432,10 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 								)}
 							/>
 						</div>
-					</div>
+					</section>
 
 					{/* Section 3: Problem Statement */}
-					<div className="mb-8">
+					<section className="rounded-lg border border-gray-200 bg-card/50 p-8">
 						<h2 className="mb-4 text-xl font-semibold">3. Problem Statement</h2>
 						<div className="space-y-4">
 							<FormField
@@ -425,11 +443,13 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 								name="problemStatement"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>What is the problem?</FormLabel>
+										<FormLabel className="text-lg font-medium">
+											What is the problem?
+										</FormLabel>
 										<FormControl>
-											<Textarea className="min-h-[100px]" {...field} />
+											<Textarea className="min-h-[100px] bg-white" {...field} />
 										</FormControl>
-										<FormDescription>
+										<FormDescription className="flex justify-end">
 											{getMaxLengthForField('problemStatement') -
 												field.value.length}{' '}
 											characters remaining
@@ -444,11 +464,13 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 								name="problemImportance"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>Why does it matter?</FormLabel>
+										<FormLabel className="text-lg font-medium">
+											Why does it matter?
+										</FormLabel>
 										<FormControl>
-											<Textarea className="min-h-[100px]" {...field} />
+											<Textarea className="min-h-[100px] bg-white" {...field} />
 										</FormControl>
-										<FormDescription>
+										<FormDescription className="flex justify-end">
 											{getMaxLengthForField('problemImportance') -
 												field.value.length}{' '}
 											characters remaining
@@ -458,10 +480,10 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 								)}
 							/>
 						</div>
-					</div>
+					</section>
 
 					{/* Section 4: Proposed Solution */}
-					<div className="mb-8">
+					<section className="rounded-lg border border-gray-200 bg-card/50 p-8">
 						<h2 className="mb-4 text-xl font-semibold">4. Proposed Solution</h2>
 						<div className="space-y-4">
 							<FormField
@@ -469,11 +491,13 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 								name="proposedSolution"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>What will you do?</FormLabel>
+										<FormLabel className="text-lg font-medium">
+											What will you do?
+										</FormLabel>
 										<FormControl>
-											<Textarea className="min-h-[150px]" {...field} />
+											<Textarea className="min-h-[150px] bg-white" {...field} />
 										</FormControl>
-										<FormDescription>
+										<FormDescription className="flex justify-end">
 											{getMaxLengthForField('proposedSolution') -
 												field.value.length}{' '}
 											characters remaining
@@ -488,11 +512,13 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 								name="implementationDetails"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>How will it work?</FormLabel>
+										<FormLabel className="text-lg font-medium">
+											How will it work?
+										</FormLabel>
 										<FormControl>
-											<Textarea className="min-h-[150px]" {...field} />
+											<Textarea className="min-h-[150px] bg-white" {...field} />
 										</FormControl>
-										<FormDescription>
+										<FormDescription className="flex justify-end">
 											{getMaxLengthForField('implementationDetails') -
 												field.value.length}{' '}
 											characters remaining
@@ -502,10 +528,10 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 								)}
 							/>
 						</div>
-					</div>
+					</section>
 
 					{/* Section 5: Expected Impact */}
-					<div className="mb-8">
+					<section className="rounded-lg border border-gray-200 bg-card/50 p-8">
 						<h2 className="mb-4 text-xl font-semibold">5. Expected Impact</h2>
 						<div className="space-y-4">
 							<FormField
@@ -513,11 +539,13 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 								name="communityBenefits"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>Community Benefits</FormLabel>
+										<FormLabel className="text-lg font-medium">
+											Community Benefits
+										</FormLabel>
 										<FormControl>
-											<Textarea className="min-h-[100px]" {...field} />
+											<Textarea className="min-h-[100px] bg-white" {...field} />
 										</FormControl>
-										<FormDescription>
+										<FormDescription className="flex justify-end">
 											{getMaxLengthForField('communityBenefits') -
 												field.value.length}{' '}
 											characters remaining
@@ -532,11 +560,13 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 								name="keyPerformanceIndicators"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>Key Performance Indicators (KPIs)</FormLabel>
+										<FormLabel className="text-lg font-medium">
+											Key Performance Indicators (KPIs)
+										</FormLabel>
 										<FormControl>
-											<Textarea className="min-h-[100px]" {...field} />
+											<Textarea className="min-h-[100px] bg-white" {...field} />
 										</FormControl>
-										<FormDescription>
+										<FormDescription className="flex justify-end">
 											{getMaxLengthForField('keyPerformanceIndicators') -
 												field.value.length}{' '}
 											characters remaining
@@ -546,10 +576,10 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 								)}
 							/>
 						</div>
-					</div>
+					</section>
 
 					{/* Section 6: Budget Request */}
-					<div className="mb-8">
+					<section className="rounded-lg border border-gray-200 bg-card/50 p-8">
 						<h2 className="mb-4 text-xl font-semibold">6. Budget Request</h2>
 						<div className="space-y-4">
 							<FormField
@@ -557,11 +587,13 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 								name="totalFundingRequired"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>Total Funding Required (MINA)</FormLabel>
+										<FormLabel className="text-lg font-medium">
+											Total Funding Required (MINA)
+										</FormLabel>
 										<FormControl>
-											<Input type="text" {...field} />
+											<Input className="bg-white" type="text" {...field} />
 										</FormControl>
-										<FormDescription>
+										<FormDescription className="flex justify-end">
 											Enter amount in MINA (e.g., 10000)
 										</FormDescription>
 										<FormMessage />
@@ -574,11 +606,13 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 								name="budgetBreakdown"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>Breakdown of Costs</FormLabel>
+										<FormLabel className="text-lg font-medium">
+											Breakdown of Costs
+										</FormLabel>
 										<FormControl>
-											<Textarea className="min-h-[100px]" {...field} />
+											<Textarea className="min-h-[100px] bg-white" {...field} />
 										</FormControl>
-										<FormDescription>
+										<FormDescription className="flex justify-end">
 											{getMaxLengthForField('budgetBreakdown') -
 												field.value.length}{' '}
 											characters remaining
@@ -588,10 +622,10 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 								)}
 							/>
 						</div>
-					</div>
+					</section>
 
 					{/* Section 7: Milestones and Timeline */}
-					<div className="mb-8">
+					<section className="rounded-lg border border-gray-200 bg-card/50 p-8">
 						<h2 className="mb-4 text-xl font-semibold">
 							7. Milestones and Timeline
 						</h2>
@@ -601,11 +635,13 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 								name="milestones"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>Key Milestones</FormLabel>
+										<FormLabel className="text-lg font-medium">
+											Key Milestones
+										</FormLabel>
 										<FormControl>
-											<Textarea className="min-h-[100px]" {...field} />
+											<Textarea className="min-h-[100px] bg-white" {...field} />
 										</FormControl>
-										<FormDescription>
+										<FormDescription className="flex justify-end">
 											{getMaxLengthForField('milestones') - field.value.length}{' '}
 											characters remaining
 										</FormDescription>
@@ -619,7 +655,9 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 								name="estimatedCompletionDate"
 								render={({ field }) => (
 									<FormItem className="flex flex-col">
-										<FormLabel>Estimated Completion Date</FormLabel>
+										<FormLabel className="text-lg font-medium">
+											Estimated Completion Date
+										</FormLabel>
 										<Popover>
 											<PopoverTrigger asChild>
 												<FormControl>
@@ -654,10 +692,10 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 								)}
 							/>
 						</div>
-					</div>
+					</section>
 
 					{/* Section 8: Team Information */}
-					<div className="mb-8">
+					<section className="rounded-lg border border-gray-200 bg-card/50 p-8">
 						<h2 className="mb-4 text-xl font-semibold">8. Team Information</h2>
 						<div className="space-y-4">
 							<FormField
@@ -665,11 +703,13 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 								name="teamMembers"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>Team Members</FormLabel>
+										<FormLabel className="text-lg font-medium">
+											Team Members
+										</FormLabel>
 										<FormControl>
-											<Textarea className="min-h-[100px]" {...field} />
+											<Textarea className="min-h-[100px] bg-white" {...field} />
 										</FormControl>
-										<FormDescription>
+										<FormDescription className="flex justify-end">
 											{getMaxLengthForField('teamMembers') - field.value.length}{' '}
 											characters remaining
 										</FormDescription>
@@ -683,11 +723,13 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 								name="relevantExperience"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>Relevant Experience</FormLabel>
+										<FormLabel className="text-lg font-medium">
+											Relevant Experience
+										</FormLabel>
 										<FormControl>
-											<Textarea className="min-h-[100px]" {...field} />
+											<Textarea className="min-h-[100px] bg-white" {...field} />
 										</FormControl>
-										<FormDescription>
+										<FormDescription className="flex justify-end">
 											{getMaxLengthForField('relevantExperience') -
 												field.value.length}{' '}
 											characters remaining
@@ -697,10 +739,10 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 								)}
 							/>
 						</div>
-					</div>
+					</section>
 
 					{/* Section 9: Risks and Mitigation */}
-					<div className="mb-8">
+					<section className="rounded-lg border border-gray-200 bg-card/50 p-8">
 						<h2 className="mb-4 text-xl font-semibold">
 							9. Risks and Mitigation
 						</h2>
@@ -710,11 +752,13 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 								name="potentialRisks"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>Potential Risks</FormLabel>
+										<FormLabel className="text-lg font-medium">
+											Potential Risks
+										</FormLabel>
 										<FormControl>
-											<Textarea className="min-h-[100px]" {...field} />
+											<Textarea className="min-h-[100px] bg-white" {...field} />
 										</FormControl>
-										<FormDescription>
+										<FormDescription className="flex justify-end">
 											{getMaxLengthForField('potentialRisks') -
 												field.value.length}{' '}
 											characters remaining
@@ -729,11 +773,13 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 								name="mitigationPlans"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>Mitigation Plans</FormLabel>
+										<FormLabel className="text-lg font-medium">
+											Mitigation Plans
+										</FormLabel>
 										<FormControl>
-											<Textarea className="min-h-[100px]" {...field} />
+											<Textarea className="min-h-[100px] bg-white" {...field} />
 										</FormControl>
-										<FormDescription>
+										<FormDescription className="flex justify-end">
 											{getMaxLengthForField('mitigationPlans') -
 												field.value.length}{' '}
 											characters remaining
@@ -743,10 +789,10 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 								)}
 							/>
 						</div>
-					</div>
+					</section>
 
 					{/* Section 10: Contact Information */}
-					<div className="mb-8">
+					<section className="rounded-lg border border-gray-200 bg-card/50 p-8">
 						<h2 className="mb-4 text-xl font-semibold">
 							10. About the Submitter
 						</h2>
@@ -756,9 +802,9 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 								name="email"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>Email</FormLabel>
+										<FormLabel className="text-lg font-medium">Email</FormLabel>
 										<FormControl>
-											<Input type="email" {...field} />
+											<Input className="bg-white" type="email" {...field} />
 										</FormControl>
 										<FormMessage />
 									</FormItem>
@@ -770,9 +816,11 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 								name="discordHandle"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>Discord Handle</FormLabel>
+										<FormLabel className="text-lg font-medium">
+											Discord Handle
+										</FormLabel>
 										<FormControl>
-											<Input {...field} />
+											<Input className="bg-white" {...field} />
 										</FormControl>
 										<FormMessage />
 									</FormItem>
@@ -784,9 +832,15 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 								name="website"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>Website (Optional)</FormLabel>
+										<FormLabel className="text-lg font-medium">
+											Website (Optional)
+										</FormLabel>
 										<FormControl>
-											<Input placeholder="https://example.com" {...field} />
+											<Input
+												className="bg-white"
+												placeholder="https://example.com"
+												{...field}
+											/>
 										</FormControl>
 										<FormMessage />
 									</FormItem>
@@ -798,9 +852,12 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 								name="githubProfile"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>GitHub Profile (Optional)</FormLabel>
+										<FormLabel className="text-lg font-medium">
+											GitHub Profile (Optional)
+										</FormLabel>
 										<FormControl>
 											<Input
+												className="bg-white"
 												placeholder="https://github.com/username"
 												{...field}
 											/>
@@ -815,14 +872,17 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 								name="otherLinks"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>Other Relevant Links (Optional)</FormLabel>
+										<FormLabel className="text-lg font-medium">
+											Other Relevant Links (Optional)
+										</FormLabel>
 										<FormControl>
 											<Input
+												className="bg-white"
 												placeholder="Separate links with commas"
 												{...field}
 											/>
 										</FormControl>
-										<FormDescription>
+										<FormDescription className="flex justify-end">
 											{getMaxLengthForField('otherLinks') - field.value.length}{' '}
 											characters remaining
 										</FormDescription>
@@ -831,7 +891,7 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 								)}
 							/>
 						</div>
-					</div>
+					</section>
 
 					<div className="flex justify-end space-x-4">
 						<Link href="/proposals">
