@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { AppError } from './errors'
 import { HTTPStatus } from '@/constants/errors'
 import logger from '@/logging'
+import { ZodError } from 'zod'
 
 export class ApiResponse {
 	static notFound<T>(data: T | { error: string } | string) {
@@ -16,6 +17,13 @@ export class ApiResponse {
 			data = { error: data }
 		}
 		return NextResponse.json(data, { status: HTTPStatus.UNAUTHORIZED })
+	}
+
+	static badRequest<T>(data: T | { error: string } | string) {
+		if (typeof data === 'string') {
+			data = { error: data }
+		}
+		return NextResponse.json(data, { status: HTTPStatus.BAD_REQUEST })
 	}
 
 	static success<T>(data: T) {
