@@ -9,9 +9,10 @@ import {
 
 export async function GET(req: NextRequest) {
 	try {
-		const { data: { query, sortBy, sortOrder } = {}, error } =
+		const { data: { query, filterBy, sortBy, sortOrder } = {}, error } =
 			getPublicFundingRoundsOptionsSchema.safeParse({
 				query: req.nextUrl.searchParams.get('query'),
+				filterBy: req.nextUrl.searchParams.get('filterBy'),
 				sortBy: req.nextUrl.searchParams.get('sortBy'),
 				sortOrder: req.nextUrl.searchParams.get('sortOrder'),
 			})
@@ -28,6 +29,7 @@ export async function GET(req: NextRequest) {
 
 		const rounds = await fundingRoundService.getPublicFundingRounds({
 			query,
+			filterBy,
 			sortBy,
 			sortOrder,
 		})

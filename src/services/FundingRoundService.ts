@@ -10,6 +10,18 @@ import { z } from 'zod'
 
 export const getPublicFundingRoundsOptionsSchema = z.object({
 	query: z.string().optional().nullable(),
+	filterBy: z
+		.enum([
+			'UPCOMING',
+			'SUBMISSION',
+			'CONSIDERATION',
+			'DELIBERATION',
+			'VOTING',
+			'COMPLETED',
+			'BETWEEN_PHASES',
+		])
+		.optional()
+		.nullable(),
 	sortBy: z.enum(['totalBudget', 'startDate', 'status']).optional().nullable(),
 	sortOrder: z.enum(['asc', 'desc']).optional().nullable(),
 })
@@ -87,7 +99,7 @@ export class FundingRoundService {
 			orderBy: buildOrderBy(options.sortBy ? options : undefined),
 		})
 
-		return rounds.map(({ _count, ...round }) => {
+		const fundingRounds = rounds.map(({ _count, ...round }) => {
 			const phases = this.buildPhases(round)
 
 			return {
@@ -107,24 +119,56 @@ export class FundingRoundService {
 				phases,
 			}
 		})
+
+		if (options.filterBy) {
+			// TODO: remember to move that to the db query when using pagination
+			return fundingRounds.filter(({ phase }) => phase === options.filterBy)
+		}
+
+		return fundingRounds
 	}
 
-	async getActiveFundingRounds() {
+	async getActiveFundingRounds(): Promise<FundingRoundWithPhases[]> {
 		const now = new Date()
-		return await this.prisma.fundingRound.findMany({
+
+		const rounds = await this.prisma.fundingRound.findMany({
 			where: {
 				startDate: { lte: now },
 				endDate: { gte: now },
 				status: 'ACTIVE',
 			},
 			include: {
-				proposals: true,
+				_count: {
+					select: { proposals: true },
+				},
 				submissionPhase: true,
 				considerationPhase: true,
 				deliberationPhase: true,
 				votingPhase: true,
+				topic: true,
 			},
 			orderBy: { startDate: 'asc' },
+		})
+
+		return rounds.map(({ _count, ...round }) => {
+			const phases = this.buildPhases(round)
+
+			return {
+				...round,
+				totalBudget: round.totalBudget.toString(),
+				proposalsCount: _count.proposals,
+				status: FundingRoundService.fixFundingRoundStatus(
+					round.status,
+					round.startDate,
+				),
+				startDate: round.startDate.toDateString(),
+				endDate: round.endDate.toDateString(),
+				phase: FundingRoundService.getCurrentPhase(
+					round.endDate.toDateString(),
+					phases,
+				),
+				phases,
+			}
 		})
 	}
 
