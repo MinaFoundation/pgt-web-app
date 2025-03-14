@@ -9,7 +9,7 @@ import { Prisma, PrismaClient } from '@prisma/client'
 import { z } from 'zod'
 
 export const getPublicFundingRoundsOptionsSchema = z.object({
-	filterName: z.string().optional().nullable(),
+	query: z.string().optional().nullable(),
 	sortBy: z.enum(['totalBudget', 'startDate', 'status']).optional().nullable(),
 	sortOrder: z.enum(['asc', 'desc']).optional().nullable(),
 })
@@ -65,10 +65,10 @@ export class FundingRoundService {
 				status: {
 					in: ['ACTIVE', 'COMPLETED'],
 				},
-				...(options.filterName
+				...(options.query
 					? {
 							name: {
-								contains: options.filterName,
+								contains: options.query,
 								mode: 'insensitive',
 							},
 						}

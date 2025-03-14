@@ -9,9 +9,9 @@ import {
 
 export async function GET(req: NextRequest) {
 	try {
-		const { data: { filterName, sortBy, sortOrder } = {}, error } =
+		const { data: { query, sortBy, sortOrder } = {}, error } =
 			getPublicFundingRoundsOptionsSchema.safeParse({
-				filterName: req.nextUrl.searchParams.get('filterName'),
+				query: req.nextUrl.searchParams.get('query'),
 				sortBy: req.nextUrl.searchParams.get('sortBy'),
 				sortOrder: req.nextUrl.searchParams.get('sortOrder'),
 			})
@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
 		const fundingRoundService = new FundingRoundService(prisma)
 
 		const rounds = await fundingRoundService.getPublicFundingRounds({
-			filterName,
+			query,
 			sortBy,
 			sortOrder,
 		})

@@ -193,7 +193,7 @@ export async function GET(
 		// TODO: implement filters and sorting
 		const { data: { query, filterBy, sortBy, sortOrder } = {}, error } =
 			considerationOptionsSchema.safeParse({
-				filterName: request.nextUrl.searchParams.get('filterName'),
+				query: request.nextUrl.searchParams.get('query'),
 				sortBy: request.nextUrl.searchParams.get('sortBy'),
 				sortOrder: request.nextUrl.searchParams.get('sortOrder'),
 			})
