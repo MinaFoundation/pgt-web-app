@@ -128,50 +128,6 @@ export class FundingRoundService {
 		return fundingRounds
 	}
 
-	async getActiveFundingRounds(): Promise<FundingRoundWithPhases[]> {
-		const now = new Date()
-
-		const rounds = await this.prisma.fundingRound.findMany({
-			where: {
-				startDate: { lte: now },
-				endDate: { gte: now },
-				status: 'ACTIVE',
-			},
-			include: {
-				_count: {
-					select: { proposals: true },
-				},
-				submissionPhase: true,
-				considerationPhase: true,
-				deliberationPhase: true,
-				votingPhase: true,
-				topic: true,
-			},
-			orderBy: { startDate: 'asc' },
-		})
-
-		return rounds.map(({ _count, ...round }) => {
-			const phases = this.buildPhases(round)
-
-			return {
-				...round,
-				totalBudget: round.totalBudget.toString(),
-				proposalsCount: _count.proposals,
-				status: FundingRoundService.fixFundingRoundStatus(
-					round.status,
-					round.startDate,
-				),
-				startDate: round.startDate.toDateString(),
-				endDate: round.endDate.toDateString(),
-				phase: FundingRoundService.getCurrentPhase(
-					round.endDate.toDateString(),
-					phases,
-				),
-				phases,
-			}
-		})
-	}
-
 	async getFundingRoundById(
 		id: string,
 	): Promise<FundingRoundWithPhases | null> {

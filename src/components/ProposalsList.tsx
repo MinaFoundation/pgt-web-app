@@ -25,7 +25,6 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { useAvailableFundingRounds } from '@/hooks/use-available-funding-rounds'
 import {
 	Card,
 	CardContent,
@@ -36,6 +35,7 @@ import {
 } from './ui/card'
 import { useProposals } from '@/hooks/use-proposals'
 import { ProposalWithUserAndFundingRound } from '@/types/proposals'
+import { useFundingRounds } from '@/hooks/use-funding-rounds'
 
 export function ProposalsList() {
 	const { toast } = useToast()
@@ -52,8 +52,14 @@ export function ProposalsList() {
 	)
 	const [viewFundingRoundOpen, setViewFundingRoundOpen] = useState(false)
 	const [selectFundingRoundOpen, setSelectFundingRoundOpen] = useState(false)
-	const { loading: checkingRounds, hasAvailableRounds } =
-		useAvailableFundingRounds()
+	const {
+		data: submissionFundingRounds = [],
+		isLoading: checkingSubmissionFundingRounds,
+	} = useFundingRounds({
+		filterBy: 'SUBMISSION',
+	})
+
+	const hasActiveSubmissionRounds = submissionFundingRounds.length > 0
 
 	const { handleAction, loading: deleteLoading } = useActionFeedback({
 		successMessage: 'Proposal deleted successfully',
@@ -134,7 +140,7 @@ export function ProposalsList() {
 	}
 
 	const handleSubmitClick = (proposalId: number) => {
-		if (!hasAvailableRounds) {
+		if (!hasActiveSubmissionRounds) {
 			toast({
 				title: 'No Available Funding Rounds',
 				description:
@@ -186,8 +192,8 @@ export function ProposalsList() {
 					<ProposalCard
 						key={proposal.id}
 						proposal={proposal}
-						checkingRounds={checkingRounds}
-						hasAvailableRounds={hasAvailableRounds}
+						checkingRounds={checkingSubmissionFundingRounds}
+						hasAvailableRounds={hasActiveSubmissionRounds}
 						deleteLoading={deleteLoading}
 						onSubmit={() => handleSubmitClick(proposal.id)}
 						onDelete={() => handleDelete(proposal.id)}

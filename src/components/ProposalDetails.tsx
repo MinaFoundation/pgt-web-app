@@ -83,13 +83,15 @@ export function ProposalDetails({ proposalId }: Props) {
 	const [loadingComments, setLoadingComments] = useState(true)
 	const [selectFundingRoundOpen, setSelectFundingRoundOpen] = useState(false)
 	const [viewFundingRoundOpen, setViewFundingRoundOpen] = useState(false)
-	const { loading: checkingRounds, hasAvailableRounds } =
-		useAvailableFundingRounds()
 
-	const { handleAction } = useActionFeedback({
-		successMessage: 'Action will be implemented soon',
-		errorMessage: 'Failed to perform action',
+	const {
+		data: submissionFundingRounds = [],
+		isLoading: checkingSubmissionFundingRounds,
+	} = useFundingRounds({
+		filterBy: 'SUBMISSION',
 	})
+
+	const hasActiveSubmissionRounds = submissionFundingRounds.length > 0
 
 	const fetchProposal = useCallback(async () => {
 		try {
@@ -496,15 +498,18 @@ export function ProposalDetails({ proposalId }: Props) {
 											<div>
 												<Button
 													onClick={handleSubmitClick}
-													disabled={checkingRounds || !hasAvailableRounds}
+													disabled={
+														checkingSubmissionFundingRounds ||
+														!hasActiveSubmissionRounds
+													}
 												>
-													{checkingRounds
+													{checkingSubmissionFundingRounds
 														? 'Checking rounds...'
 														: 'Submit to funding round'}
 												</Button>
 											</div>
 										</TooltipTrigger>
-										{!hasAvailableRounds && (
+										{!hasActiveSubmissionRounds && (
 											<TooltipContent>
 												<p>
 													No funding rounds are currently accepting proposals
