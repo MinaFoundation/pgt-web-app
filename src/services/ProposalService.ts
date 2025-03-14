@@ -8,7 +8,6 @@ import type { ProposalComment } from '@/types/deliberation'
 import { UserMetadata } from './UserService'
 import { ProposalSummaryWithUserAndFundingRound } from '@/types/proposals'
 import { FundingRoundService } from './FundingRoundService'
-import { FundingRoundPhases } from '@/types/funding-round'
 
 // Validation schema (reuse from CreateProposal component)
 export const proposalCreateSchema = z.object({
@@ -252,56 +251,8 @@ export class ProposalService {
 				},
 			},
 			include: {
-				user: {
-					select: {
-						id: true,
-						metadata: true,
-						linkId: true,
-					},
-				},
-				fundingRound: {
-					select: {
-						id: true,
-						name: true,
-						description: true,
-						status: true,
-						totalBudget: true,
-						mefId: true,
-						startDate: true,
-						endDate: true,
-						_count: {
-							select: { proposals: true },
-						},
-						submissionPhase: {
-							select: {
-								id: true,
-								startDate: true,
-								endDate: true,
-							},
-						},
-						considerationPhase: {
-							select: {
-								id: true,
-								startDate: true,
-								endDate: true,
-							},
-						},
-						deliberationPhase: {
-							select: {
-								id: true,
-								startDate: true,
-								endDate: true,
-							},
-						},
-						votingPhase: {
-							select: {
-								id: true,
-								startDate: true,
-								endDate: true,
-							},
-						},
-					},
-				},
+				user: this.buildUserInclude(),
+				fundingRound: this.buildFundingRoundInclude(),
 			},
 			orderBy: [
 				{ status: 'asc' }, // Show drafts first
@@ -310,60 +261,6 @@ export class ProposalService {
 		})
 
 		return proposals.map(proposal => {
-			const phases: FundingRoundPhases | null = proposal.fundingRound
-				? {
-						submission: {
-							id: proposal.fundingRound.submissionPhase!.id,
-							startDate:
-								proposal.fundingRound.submissionPhase!.startDate.toISOString(),
-							endDate:
-								proposal.fundingRound.submissionPhase!.endDate.toISOString(),
-						},
-						consideration: {
-							id: proposal.fundingRound.considerationPhase!.id,
-							startDate:
-								proposal.fundingRound.considerationPhase!.startDate.toISOString(),
-							endDate:
-								proposal.fundingRound.considerationPhase!.endDate.toISOString(),
-						},
-						deliberation: {
-							id: proposal.fundingRound.deliberationPhase!.id,
-							startDate:
-								proposal.fundingRound.deliberationPhase!.startDate.toISOString(),
-							endDate:
-								proposal.fundingRound.deliberationPhase!.endDate.toISOString(),
-						},
-						voting: {
-							id: proposal.fundingRound.votingPhase!.id,
-							startDate:
-								proposal.fundingRound.votingPhase!.startDate.toISOString(),
-							endDate: proposal.fundingRound.votingPhase!.endDate.toISOString(),
-						},
-					}
-				: null
-
-			const fundingRound = proposal.fundingRound
-				? {
-						id: proposal.fundingRound.id,
-						name: proposal.fundingRound.name,
-						description: proposal.fundingRound.description,
-						status: FundingRoundService.fixFundingRoundStatus(
-							proposal.fundingRound.status,
-							proposal.fundingRound.startDate,
-						),
-						phase: FundingRoundService.getCurrentPhase(
-							proposal.fundingRound.endDate.toISOString(),
-							phases!,
-						),
-						mefId: proposal.fundingRound.mefId,
-						proposalsCount: proposal.fundingRound._count.proposals,
-						totalBudget: proposal.fundingRound.totalBudget.toString(),
-						startDate: proposal.fundingRound.startDate.toISOString(),
-						endDate: proposal.fundingRound.endDate.toISOString(),
-						phases: phases!,
-					}
-				: null
-
 			return {
 				id: proposal.id,
 				title: proposal.title,
@@ -377,9 +274,115 @@ export class ProposalService {
 					linkId: proposal.user.linkId,
 					username: (proposal.user.metadata as UserMetadata).username,
 				},
-				fundingRound,
+				fundingRound:
+					proposal.fundingRound &&
+					this.buildFundingRound(proposal.fundingRound),
 			}
 		})
+	}
+
+	private buildUserInclude() {
+		return {
+			select: {
+				id: true,
+				metadata: true,
+				linkId: true,
+			},
+		}
+	}
+
+	private buildFundingRoundInclude() {
+		return {
+			select: {
+				id: true,
+				name: true,
+				description: true,
+				status: true,
+				totalBudget: true,
+				mefId: true,
+				startDate: true,
+				endDate: true,
+				_count: {
+					select: { proposals: true },
+				},
+				submissionPhase: {
+					select: {
+						id: true,
+						startDate: true,
+						endDate: true,
+					},
+				},
+				considerationPhase: {
+					select: {
+						id: true,
+						startDate: true,
+						endDate: true,
+					},
+				},
+				deliberationPhase: {
+					select: {
+						id: true,
+						startDate: true,
+						endDate: true,
+					},
+				},
+				votingPhase: {
+					select: {
+						id: true,
+						startDate: true,
+						endDate: true,
+					},
+				},
+			},
+		}
+	}
+
+	private buildFundingRound(
+		fundingRound: {
+			id: string
+			name: string
+			description: string
+			status: string
+			totalBudget: Decimal
+			mefId: number
+			startDate: Date
+			endDate: Date
+			_count: {
+				proposals: number
+			}
+		} & Record<
+			| 'submissionPhase'
+			| 'considerationPhase'
+			| 'deliberationPhase'
+			| 'votingPhase',
+			{
+				id: string
+				startDate: Date
+				endDate: Date
+			} | null
+		>,
+	) {
+		const phases = FundingRoundService.buildPhases(fundingRound)
+
+		return {
+			id: fundingRound.id,
+			name: fundingRound.name,
+			description: fundingRound.description,
+			status: FundingRoundService.fixFundingRoundStatus(
+				fundingRound.status,
+				fundingRound.startDate,
+			),
+			phase: FundingRoundService.getCurrentPhase(
+				fundingRound.endDate.toISOString(),
+				phases,
+			),
+			mefId: fundingRound.mefId,
+			proposalsCount: fundingRound._count.proposals,
+			totalBudget: fundingRound.totalBudget.toString(),
+			startDate: fundingRound.startDate.toISOString(),
+			endDate: fundingRound.endDate.toISOString(),
+			phases: phases!,
+		}
 	}
 
 	async deleteProposal(
