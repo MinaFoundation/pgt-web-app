@@ -1,18 +1,18 @@
 'use client'
 
 import logger from '@/logging'
-import { ProposalWithUserAndFundingRound } from '@/types/proposals'
+import { ProposalSummaryWithUserAndFundingRound } from '@/types/proposals'
 import { UndefinedInitialDataOptions, useQuery } from '@tanstack/react-query'
 
 export function useProposals(
 	options: Omit<
-		UndefinedInitialDataOptions<ProposalWithUserAndFundingRound[]>,
+		UndefinedInitialDataOptions<ProposalSummaryWithUserAndFundingRound[]>,
 		'queryKey' | 'queryFn'
 	> = {},
 ) {
 	const url = '/api/proposals'
 
-	return useQuery<ProposalWithUserAndFundingRound[]>({
+	return useQuery<ProposalSummaryWithUserAndFundingRound[]>({
 		...options,
 		queryKey: [url],
 		queryFn: async () => {

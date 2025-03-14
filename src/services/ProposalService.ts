@@ -6,7 +6,7 @@ import { AppError } from '@/lib/errors'
 import { ProposalErrors } from '@/constants/errors'
 import type { ProposalComment } from '@/types/deliberation'
 import { UserMetadata } from './UserService'
-import { ProposalWithUserAndFundingRound } from '@/types/proposals'
+import { ProposalSummaryWithUserAndFundingRound } from '@/types/proposals'
 import { FundingRoundService } from './FundingRoundService'
 import { FundingRoundPhases } from '@/types/funding-round'
 
@@ -244,7 +244,7 @@ export class ProposalService {
 	async getUserProposalsWithLinked(
 		userId: string,
 		userLinkId: string,
-	): Promise<ProposalWithUserAndFundingRound[]> {
+	): Promise<ProposalSummaryWithUserAndFundingRound[]> {
 		const proposals = await this.prisma.proposal.findMany({
 			where: {
 				user: {

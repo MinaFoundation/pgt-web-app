@@ -44,7 +44,7 @@ export interface ProposalWithUser extends PrismaProposal {
 	}
 }
 
-export interface ProposalWithUserAndFundingRound {
+export interface ProposalSummary {
 	id: number
 	title: string
 	summary: string
@@ -52,6 +52,10 @@ export interface ProposalWithUserAndFundingRound {
 	totalFundingRequired: number
 	createdAt: string
 	updatedAt: string
+}
+
+export interface ProposalSummaryWithUserAndFundingRound
+	extends ProposalSummary {
 	user: {
 		id: string
 		linkId: string

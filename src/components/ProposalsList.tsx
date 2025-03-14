@@ -34,7 +34,7 @@ import {
 	CardTitle,
 } from './ui/card'
 import { useProposals } from '@/hooks/use-proposals'
-import { ProposalWithUserAndFundingRound } from '@/types/proposals'
+import { ProposalSummaryWithUserAndFundingRound } from '@/types/proposals'
 import { useFundingRounds } from '@/hooks/use-funding-rounds'
 
 export function ProposalsList() {
@@ -257,7 +257,7 @@ function ProposalCard({
 	onDelete,
 	onViewFundingRound,
 }: {
-	proposal: ProposalWithUserAndFundingRound
+	proposal: ProposalSummaryWithUserAndFundingRound
 	checkingRounds: boolean
 	hasAvailableRounds: boolean
 	deleteLoading: boolean
