@@ -81,8 +81,13 @@ interface ProposalWithUser {
 
 export function ProposalsList() {
 	const { toast } = useToast()
-	const [proposals, setProposals] = useState<ProposalWithUser[]>([])
-	const [loading, setLoading] = useState(true)
+
+	const {
+		data: proposals = [],
+		isLoading,
+		refetch: refetchProposals,
+	} = useProposals()
+
 	const [deleteId, setDeleteId] = useState<number | null>(null)
 	const [selectedProposalId, setSelectedProposalId] = useState<number | null>(
 		null,
@@ -100,27 +105,6 @@ export function ProposalsList() {
 			'Are you sure you want to delete this proposal? This action cannot be undone.',
 	})
 
-	const fetchProposals = useCallback(async () => {
-		try {
-			const response = await fetch('/api/proposals')
-			if (!response.ok) throw new Error('Failed to fetch proposals')
-			const data = await response.json()
-			setProposals(data)
-		} catch (error) {
-			toast({
-				title: 'Error',
-				description: 'Failed to load proposals',
-				variant: 'destructive',
-			})
-		} finally {
-			setLoading(false)
-		}
-	}, [toast])
-
-	useEffect(() => {
-		fetchProposals()
-	}, [fetchProposals])
-
 	const handleDelete = async (id: number) => {
 		await handleAction(async () => {
 			const response = await fetch(`/api/proposals/${id}`, {
@@ -131,7 +115,7 @@ export function ProposalsList() {
 				throw new Error('Failed to delete proposal')
 			}
 
-			setProposals(prev => prev.filter(p => p.id !== id))
+			refetchProposals()
 		})
 	}
 
@@ -157,8 +141,7 @@ export function ProposalsList() {
 				description: 'Proposal submitted to funding round',
 			})
 
-			// Refresh proposals list
-			fetchProposals()
+			refetchProposals()
 		} catch (error) {
 			toast({
 				title: 'Error',
@@ -182,7 +165,7 @@ export function ProposalsList() {
 			})
 
 			// Refresh proposals list
-			fetchProposals()
+			refetchProposals()
 		} catch (error) {
 			toast({
 				title: 'Error',
@@ -206,7 +189,7 @@ export function ProposalsList() {
 		setSelectFundingRoundOpen(true)
 	}
 
-	if (loading) {
+	if (isLoading) {
 		return <div className="py-8 text-center">Loading proposals...</div>
 	}
 
