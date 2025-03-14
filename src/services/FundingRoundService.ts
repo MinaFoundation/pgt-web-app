@@ -100,7 +100,7 @@ export class FundingRoundService {
 		})
 
 		const fundingRounds = rounds.map(({ _count, ...round }) => {
-			const phases = this.buildPhases(round)
+			const phases = FundingRoundService.buildPhases(round)
 
 			return {
 				...round,
@@ -151,7 +151,7 @@ export class FundingRoundService {
 			return null
 		}
 
-		const phases = this.buildPhases(round)
+		const phases = FundingRoundService.buildPhases(round)
 
 		return {
 			...round,
@@ -245,7 +245,7 @@ export class FundingRoundService {
 			),
 			phase: FundingRoundService.getCurrentPhase(
 				round.endDate.toDateString(),
-				this.buildPhases(round),
+				FundingRoundService.buildPhases(round),
 			),
 			startDate: round.startDate.toDateString(),
 			endDate: round.endDate.toDateString(),
@@ -268,7 +268,7 @@ export class FundingRoundService {
 		return status as FundingRoundStatus
 	}
 
-	private buildPhases(
+	static buildPhases(
 		round: Record<
 			| 'submissionPhase'
 			| 'considerationPhase'
