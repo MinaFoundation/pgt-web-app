@@ -1,13 +1,10 @@
-import { NextResponse } from 'next/server'
 import { ProposalService } from '@/services/ProposalService'
-import { UserService } from '@/services/UserService'
 import prisma from '@/lib/prisma'
 import { getOrCreateUserFromRequest } from '@/lib/auth'
-import { z, ZodError } from 'zod'
+import { z } from 'zod'
 import logger from '@/logging'
 import { ApiResponse } from '@/lib/api-response'
 import { AppError } from '@/lib/errors'
-import { AuthErrors, HTTPStatus } from '@/constants/errors'
 
 const proposalService = new ProposalService(prisma)
 const userService = new UserService(prisma)
@@ -80,14 +77,11 @@ export async function GET(request: Request, context: RouteContext) {
 	}
 }
 
-export async function DELETE(
-	req: Request,
-	{ params }: { params: Promise<{ id: string }> },
-) {
+export async function DELETE(req: Request, { params }: RouteContext) {
 	try {
 		const user = await getOrCreateUserFromRequest(req)
 		if (!user) {
-			throw AppError.unauthorized(AuthErrors.UNAUTHORIZED)
+			throw AppError.unauthorized('Please log in to delete proposals')
 		}
 
 		await proposalService.deleteProposal(
@@ -102,19 +96,13 @@ export async function DELETE(
 	}
 }
 
-export async function PUT(
-	req: Request,
-	{ params }: { params: Promise<{ id: string }> },
-) {
+export async function PUT(req: Request, { params }: RouteContext) {
 	try {
 		const proposalId = z.number().parse((await params).id)
 
 		const user = await getOrCreateUserFromRequest(req)
 		if (!user) {
-			return NextResponse.json(
-				{ error: 'Please log in to update proposals' },
-				{ status: 401 },
-			)
+			return ApiResponse.unauthorized('Please log in to update proposals')
 		}
 
 		const data = await req.json()
@@ -122,37 +110,14 @@ export async function PUT(
 		const canEdit = proposalService.checkEditPermission(proposalId, user)
 
 		if (!canEdit) {
-			return NextResponse.json(
-				{ error: 'You cannot edit this proposal' },
-				{ status: 403 },
-			)
+			return ApiResponse.unauthorized('You cannot edit this proposal')
 		}
 
 		await proposalService.updateProposal(proposalId, data)
 
-		return NextResponse.json({
-			success: true,
-		})
+		return ApiResponse.success({ success: true })
 	} catch (error) {
 		logger.error('Failed to update proposal:', error)
-
-		if (error instanceof AppError) {
-			return NextResponse.json(
-				{ error: error.message },
-				{ status: error.statusCode },
-			)
-		}
-
-		if (error instanceof ZodError) {
-			return NextResponse.json(
-				{ error: 'Validation failed', details: error.errors },
-				{ status: 400 },
-			)
-		}
-
-		return NextResponse.json(
-			{ error: 'Internal server error' },
-			{ status: 500 },
-		)
+		return ApiResponse.error(error)
 	}
 }
