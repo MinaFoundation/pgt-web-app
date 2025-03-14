@@ -86,11 +86,6 @@ export interface FullProposal extends ProposalSummaryWithUserAndFundingRound {
 	otherLinks: string | null
 }
 
-export interface ProposalWithAccess extends ProposalWithUser {
-	canEdit: boolean
-	canDelete: boolean
-}
-
 export interface CoreProposalData
 	extends Pick<
 		PrismaProposal,
