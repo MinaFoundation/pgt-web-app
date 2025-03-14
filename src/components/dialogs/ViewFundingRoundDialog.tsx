@@ -24,32 +24,12 @@ import {
 	AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-
-interface FundingRound {
-	id: string
-	name: string
-	description: string
-	status: string
-	startDate: string
-	endDate: string
-	considerationPhase: {
-		startDate: string
-		endDate: string
-	}
-	deliberationPhase: {
-		startDate: string
-		endDate: string
-	}
-	votingPhase: {
-		startDate: string
-		endDate: string
-	}
-}
+import { FundingRoundWithPhases } from '@/types/funding-round'
 
 interface Props {
 	open: boolean
 	onOpenChange: (open: boolean) => void
-	fundingRound: FundingRound
+	fundingRound: FundingRoundWithPhases
 	proposalTitle: string
 	onWithdraw?: () => Promise<void>
 	mode?: 'view' | 'withdraw'
@@ -147,12 +127,12 @@ export function ViewFundingRoundDialog({
 											</td>
 											<td>
 												{format(
-													new Date(fundingRound.considerationPhase.startDate),
+													new Date(fundingRound.phases.consideration.startDate),
 													'PPP',
 												)}{' '}
 												-{' '}
 												{format(
-													new Date(fundingRound.considerationPhase.endDate),
+													new Date(fundingRound.phases.consideration.endDate),
 													'PPP',
 												)}
 											</td>
@@ -163,12 +143,12 @@ export function ViewFundingRoundDialog({
 											</td>
 											<td>
 												{format(
-													new Date(fundingRound.deliberationPhase.startDate),
+													new Date(fundingRound.phases.deliberation.startDate),
 													'PPP',
 												)}{' '}
 												-{' '}
 												{format(
-													new Date(fundingRound.deliberationPhase.endDate),
+													new Date(fundingRound.phases.deliberation.endDate),
 													'PPP',
 												)}
 											</td>
@@ -177,12 +157,12 @@ export function ViewFundingRoundDialog({
 											<td className="py-2 font-medium">🗳️ Voting Phase:</td>
 											<td>
 												{format(
-													new Date(fundingRound.votingPhase.startDate),
+													new Date(fundingRound.phases.voting.startDate),
 													'PPP',
 												)}{' '}
 												-{' '}
 												{format(
-													new Date(fundingRound.votingPhase.endDate),
+													new Date(fundingRound.phases.voting.endDate),
 													'PPP',
 												)}
 											</td>
