@@ -7,6 +7,8 @@ import { ProposalErrors } from '@/constants/errors'
 import type { ProposalComment } from '@/types/deliberation'
 import { UserMetadata } from './UserService'
 import { ProposalWithUserAndFundingRound } from '@/types/proposals'
+import { FundingRoundService } from './FundingRoundService'
+import { FundingRoundPhases } from '@/types/funding-round'
 
 // Validation schema (reuse from CreateProposal component)
 export const proposalCreateSchema = z.object({
@@ -263,8 +265,41 @@ export class ProposalService {
 						name: true,
 						description: true,
 						status: true,
+						totalBudget: true,
+						mefId: true,
 						startDate: true,
 						endDate: true,
+						_count: {
+							select: { proposals: true },
+						},
+						submissionPhase: {
+							select: {
+								id: true,
+								startDate: true,
+								endDate: true,
+							},
+						},
+						considerationPhase: {
+							select: {
+								id: true,
+								startDate: true,
+								endDate: true,
+							},
+						},
+						deliberationPhase: {
+							select: {
+								id: true,
+								startDate: true,
+								endDate: true,
+							},
+						},
+						votingPhase: {
+							select: {
+								id: true,
+								startDate: true,
+								endDate: true,
+							},
+						},
 					},
 				},
 			},
@@ -274,30 +309,77 @@ export class ProposalService {
 			],
 		})
 
-		return proposals.map(proposal => ({
-			id: proposal.id,
-			title: proposal.title,
-			summary: proposal.proposalSummary,
-			status: proposal.status,
-			totalFundingRequired: proposal.totalFundingRequired.toNumber(),
-			createdAt: proposal.createdAt.toISOString(),
-			updatedAt: proposal.updatedAt.toISOString(),
-			user: {
-				id: proposal.user.id,
-				linkId: proposal.user.linkId,
-				username: (proposal.user.metadata as UserMetadata).username,
-			},
-			fundingRound: proposal.fundingRound
+		return proposals.map(proposal => {
+			const phases: FundingRoundPhases | null = proposal.fundingRound
+				? {
+						submission: {
+							id: proposal.fundingRound.submissionPhase!.id,
+							startDate:
+								proposal.fundingRound.submissionPhase!.startDate.toISOString(),
+							endDate:
+								proposal.fundingRound.submissionPhase!.endDate.toISOString(),
+						},
+						consideration: {
+							id: proposal.fundingRound.considerationPhase!.id,
+							startDate:
+								proposal.fundingRound.considerationPhase!.startDate.toISOString(),
+							endDate:
+								proposal.fundingRound.considerationPhase!.endDate.toISOString(),
+						},
+						deliberation: {
+							id: proposal.fundingRound.deliberationPhase!.id,
+							startDate:
+								proposal.fundingRound.deliberationPhase!.startDate.toISOString(),
+							endDate:
+								proposal.fundingRound.deliberationPhase!.endDate.toISOString(),
+						},
+						voting: {
+							id: proposal.fundingRound.votingPhase!.id,
+							startDate:
+								proposal.fundingRound.votingPhase!.startDate.toISOString(),
+							endDate: proposal.fundingRound.votingPhase!.endDate.toISOString(),
+						},
+					}
+				: null
+
+			const fundingRound = proposal.fundingRound
 				? {
 						id: proposal.fundingRound.id,
 						name: proposal.fundingRound.name,
 						description: proposal.fundingRound.description,
-						status: proposal.fundingRound.status,
-						startDate: proposal.fundingRound.startDate,
-						endDate: proposal.fundingRound.endDate,
+						status: FundingRoundService.fixFundingRoundStatus(
+							proposal.fundingRound.status,
+							proposal.fundingRound.startDate,
+						),
+						phase: FundingRoundService.getCurrentPhase(
+							proposal.fundingRound.endDate.toISOString(),
+							phases!,
+						),
+						mefId: proposal.fundingRound.mefId,
+						proposalsCount: proposal.fundingRound._count.proposals,
+						totalBudget: proposal.fundingRound.totalBudget.toString(),
+						startDate: proposal.fundingRound.startDate.toISOString(),
+						endDate: proposal.fundingRound.endDate.toISOString(),
+						phases: phases!,
 					}
-				: null,
-		}))
+				: null
+
+			return {
+				id: proposal.id,
+				title: proposal.title,
+				summary: proposal.proposalSummary,
+				status: proposal.status,
+				totalFundingRequired: proposal.totalFundingRequired.toNumber(),
+				createdAt: proposal.createdAt.toISOString(),
+				updatedAt: proposal.updatedAt.toISOString(),
+				user: {
+					id: proposal.user.id,
+					linkId: proposal.user.linkId,
+					username: (proposal.user.metadata as UserMetadata).username,
+				},
+				fundingRound,
+			}
+		})
 	}
 
 	async deleteProposal(
