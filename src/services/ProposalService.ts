@@ -6,6 +6,7 @@ import { AppError } from '@/lib/errors'
 import { ProposalErrors } from '@/constants/errors'
 import type { ProposalComment } from '@/types/deliberation'
 import { UserMetadata } from './UserService'
+import { ProposalWithUserAndFundingRound } from '@/types/proposals'
 
 // Validation schema (reuse from CreateProposal component)
 export const proposalCreateSchema = z.object({
@@ -241,8 +242,8 @@ export class ProposalService {
 	async getUserProposalsWithLinked(
 		userId: string,
 		userLinkId: string,
-	): Promise<Proposal[]> {
-		return await this.prisma.proposal.findMany({
+	): Promise<ProposalWithUserAndFundingRound[]> {
+		const proposals = await this.prisma.proposal.findMany({
 			where: {
 				user: {
 					OR: [{ id: userId }, { linkId: userLinkId }],
@@ -264,24 +265,6 @@ export class ProposalService {
 						status: true,
 						startDate: true,
 						endDate: true,
-						considerationPhase: {
-							select: {
-								startDate: true,
-								endDate: true,
-							},
-						},
-						deliberationPhase: {
-							select: {
-								startDate: true,
-								endDate: true,
-							},
-						},
-						votingPhase: {
-							select: {
-								startDate: true,
-								endDate: true,
-							},
-						},
 					},
 				},
 			},
@@ -290,6 +273,31 @@ export class ProposalService {
 				{ createdAt: 'desc' }, // Then by creation date
 			],
 		})
+
+		return proposals.map(proposal => ({
+			id: proposal.id,
+			title: proposal.title,
+			summary: proposal.proposalSummary,
+			status: proposal.status,
+			totalFundingRequired: proposal.totalFundingRequired.toNumber(),
+			createdAt: proposal.createdAt.toISOString(),
+			updatedAt: proposal.updatedAt.toISOString(),
+			user: {
+				id: proposal.user.id,
+				linkId: proposal.user.linkId,
+				username: (proposal.user.metadata as UserMetadata).username,
+			},
+			fundingRound: proposal.fundingRound
+				? {
+						id: proposal.fundingRound.id,
+						name: proposal.fundingRound.name,
+						description: proposal.fundingRound.description,
+						status: proposal.fundingRound.status,
+						startDate: proposal.fundingRound.startDate,
+						endDate: proposal.fundingRound.endDate,
+					}
+				: null,
+		}))
 	}
 
 	async deleteProposal(
