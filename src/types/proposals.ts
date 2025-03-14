@@ -1,4 +1,8 @@
-import type { Proposal as PrismaProposal } from '@prisma/client'
+import type {
+	FundingRoundStatus,
+	Proposal as PrismaProposal,
+	ProposalStatus,
+} from '@prisma/client'
 
 export type ProposalField =
 	| 'title'
@@ -37,6 +41,29 @@ export interface ProposalWithUser extends PrismaProposal {
 			}
 		}
 	}
+}
+
+export interface ProposalWithUserAndFundingRound {
+	id: number
+	title: string
+	summary: string
+	status: keyof typeof ProposalStatus
+	totalFundingRequired: number
+	createdAt: string
+	updatedAt: string
+	user: {
+		id: string
+		linkId: string
+		username: string
+	}
+	fundingRound: {
+		name: string
+		id: string
+		status: keyof typeof FundingRoundStatus
+		description: string
+		startDate: Date
+		endDate: Date
+	} | null
 }
 
 export interface ProposalWithAccess extends ProposalWithUser {
