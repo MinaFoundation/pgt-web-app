@@ -30,6 +30,13 @@ export class ApiResponse {
 			)
 		}
 
+		if (error instanceof ZodError) {
+			return NextResponse.json(
+				{ error: 'Validation failed', details: error.errors },
+				{ status: HTTPStatus.BAD_REQUEST },
+			)
+		}
+
 		logger.error('Unhandled error:', error)
 		return NextResponse.json(
 			{ error: 'Internal server error' },
