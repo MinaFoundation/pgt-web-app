@@ -6,7 +6,10 @@ import { AppError } from '@/lib/errors'
 import { ProposalErrors } from '@/constants/errors'
 import type { ProposalComment } from '@/types/deliberation'
 import { UserMetadata } from './UserService'
-import { ProposalSummaryWithUserAndFundingRound } from '@/types/proposals'
+import {
+	FullProposal,
+	ProposalSummaryWithUserAndFundingRound,
+} from '@/types/proposals'
 import { FundingRoundService } from './FundingRoundService'
 
 // Validation schema (reuse from CreateProposal component)
@@ -209,34 +212,53 @@ export class ProposalService {
 		})
 	}
 
-	async getProposalById(
-		id: number,
-		userId: string,
-		userLinkId: string,
-	): Promise<(Proposal & { canEdit: boolean; canDelete: boolean }) | null> {
+	async getProposalById(id: number): Promise<FullProposal | null> {
 		const proposal = await this.prisma.proposal.findUnique({
 			where: { id },
 			include: {
-				user: true,
+				user: this.buildUserInclude(),
+				fundingRound: this.buildFundingRoundInclude(),
 			},
 		})
 
 		if (!proposal) return null
 
-		// Check if user has access (is creator or has same linkId)
-		const isOnwer =
-			proposal.userId === userId || proposal.user?.linkId === userLinkId
-
-		if (!isOnwer) return null
-
-		// Only creator can edit/delete, and only if status is DRAFT
-		const canEdit = isOnwer && proposal.status === ProposalStatus.DRAFT
-		const canDelete = canEdit
-
 		return {
-			...proposal,
-			canEdit,
-			canDelete,
+			id: proposal.id,
+			title: proposal.title,
+			summary: proposal.proposalSummary,
+			status: proposal.status,
+			totalFundingRequired: proposal.totalFundingRequired.toNumber(),
+			createdAt: proposal.createdAt.toISOString(),
+			updatedAt: proposal.updatedAt.toISOString(),
+
+			problemStatement: proposal.problemStatement,
+			problemImportance: proposal.problemImportance,
+			proposedSolution: proposal.proposedSolution,
+			implementationDetails: proposal.implementationDetails,
+			keyObjectives: proposal.keyObjectives,
+			communityBenefits: proposal.communityBenefits,
+			keyPerformanceIndicators: proposal.keyPerformanceIndicators,
+			budgetBreakdown: proposal.budgetBreakdown,
+			estimatedCompletionDate: proposal.estimatedCompletionDate.toISOString(),
+			milestones: proposal.milestones,
+			teamMembers: proposal.teamMembers,
+			relevantExperience: proposal.relevantExperience,
+			potentialRisks: proposal.potentialRisks,
+			mitigationPlans: proposal.mitigationPlans,
+			discordHandle: proposal.discordHandle,
+			email: proposal.email,
+			website: proposal.website,
+			githubProfile: proposal.githubProfile,
+			otherLinks: proposal.otherLinks,
+
+			user: {
+				id: proposal.user.id,
+				linkId: proposal.user.linkId,
+				username: (proposal.user.metadata as UserMetadata).username,
+			},
+			fundingRound:
+				proposal.fundingRound && this.buildFundingRound(proposal.fundingRound),
 		}
 	}
 
