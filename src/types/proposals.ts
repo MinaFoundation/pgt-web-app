@@ -3,6 +3,7 @@ import type {
 	Proposal as PrismaProposal,
 	ProposalStatus,
 } from '@prisma/client'
+import { FundingRoundWithPhases } from './funding-round'
 
 export type ProposalField =
 	| 'title'
@@ -56,14 +57,7 @@ export interface ProposalWithUserAndFundingRound {
 		linkId: string
 		username: string
 	}
-	fundingRound: {
-		name: string
-		id: string
-		status: keyof typeof FundingRoundStatus
-		description: string
-		startDate: Date
-		endDate: Date
-	} | null
+	fundingRound: FundingRoundWithPhases | null
 }
 
 export interface ProposalWithAccess extends ProposalWithUser {
