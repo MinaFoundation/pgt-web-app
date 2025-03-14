@@ -3,7 +3,7 @@ import { ProposalService } from '@/services/ProposalService'
 import { UserService } from '@/services/UserService'
 import prisma from '@/lib/prisma'
 import { getOrCreateUserFromRequest } from '@/lib/auth'
-import { ZodError } from 'zod'
+import { z, ZodError } from 'zod'
 import logger from '@/logging'
 import { ApiResponse } from '@/lib/api-response'
 import { AppError } from '@/lib/errors'
@@ -107,6 +107,8 @@ export async function PUT(
 	{ params }: { params: Promise<{ id: string }> },
 ) {
 	try {
+		const proposalId = z.number().parse((await params).id)
+
 		const user = await getOrCreateUserFromRequest(req)
 		if (!user) {
 			return NextResponse.json(
@@ -117,33 +119,29 @@ export async function PUT(
 
 		const data = await req.json()
 
-		// Verify user can edit this proposal
-		const existing = await proposalService.getProposalById(
-			parseInt((await params).id),
-			user.id,
-			user.linkId,
-		)
+		const canEdit = proposalService.checkEditPermission(proposalId, user)
 
-		if (!existing) {
-			return NextResponse.json({ error: 'Proposal not found' }, { status: 404 })
-		}
-
-		if (!existing.canEdit) {
+		if (!canEdit) {
 			return NextResponse.json(
 				{ error: 'You cannot edit this proposal' },
 				{ status: 403 },
 			)
 		}
 
-		// Update proposal
-		const updated = await proposalService.updateProposal(
-			parseInt((await params).id),
-			data,
-		)
+		await proposalService.updateProposal(proposalId, data)
 
-		return NextResponse.json(updated)
+		return NextResponse.json({
+			success: true,
+		})
 	} catch (error) {
 		logger.error('Failed to update proposal:', error)
+
+		if (error instanceof AppError) {
+			return NextResponse.json(
+				{ error: error.message },
+				{ status: error.statusCode },
+			)
+		}
 
 		if (error instanceof ZodError) {
 			return NextResponse.json(
