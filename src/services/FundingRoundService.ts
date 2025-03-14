@@ -94,10 +94,16 @@ export class FundingRoundService {
 				...round,
 				totalBudget: round.totalBudget.toString(),
 				proposalsCount: _count.proposals,
-				status: this.fixFundingRoundStatus(round.status, round.startDate),
+				status: FundingRoundService.fixFundingRoundStatus(
+					round.status,
+					round.startDate,
+				),
 				startDate: round.startDate.toDateString(),
 				endDate: round.endDate.toDateString(),
-				phase: this.getCurrentPhase(round.endDate.toDateString(), phases),
+				phase: FundingRoundService.getCurrentPhase(
+					round.endDate.toDateString(),
+					phases,
+				),
 				phases,
 			}
 		})
@@ -151,10 +157,16 @@ export class FundingRoundService {
 			...round,
 			proposalsCount: round._count.proposals,
 			totalBudget: round.totalBudget.toString(),
-			status: this.fixFundingRoundStatus(round.status, round.startDate),
+			status: FundingRoundService.fixFundingRoundStatus(
+				round.status,
+				round.startDate,
+			),
 			startDate: round.startDate.toDateString(),
 			endDate: round.endDate.toDateString(),
-			phase: this.getCurrentPhase(round.endDate.toDateString(), phases),
+			phase: FundingRoundService.getCurrentPhase(
+				round.endDate.toDateString(),
+				phases,
+			),
 			phases,
 		}
 	}
@@ -227,8 +239,11 @@ export class FundingRoundService {
 			id: round.id,
 			name: round.name,
 			description: round.description,
-			status: this.fixFundingRoundStatus(round.status, round.startDate),
-			phase: this.getCurrentPhase(
+			status: FundingRoundService.fixFundingRoundStatus(
+				round.status,
+				round.startDate,
+			),
+			phase: FundingRoundService.getCurrentPhase(
 				round.endDate.toDateString(),
 				this.buildPhases(round),
 			),
@@ -240,7 +255,7 @@ export class FundingRoundService {
 		}
 	}
 
-	private fixFundingRoundStatus(
+	static fixFundingRoundStatus(
 		status: string,
 		startDate: Date | string,
 	): FundingRoundStatus {
@@ -299,7 +314,7 @@ export class FundingRoundService {
 		}
 	}
 
-	getCurrentPhase(
+	static getCurrentPhase(
 		endDate: string,
 		phases: FundingRoundPhases,
 	): FundingRoundPhase {
