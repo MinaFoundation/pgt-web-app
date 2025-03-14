@@ -1,11 +1,10 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Trash2 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
-import type { Proposal } from '@prisma/client'
 import { SelectFundingRoundDialog } from '@/components/dialogs/SelectFundingRoundDialog'
 import { ViewFundingRoundDialog } from '@/components/dialogs/ViewFundingRoundDialog'
 import {
@@ -27,57 +26,16 @@ import {
 	TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { useAvailableFundingRounds } from '@/hooks/use-available-funding-rounds'
-
-interface ProposalWithUser {
-	id: number
-	userId: string
-	fundingRoundId: string | null
-	status: string
-	title: string
-	abstract: string
-	motivation: string
-	rationale: string
-	deliveryRequirements: string
-	securityAndPerformance: string
-	totalFundingRequired: string
-	discord: string
-	email: string
-	createdAt: string
-	updatedAt: string
-	user: {
-		id: string
-		linkId: string
-		metadata: {
-			username: string
-			createdAt: string
-			authSource: {
-				type: string
-				id: string
-				username: string
-			}
-		}
-	}
-	fundingRound?: {
-		id: string
-		name: string
-		description: string
-		status: string
-		startDate: string
-		endDate: string
-		considerationPhase: {
-			startDate: string
-			endDate: string
-		}
-		deliberationPhase: {
-			startDate: string
-			endDate: string
-		}
-		votingPhase: {
-			startDate: string
-			endDate: string
-		}
-	}
-}
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardFooter,
+	CardHeader,
+	CardTitle,
+} from './ui/card'
+import { useProposals } from '@/hooks/use-proposals'
+import { ProposalWithUserAndFundingRound } from '@/types/proposals'
 
 export function ProposalsList() {
 	const { toast } = useToast()
@@ -209,119 +167,35 @@ export function ProposalsList() {
 		: null
 
 	return (
-		<div className="mx-auto max-w-4xl p-6">
-			<div className="mb-8 flex items-center justify-between">
-				<h1 className="text-3xl font-bold">My Proposals</h1>
+		<div className="mx-auto w-full max-w-4xl p-6">
+			<header className="mb-6 flex items-center justify-between border-b border-gray-200 pb-6">
+				<div>
+					<h1 className="text-3xl font-bold">Proposals</h1>
+					<p className="text-sm text-gray-600">
+						Browse and manage governance proposals for the Mina Protocol
+					</p>
+				</div>
+
 				<Link href="/proposals/create">
-					<Button className="bg-gray-600 text-white hover:bg-gray-700">
-						Create a proposal
-					</Button>
+					<Button className="button-3d font-semibold">Create a proposal</Button>
 				</Link>
-			</div>
+			</header>
 
 			<div className="space-y-4">
 				{proposals.map(proposal => (
-					<div
+					<ProposalCard
 						key={proposal.id}
-						className="flex items-center justify-between rounded-lg border bg-background p-4"
-					>
-						<div className="flex flex-col">
-							<Link
-								href={`/proposals/${proposal.id}`}
-								className="text-lg font-medium hover:underline"
-							>
-								{proposal.title}
-							</Link>
-							<div className="flex items-center gap-2 text-sm text-muted-foreground">
-								<span>by {proposal.user.metadata.username}</span>
-								<span>•</span>
-								<span>Status: {proposal.status.toLowerCase()}</span>
-								{proposal.fundingRound && (
-									<>
-										<span>•</span>
-										<Button
-											variant="link"
-											className="h-auto p-0"
-											onClick={() => {
-												setSelectedProposalId(proposal.id)
-												setViewFundingRoundOpen(true)
-											}}
-										>
-											<Badge variant="outline" className="cursor-pointer">
-												{proposal.fundingRound.name}
-											</Badge>
-										</Button>
-									</>
-								)}
-							</div>
-						</div>
-
-						<div className="flex items-center gap-4">
-							{proposal.status === 'DRAFT' && (
-								<>
-									<Link
-										href={`/proposals/${proposal.id}/edit`}
-										className="text-muted-foreground underline hover:text-foreground"
-									>
-										Edit
-									</Link>
-
-									{proposal.fundingRound ? (
-										<Button
-											variant="secondary"
-											onClick={() => {
-												setSelectedProposalId(proposal.id)
-												setViewFundingRoundOpen(true)
-											}}
-										>
-											View Funding Round Details
-										</Button>
-									) : (
-										<TooltipProvider>
-											<Tooltip>
-												<TooltipTrigger asChild>
-													<div>
-														<Button
-															variant="secondary"
-															onClick={() => handleSubmitClick(proposal.id)}
-															disabled={checkingRounds || !hasAvailableRounds}
-														>
-															{checkingRounds
-																? 'Checking rounds...'
-																: 'Submit to funding round'}
-														</Button>
-													</div>
-												</TooltipTrigger>
-												{!hasAvailableRounds && (
-													<TooltipContent>
-														<p>
-															No funding rounds are currently accepting
-															proposals
-														</p>
-													</TooltipContent>
-												)}
-											</Tooltip>
-										</TooltipProvider>
-									)}
-
-									<Button
-										variant="ghost"
-										size="icon"
-										onClick={() => handleDelete(proposal.id)}
-										disabled={deleteLoading}
-										className="text-muted-foreground hover:text-foreground"
-									>
-										{deleteLoading ? (
-											<span className="animate-spin">⌛</span>
-										) : (
-											<Trash2 className="h-5 w-5" />
-										)}
-										<span className="sr-only">Delete proposal</span>
-									</Button>
-								</>
-							)}
-						</div>
-					</div>
+						proposal={proposal}
+						checkingRounds={checkingRounds}
+						hasAvailableRounds={hasAvailableRounds}
+						deleteLoading={deleteLoading}
+						onSubmit={() => handleSubmitClick(proposal.id)}
+						onDelete={() => handleDelete(proposal.id)}
+						onViewFundingRound={() => {
+							setSelectedProposalId(proposal.id)
+							setViewFundingRoundOpen(true)
+						}}
+					/>
 				))}
 			</div>
 
@@ -365,5 +239,118 @@ export function ProposalsList() {
 				/>
 			)}
 		</div>
+	)
+}
+
+function ProposalCard({
+	proposal,
+	checkingRounds,
+	hasAvailableRounds,
+	deleteLoading,
+	onSubmit,
+	onDelete,
+	onViewFundingRound,
+}: {
+	proposal: ProposalWithUserAndFundingRound
+	checkingRounds: boolean
+	hasAvailableRounds: boolean
+	deleteLoading: boolean
+	onSubmit: () => void
+	onDelete: () => void
+	onViewFundingRound: () => void
+}) {
+	return (
+		<Card>
+			<CardHeader>
+				<CardTitle>
+					<Link
+						href={`/proposals/${proposal.id}`}
+						className="text-xl font-medium hover:underline"
+					>
+						{proposal.title}
+					</Link>
+				</CardTitle>
+				<CardDescription>
+					<div className="flex items-center gap-2 text-sm text-muted-foreground">
+						<span>by {proposal.user.username}</span>
+					</div>
+				</CardDescription>
+			</CardHeader>
+
+			<CardContent>
+				{proposal.status === 'DRAFT' && (
+					<div className="flex items-center justify-between gap-4">
+						{proposal.fundingRound ? (
+							<Button variant="secondary" onClick={onViewFundingRound}>
+								View Funding Round Details
+							</Button>
+						) : (
+							<TooltipProvider>
+								<Tooltip>
+									<TooltipTrigger asChild>
+										<div>
+											<Button
+												variant="secondary"
+												onClick={onSubmit}
+												disabled={checkingRounds || !hasAvailableRounds}
+											>
+												{checkingRounds
+													? 'Checking rounds...'
+													: 'Submit to funding round'}
+											</Button>
+										</div>
+									</TooltipTrigger>
+									{!hasAvailableRounds && (
+										<TooltipContent>
+											<p>No funding rounds are currently accepting proposals</p>
+										</TooltipContent>
+									)}
+								</Tooltip>
+							</TooltipProvider>
+						)}
+
+						<div className="flex items-center">
+							<Link
+								href={`/proposals/${proposal.id}/edit`}
+								className="text-muted-foreground underline hover:text-foreground"
+							>
+								Edit
+							</Link>
+
+							<Button
+								variant="ghost"
+								size="icon"
+								onClick={onDelete}
+								disabled={deleteLoading}
+								className="text-muted-foreground hover:text-foreground"
+							>
+								{deleteLoading ? (
+									<span className="animate-spin">⌛</span>
+								) : (
+									<Trash2 className="h-5 w-5" />
+								)}
+								<span className="sr-only">Delete proposal</span>
+							</Button>
+						</div>
+					</div>
+				)}
+			</CardContent>
+			<CardFooter className="flex gap-4">
+				{proposal.fundingRound && (
+					<>
+						<Button
+							variant="link"
+							className="h-auto p-0"
+							onClick={onViewFundingRound}
+						>
+							<Badge variant="outline" className="cursor-pointer">
+								{proposal.fundingRound.name}
+							</Badge>
+						</Button>
+					</>
+				)}
+				<Badge variant="outline">Status: {proposal.status.toLowerCase()}</Badge>
+			</CardFooter>
+		</Card>
 	)
 }
