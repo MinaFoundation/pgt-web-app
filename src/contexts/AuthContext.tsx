@@ -9,6 +9,7 @@ import {
 } from 'react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
+import { useQueryClient } from '@tanstack/react-query'
 
 export type AuthSource = {
 	type: 'discord' | 'telegram' | 'wallet'
@@ -49,6 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	const [isLoading, setIsLoading] = useState(true)
 	const router = useRouter()
 	const { toast } = useToast()
+	const queryClient = useQueryClient()
 
 	const refresh = useCallback(async () => {
 		try {
@@ -56,7 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 				setUser(null)
 				return
 			}
-
+			queryClient.invalidateQueries({ queryKey: ['adminStatus'] })
 			const res = await fetch('/api/me/info')
 
 			if (res.status === 401 || res.status === 403) {
