@@ -64,6 +64,28 @@ export interface ProposalSummaryWithUserAndFundingRound
 	fundingRound: FundingRoundWithPhases | null
 }
 
+export interface FullProposal extends ProposalSummaryWithUserAndFundingRound {
+	problemStatement: string
+	problemImportance: string
+	proposedSolution: string
+	implementationDetails: string
+	keyObjectives: string
+	communityBenefits: string
+	keyPerformanceIndicators: string
+	budgetBreakdown: string
+	estimatedCompletionDate: string
+	milestones: string
+	teamMembers: string
+	relevantExperience: string
+	potentialRisks: string
+	mitigationPlans: string
+	discordHandle: string
+	email: string
+	website: string | null
+	githubProfile: string | null
+	otherLinks: string | null
+}
+
 export interface ProposalWithAccess extends ProposalWithUser {
 	canEdit: boolean
 	canDelete: boolean
