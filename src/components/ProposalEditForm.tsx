@@ -28,7 +28,7 @@ export function ProposalEditForm({ proposalId }: { proposalId: string }) {
 			router.push('/proposals')
 			return
 		}
-	}, [proposal])
+	}, [proposal, router, toast, user])
 
 	if (isLoading || !user) {
 		return <div className="py-8 text-center">Loading proposal...</div>
