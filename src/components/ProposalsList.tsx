@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Trash2 } from 'lucide-react'
+import { PenIcon, Trash2 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { SelectFundingRoundDialog } from '@/components/dialogs/SelectFundingRoundDialog'
 import { ViewFundingRoundDialog } from '@/components/dialogs/ViewFundingRoundDialog'
@@ -36,6 +36,8 @@ import {
 import { useProposals } from '@/hooks/use-proposals'
 import { ProposalSummaryWithUserAndFundingRound } from '@/types/proposals'
 import { useFundingRounds } from '@/hooks/use-funding-rounds'
+import { isWalletAddress, truncateWallet } from '@/lib/utils'
+import { useAuth } from '@/contexts/AuthContext'
 
 export function ProposalsList() {
 	const { toast } = useToast()
@@ -58,6 +60,7 @@ export function ProposalsList() {
 	} = useFundingRounds({
 		filterBy: 'SUBMISSION',
 	})
+	const { user } = useAuth()
 
 	const hasActiveSubmissionRounds = submissionFundingRounds.length > 0
 
@@ -192,6 +195,10 @@ export function ProposalsList() {
 					<ProposalCard
 						key={proposal.id}
 						proposal={proposal}
+						isOwner={
+							user?.id === proposal.user.id ||
+							user?.linkId === proposal.user.linkId
+						}
 						checkingRounds={checkingSubmissionFundingRounds}
 						hasAvailableRounds={hasActiveSubmissionRounds}
 						deleteLoading={deleteLoading}
@@ -250,6 +257,7 @@ export function ProposalsList() {
 
 function ProposalCard({
 	proposal,
+	isOwner,
 	checkingRounds,
 	hasAvailableRounds,
 	deleteLoading,
@@ -258,6 +266,7 @@ function ProposalCard({
 	onViewFundingRound,
 }: {
 	proposal: ProposalSummaryWithUserAndFundingRound
+	isOwner: boolean
 	checkingRounds: boolean
 	hasAvailableRounds: boolean
 	deleteLoading: boolean
@@ -277,8 +286,11 @@ function ProposalCard({
 					</Link>
 				</CardTitle>
 				<CardDescription>
-					<div className="flex items-center gap-2 text-sm text-muted-foreground">
-						<span>by {proposal.user.username}</span>
+					<div className="flex w-48 items-center gap-2 overflow-hidden truncate text-sm text-muted-foreground">
+						by{' '}
+						{!isWalletAddress(proposal.user.username)
+							? truncateWallet(proposal.user.username)
+							: proposal.user.username}
 					</div>
 				</CardDescription>
 			</CardHeader>
@@ -341,21 +353,24 @@ function ProposalCard({
 					</div>
 				)}
 			</CardContent>
-			<CardFooter className="flex gap-4">
-				{proposal.fundingRound && (
-					<>
-						<Button
-							variant="link"
-							className="h-auto p-0"
-							onClick={onViewFundingRound}
-						>
-							<Badge variant="outline" className="cursor-pointer">
+			<CardFooter className="flex justify-between gap-4">
+				<div>
+					{proposal.fundingRound && isOwner ? (
+						<>
+							<Button variant="outline" onClick={onViewFundingRound}>
+								<PenIcon className="mr-1 h-2 w-2" />
 								{proposal.fundingRound.name}
-							</Badge>
-						</Button>
-					</>
-				)}
-				<Badge variant="outline">Status: {proposal.status.toLowerCase()}</Badge>
+							</Button>
+						</>
+					) : (
+						proposal.fundingRound && (
+							<Badge variant="outline">{proposal.fundingRound.name}</Badge>
+						)
+					)}
+				</div>
+				<Badge variant="outline" className="capitalize">
+					Status: {proposal.status.toLowerCase()}
+				</Badge>
 			</CardFooter>
 		</Card>
 	)
