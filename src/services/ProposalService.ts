@@ -186,32 +186,6 @@ export class ProposalService {
 		}
 	}
 
-	async getUserProposals(userId: string): Promise<Proposal[]> {
-		return await this.prisma.proposal.findMany({
-			where: { userId },
-			orderBy: { createdAt: 'desc' },
-		})
-	}
-
-	async getProposalsByStatus(status: ProposalStatus): Promise<Proposal[]> {
-		return await this.prisma.proposal.findMany({
-			where: { status },
-			orderBy: { createdAt: 'desc' },
-		})
-	}
-
-	async searchProposals(searchTerm: string): Promise<Proposal[]> {
-		return await this.prisma.proposal.findMany({
-			where: {
-				title: {
-					contains: searchTerm,
-					mode: 'insensitive',
-				},
-			},
-			orderBy: { createdAt: 'desc' },
-		})
-	}
-
 	async getProposalById(id: number): Promise<FullProposal | null> {
 		const proposal = await this.prisma.proposal.findUnique({
 			where: { id },
