@@ -157,7 +157,7 @@ export function ProposalsList() {
 	}
 
 	if (isLoading) {
-		return <div className="py-8 text-center">Loading proposals...</div>
+		return <ProposalsListSkeleton />
 	}
 
 	if (proposals.length === 0) {
@@ -379,5 +379,47 @@ function ProposalCard({
 				</Badge>
 			</CardFooter>
 		</Card>
+	)
+}
+
+function ProposalsListSkeleton() {
+	return (
+		<div className="mx-auto w-full max-w-4xl p-6">
+			<ProposalsListHeader />
+			<div className="space-y-4">
+				{Array.from({ length: 3 }).map((_, i) => (
+					<Card key={i}>
+						<CardHeader>
+							<CardTitle>
+								<div className="h-6 w-1/2 animate-pulse rounded bg-gray-200" />
+							</CardTitle>
+							<CardDescription>
+								<div className="h-4 w-1/4 animate-pulse rounded bg-gray-200" />
+							</CardDescription>
+						</CardHeader>
+						<CardContent>
+							<div className="flex items-center justify-between gap-4">
+								<div className="flex items-center gap-4">
+									<div className="h-6 w-1/4 animate-pulse rounded bg-gray-200" />
+									<div className="h-6 w-1/4 animate-pulse rounded bg-gray-200" />
+								</div>
+								<div className="flex items-center gap-4">
+									<div className="h-6 w-1/4 animate-pulse rounded bg-gray-200" />
+									<div className="h-6 w-1/4 animate-pulse rounded bg-gray-200" />
+								</div>
+							</div>
+						</CardContent>
+						<CardFooter className="flex justify-between gap-4">
+							<div>
+								<div className="h-6 w-1/4 animate-pulse rounded bg-gray-200" />
+							</div>
+							<div>
+								<div className="h-6 w-1/4 animate-pulse rounded bg-gray-200" />
+							</div>
+						</CardFooter>
+					</Card>
+				))}
+			</div>
+		</div>
 	)
 }
