@@ -14,19 +14,19 @@ import { cn } from '@/lib/utils'
 import { Loader2, LogOut, User, Wallet } from 'lucide-react'
 import { DiscordLogoIcon, ChatBubbleIcon } from '@radix-ui/react-icons'
 import { useState } from 'react'
-import type { AuthSource } from '@/contexts/AuthContext'
+import { AuthSourceType } from '@/types/user'
 
 const AUTH_PROVIDER_ICONS = {
 	discord: DiscordLogoIcon,
 	telegram: ChatBubbleIcon,
 	wallet: Wallet,
-} as const satisfies Record<AuthSource['type'], React.ComponentType>
+} as const satisfies Record<AuthSourceType, React.ComponentType>
 
 const AUTH_PROVIDER_NAMES = {
 	discord: 'Discord',
 	telegram: 'Telegram',
 	wallet: 'Wallet',
-} as const satisfies Record<AuthSource['type'], string>
+} as const satisfies Record<AuthSourceType, string>
 
 export function UserStatus() {
 	const { user, logout, refresh } = useAuth()
