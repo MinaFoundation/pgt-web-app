@@ -34,23 +34,21 @@ import {
 	FormLabel,
 	FormMessage,
 } from '@/components/ui/form'
-import { proposalCreateSchema } from '@/services'
+import { CreateProposalInput, proposalCreateSchema } from '@/schemas/proposals'
 
-// Define form data type from zod schema
-type ProposalFormValues = z.infer<typeof proposalCreateSchema>
-
-interface Props {
+export function CreateProposal({
+	mode = 'create',
+	proposalId,
+}: {
 	mode?: 'create' | 'edit'
 	proposalId?: string
-}
-
-export function CreateProposal({ mode = 'create', proposalId }: Props) {
+}) {
 	const { toast } = useToast()
 	const router = useRouter()
 	const [isSaving, setIsSaving] = useState<boolean>(false)
 
 	// Initialize form with default values
-	const form = useForm<ProposalFormValues>({
+	const form = useForm<CreateProposalInput>({
 		resolver: zodResolver(proposalCreateSchema),
 		defaultValues: {
 			title: '',
@@ -80,7 +78,7 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 
 	// Helper function to get max length for a field
 	const getMaxLengthForField = (
-		fieldName: keyof ProposalFormValues,
+		fieldName: keyof CreateProposalInput,
 	): number => {
 		switch (fieldName) {
 			case 'title':
@@ -186,7 +184,7 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 	}, [mode, proposalId, router, toast, form])
 
 	// Form submission handler
-	const onSubmit = async (values: ProposalFormValues) => {
+	const onSubmit = async (values: CreateProposalInput) => {
 		setIsSaving(true)
 
 		try {
