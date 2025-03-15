@@ -15,35 +15,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { GDPRTermsDialog } from './GDPRTermsDialog'
 import { ViewFundingRoundDialog } from './ViewFundingRoundDialog'
-
-interface FundingRound {
-	id: string
-	name: string
-	description: string
-	status: string
-	startDate: string
-	endDate: string
-	considerationPhase: {
-		startDate: string
-		endDate: string
-	}
-	deliberationPhase: {
-		startDate: string
-		endDate: string
-	}
-	votingPhase: {
-		startDate: string
-		endDate: string
-	}
-}
-
-interface Props {
-	open: boolean
-	onOpenChange: (open: boolean) => void
-	proposalTitle: string
-	fundingRound: FundingRound
-	onConfirm: () => Promise<void>
-}
+import { FundingRoundWithPhases } from '@/types/funding-round'
 
 export function SubmitProposalConfirmDialog({
 	open,
@@ -51,7 +23,13 @@ export function SubmitProposalConfirmDialog({
 	proposalTitle,
 	fundingRound,
 	onConfirm,
-}: Props) {
+}: {
+	open: boolean
+	onOpenChange: (open: boolean) => void
+	proposalTitle: string
+	fundingRound: FundingRoundWithPhases
+	onConfirm: () => Promise<void>
+}) {
 	const [gdprDialogOpen, setGdprDialogOpen] = useState(false)
 	const [viewFundingRoundOpen, setViewFundingRoundOpen] = useState(false)
 	const [gdprAccepted, setGdprAccepted] = useState(false)
