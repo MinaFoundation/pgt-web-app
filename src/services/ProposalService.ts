@@ -120,27 +120,6 @@ export class ProposalService {
 		}
 	}
 
-	static hasEditPermission(
-		user: { id: string; linkId: string },
-		proposal: { user: { id: string; linkId: string }; status: ProposalStatus },
-	) {
-		const isOwner =
-			proposal.user.id === user.id || proposal.user.linkId === user.linkId
-		return isOwner && proposal.status === ProposalStatus.DRAFT
-	}
-
-	async checkEditPermission(
-		proposalId: number,
-		user: { id: string; linkId: string },
-	) {
-		const proposal = await this.prisma.proposal.findUnique({
-			where: { id: proposalId },
-			select: { status: true, user: { select: { id: true, linkId: true } } },
-		})
-		if (!proposal) throw AppError.notFound(ProposalErrors.NOT_FOUND)
-		return ProposalService.hasEditPermission(user, proposal)
-	}
-
 	async getUserProposalsWithLinked(
 		userId: string,
 		userLinkId: string,
@@ -180,6 +159,27 @@ export class ProposalService {
 					this.buildFundingRound(proposal.fundingRound),
 			}
 		})
+	}
+
+	static hasEditPermission(
+		user: { id: string; linkId: string },
+		proposal: { user: { id: string; linkId: string }; status: ProposalStatus },
+	) {
+		const isOwner =
+			proposal.user.id === user.id || proposal.user.linkId === user.linkId
+		return isOwner && proposal.status === ProposalStatus.DRAFT
+	}
+
+	async checkEditPermission(
+		proposalId: number,
+		user: { id: string; linkId: string },
+	) {
+		const proposal = await this.prisma.proposal.findUnique({
+			where: { id: proposalId },
+			select: { status: true, user: { select: { id: true, linkId: true } } },
+		})
+		if (!proposal) throw AppError.notFound(ProposalErrors.NOT_FOUND)
+		return ProposalService.hasEditPermission(user, proposal)
 	}
 
 	private buildUserInclude() {
