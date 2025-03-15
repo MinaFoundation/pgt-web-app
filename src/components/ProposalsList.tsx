@@ -177,18 +177,7 @@ export function ProposalsList() {
 
 	return (
 		<div className="mx-auto w-full max-w-4xl p-6">
-			<header className="mb-6 flex items-center justify-between border-b border-gray-200 pb-6">
-				<div>
-					<h1 className="text-3xl font-bold">Proposals</h1>
-					<p className="text-sm text-gray-600">
-						Browse and manage governance proposals for the Mina Protocol
-					</p>
-				</div>
-
-				<Link href="/proposals/create">
-					<Button className="button-3d font-semibold">Create a proposal</Button>
-				</Link>
-			</header>
+			<ProposalsListHeader />
 
 			<div className="space-y-4">
 				{proposals.map(proposal => (
@@ -252,6 +241,23 @@ export function ProposalsList() {
 				/>
 			)}
 		</div>
+	)
+}
+
+function ProposalsListHeader() {
+	return (
+		<header className="mb-6 flex items-center justify-between border-b border-gray-200 pb-6">
+			<div>
+				<h1 className="text-3xl font-bold">Proposals</h1>
+				<p className="text-sm text-gray-600">
+					Browse and manage governance proposals for the Mina Protocol
+				</p>
+			</div>
+
+			<Link href="/proposals/create">
+				<Button className="button-3d font-semibold">Create a proposal</Button>
+			</Link>
+		</header>
 	)
 }
 
