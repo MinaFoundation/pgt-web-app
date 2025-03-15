@@ -276,7 +276,11 @@ export const WorkerHeartbeatsTable: React.FC = () => {
 
 			{totalPages > 1 && (
 				<div className="flex justify-center">
-					<Pagination>
+					<Pagination
+						totalPages={totalPages}
+						currentPage={currentPage}
+						onPageChange={setCurrentPage}
+					>
 						<PaginationContent>
 							<PaginationItem>
 								<PaginationPrevious
