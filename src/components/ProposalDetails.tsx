@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import {
 	ArrowLeftIcon,
@@ -24,9 +23,9 @@ import { useProposalComments } from '@/hooks/use-proposal-comments'
 import { useAuth } from '@/contexts/AuthContext'
 import { useFundingRounds } from '@/hooks/use-funding-rounds'
 import { ProposalStatus } from '@prisma/client'
+import Link from 'next/link'
 
 export function ProposalDetails({ proposalId }: { proposalId: string }) {
-	const router = useRouter()
 	const { toast } = useToast()
 	const [isExpanded, setIsExpanded] = useState(false)
 	const [selectFundingRoundOpen, setSelectFundingRoundOpen] = useState(false)
@@ -123,14 +122,15 @@ export function ProposalDetails({ proposalId }: { proposalId: string }) {
 		<div className="mx-auto max-w-4xl p-6">
 			<div className="mb-6">
 				<h1 className="mb-4 text-3xl font-bold">Proposal Details</h1>
-				<Button
-					variant="ghost"
-					className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-					onClick={() => router.back()}
-				>
-					<ArrowLeftIcon className="h-4 w-4" />
-					Back
-				</Button>
+				<Link href="/proposals">
+					<Button
+						variant="ghost"
+						className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+					>
+						<ArrowLeftIcon className="h-4 w-4" />
+						Back
+					</Button>
+				</Link>
 			</div>
 
 			<div className="space-y-6 rounded-lg border p-6">
@@ -357,12 +357,9 @@ export function ProposalDetails({ proposalId }: { proposalId: string }) {
 					{proposal.status === 'DRAFT' && (
 						<div className="flex gap-4">
 							{canEdit && (
-								<Button
-									variant="outline"
-									onClick={() => router.push(`/proposals/${proposal.id}/edit`)}
-								>
-									Edit
-								</Button>
+								<Link href={`/proposals/${proposalId}/edit`}>
+									<Button variant="outline">Edit</Button>
+								</Link>
 							)}
 							{proposal.fundingRound ? (
 								<Button
