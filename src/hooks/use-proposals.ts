@@ -2,8 +2,9 @@
 
 import logger from '@/logging'
 import { GetProposalsOptionsSchema } from '@/schemas/proposals'
-import { ProposalsWithCounts } from '@/types/proposals'
+import { ProposalCounts, ProposalsWithCounts } from '@/types/proposals'
 import { UndefinedInitialDataOptions, useQuery } from '@tanstack/react-query'
+import { useEffect, useState } from 'react'
 
 export function useProposals(
 	{ query, filterBy, sortBy, sortOrder }: GetProposalsOptionsSchema = {},
@@ -21,7 +22,7 @@ export function useProposals(
 
 	const url = `/api/proposals${searchParams.size > 0 ? `?${searchParams.toString()}` : ''}`
 
-	return useQuery<ProposalsWithCounts>({
+	const { data, ...result } = useQuery<ProposalsWithCounts>({
 		...options,
 		queryKey: [url],
 		queryFn: async () => {
@@ -33,4 +34,20 @@ export function useProposals(
 			return response.json()
 		},
 	})
+
+	// Cache the counts to prevent flickering when refetching
+	const [cachedCounts, setCachedCounts] = useState<ProposalCounts | null>(null)
+	useEffect(() => {
+		if (data) {
+			setCachedCounts(data.counts)
+		}
+	}, [data])
+
+	return {
+		...result,
+		data: {
+			proposals: data?.proposals ?? [],
+			counts: cachedCounts ?? data?.counts,
+		},
+	}
 }
