@@ -1,5 +1,4 @@
-import { PrismaClient, Proposal, ProposalStatus } from '@prisma/client'
-import { z } from 'zod'
+import { Prisma, PrismaClient, Proposal, ProposalStatus } from '@prisma/client'
 import { Decimal } from 'decimal.js'
 import { AppError } from '@/lib/errors'
 import { ProposalErrors } from '@/constants/errors'
@@ -7,16 +6,41 @@ import type { ProposalComment } from '@/types/deliberation'
 import { UserMetadata } from './UserService'
 import {
 	FullProposal,
-	ProposalSummaryWithUserAndFundingRound,
+	ProposalCounts,
+	ProposalsWithCounts,
 } from '@/types/proposals'
 import { FundingRoundService } from './FundingRoundService'
-import { CreateProposalInput, proposalCreateSchema } from '@/schemas/proposals'
+import {
+	CreateProposalInput,
+	getProposalsOptionsSchema,
+	GetProposalsOptionsSchema,
+	proposalCreateSchema,
+} from '@/schemas/proposals'
 
 interface CategorizedComments {
 	reviewerConsideration: ProposalComment[]
 	reviewerDeliberation: ProposalComment[]
 	communityDeliberation: ProposalComment[]
 }
+
+interface UserLinked {
+	id: string
+	linkId: string
+}
+
+export class ProposalsListService {
+	private prisma: PrismaClient
+
+	constructor(prisma: PrismaClient) {
+		this.prisma = prisma
+	}
+}
+
+const DEFAULT_ORDER_BY: Prisma.ProposalOrderByWithRelationInput[] = [
+	{ status: 'asc' },
+	{ createdAt: 'desc' },
+	{ totalFundingRequired: 'desc' },
+]
 
 export class ProposalService {
 	private prisma: PrismaClient
@@ -120,27 +144,35 @@ export class ProposalService {
 		}
 	}
 
-	async getUserProposalsWithLinked(
-		userId: string,
-		userLinkId: string,
-	): Promise<ProposalSummaryWithUserAndFundingRound[]> {
-		const proposals = await this.prisma.proposal.findMany({
-			where: {
-				user: {
-					OR: [{ id: userId }, { linkId: userLinkId }],
-				},
-			},
-			include: {
-				user: this.buildUserInclude(),
-				fundingRound: this.buildFundingRoundInclude(),
-			},
-			orderBy: [
-				{ status: 'asc' }, // Show drafts first
-				{ createdAt: 'desc' }, // Then by creation date
-			],
-		})
+	async getProposals(
+		options: GetProposalsOptionsSchema = {},
+		user: UserLinked,
+	): Promise<ProposalsWithCounts> {
+		getProposalsOptionsSchema.parse(options)
 
-		return proposals.map(proposal => {
+		const [rawProposals, allCount, myCount, othersCount] =
+			await this.prisma.$transaction([
+				this.prisma.proposal.findMany({
+					where: this.buildWhereClause(options, user),
+					select: {
+						id: true,
+						title: true,
+						proposalSummary: true,
+						status: true,
+						totalFundingRequired: true,
+						createdAt: true,
+						updatedAt: true,
+						user: this.buildUserInclude(),
+						fundingRound: this.buildFundingRoundInclude(),
+					},
+					orderBy: this.buildOrderBy(options),
+				}),
+				this.getAllProposalsCount(),
+				this.getMyProposalsCount(user),
+				this.getOthersProposalsCount(user),
+			])
+
+		const proposals = rawProposals.map(proposal => {
 			return {
 				id: proposal.id,
 				title: proposal.title,
@@ -159,27 +191,77 @@ export class ProposalService {
 					this.buildFundingRound(proposal.fundingRound),
 			}
 		})
+
+		const counts: ProposalCounts = {
+			all: allCount,
+			my: myCount,
+			others: othersCount,
+		}
+
+		return {
+			proposals,
+			counts,
+		}
 	}
 
-	static hasEditPermission(
-		user: { id: string; linkId: string },
-		proposal: { user: { id: string; linkId: string }; status: ProposalStatus },
-	) {
-		const isOwner =
-			proposal.user.id === user.id || proposal.user.linkId === user.linkId
-		return isOwner && proposal.status === ProposalStatus.DRAFT
+	private buildUserFilter(user: UserLinked): Prisma.UserWhereInput {
+		return { OR: [{ id: user.id }, { linkId: user.linkId }] }
 	}
 
-	async checkEditPermission(
-		proposalId: number,
-		user: { id: string; linkId: string },
-	) {
-		const proposal = await this.prisma.proposal.findUnique({
-			where: { id: proposalId },
-			select: { status: true, user: { select: { id: true, linkId: true } } },
+	private buildWhereClause(
+		options: GetProposalsOptionsSchema,
+		user: UserLinked,
+	): Prisma.ProposalWhereInput {
+		const clause: Prisma.ProposalWhereInput = {}
+
+		if (options.filterBy === 'my') {
+			clause.user = this.buildUserFilter(user)
+		} else if (options.filterBy === 'others') {
+			clause.user = { NOT: this.buildUserFilter(user) }
+		}
+
+		if (options.query) {
+			clause.title = { contains: options.query, mode: 'insensitive' }
+		}
+
+		return clause
+	}
+
+	private getAllProposalsCount() {
+		return this.prisma.proposal.count()
+	}
+
+	private getMyProposalsCount(user: UserLinked) {
+		return this.prisma.proposal.count({
+			where: { user: this.buildUserFilter(user) },
 		})
-		if (!proposal) throw AppError.notFound(ProposalErrors.NOT_FOUND)
-		return ProposalService.hasEditPermission(user, proposal)
+	}
+
+	private getOthersProposalsCount(user: UserLinked) {
+		return this.prisma.proposal.count({
+			where: { user: { NOT: this.buildUserFilter(user) } },
+		})
+	}
+
+	private buildOrderBy = (
+		options?: GetProposalsOptionsSchema,
+	): Prisma.ProposalOrderByWithRelationInput[] => {
+		if (!options?.sortBy) {
+			return DEFAULT_ORDER_BY
+		}
+
+		// If there is a user sort, put it first, then follow with the default array.
+		const filteredDefault = DEFAULT_ORDER_BY.filter(orderItem => {
+			const key = Object.keys(orderItem)[0]
+			return key !== options.sortBy
+		})
+
+		return [
+			{
+				[options.sortBy]: options.sortOrder,
+			},
+			...filteredDefault,
+		]
 	}
 
 	private buildUserInclude() {
@@ -286,36 +368,25 @@ export class ProposalService {
 		}
 	}
 
-	async deleteProposal(
-		id: number,
-		userId: string,
-		userLinkId: string,
-	): Promise<void> {
+	static hasEditPermission(
+		user: { id: string; linkId: string },
+		proposal: { user: { id: string; linkId: string }; status: ProposalStatus },
+	) {
+		const isOwner =
+			proposal.user.id === user.id || proposal.user.linkId === user.linkId
+		return isOwner && proposal.status === ProposalStatus.DRAFT
+	}
+
+	async checkEditPermission(
+		proposalId: number,
+		user: { id: string; linkId: string },
+	) {
 		const proposal = await this.prisma.proposal.findUnique({
-			where: { id },
-			include: {
-				user: true,
-			},
+			where: { id: proposalId },
+			select: { status: true, user: { select: { id: true, linkId: true } } },
 		})
-
-		if (!proposal) {
-			throw AppError.notFound(ProposalErrors.NOT_FOUND)
-		}
-
-		const hasAccess =
-			proposal.userId === userId || proposal.user?.linkId === userLinkId
-
-		if (!hasAccess) {
-			throw AppError.forbidden(ProposalErrors.UNAUTHORIZED)
-		}
-
-		if (proposal.status !== ProposalStatus.DRAFT) {
-			throw AppError.badRequest(ProposalErrors.DRAFT_ONLY)
-		}
-
-		await this.prisma.proposal.delete({
-			where: { id },
-		})
+		if (!proposal) throw AppError.notFound(ProposalErrors.NOT_FOUND)
+		return ProposalService.hasEditPermission(user, proposal)
 	}
 
 	async updateProposal(
@@ -359,6 +430,38 @@ export class ProposalService {
 			console.error('Error updating proposal:', error)
 			throw error // Re-throw to handle in the API route
 		}
+	}
+
+	async deleteProposal(
+		id: number,
+		userId: string,
+		userLinkId: string,
+	): Promise<void> {
+		const proposal = await this.prisma.proposal.findUnique({
+			where: { id },
+			include: {
+				user: true,
+			},
+		})
+
+		if (!proposal) {
+			throw AppError.notFound(ProposalErrors.NOT_FOUND)
+		}
+
+		const hasAccess =
+			proposal.userId === userId || proposal.user?.linkId === userLinkId
+
+		if (!hasAccess) {
+			throw AppError.forbidden(ProposalErrors.UNAUTHORIZED)
+		}
+
+		if (proposal.status !== ProposalStatus.DRAFT) {
+			throw AppError.badRequest(ProposalErrors.DRAFT_ONLY)
+		}
+
+		await this.prisma.proposal.delete({
+			where: { id },
+		})
 	}
 
 	async getProposalComments(proposalId: number): Promise<CategorizedComments> {
