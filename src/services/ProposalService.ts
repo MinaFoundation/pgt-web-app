@@ -167,30 +167,27 @@ export class ProposalService {
 					},
 					orderBy: this.buildOrderBy(options),
 				}),
-				this.getAllProposalsCount(),
+				this.getAllProposalsCount(user),
 				this.getMyProposalsCount(user),
 				this.getOthersProposalsCount(user),
 			])
 
-		const proposals = rawProposals.map(proposal => {
-			return {
-				id: proposal.id,
-				title: proposal.title,
-				summary: proposal.proposalSummary,
-				status: proposal.status,
-				totalFundingRequired: proposal.totalFundingRequired.toNumber(),
-				createdAt: proposal.createdAt.toISOString(),
-				updatedAt: proposal.updatedAt.toISOString(),
-				user: {
-					id: proposal.user.id,
-					linkId: proposal.user.linkId,
-					username: (proposal.user.metadata as UserMetadata).username,
-				},
-				fundingRound:
-					proposal.fundingRound &&
-					this.buildFundingRound(proposal.fundingRound),
-			}
-		})
+		const proposals = rawProposals.map(proposal => ({
+			id: proposal.id,
+			title: proposal.title,
+			summary: proposal.proposalSummary,
+			status: proposal.status,
+			totalFundingRequired: proposal.totalFundingRequired.toNumber(),
+			createdAt: proposal.createdAt.toISOString(),
+			updatedAt: proposal.updatedAt.toISOString(),
+			user: {
+				id: proposal.user.id,
+				linkId: proposal.user.linkId,
+				username: (proposal.user.metadata as UserMetadata).username,
+			},
+			fundingRound:
+				proposal.fundingRound && this.buildFundingRound(proposal.fundingRound),
+		}))
 
 		const counts: ProposalCounts = {
 			all: allCount,
@@ -215,9 +212,19 @@ export class ProposalService {
 		const clause: Prisma.ProposalWhereInput = {}
 
 		if (options.filterBy === 'my') {
+			// Include all statuses for the user (including DRAFT)
 			clause.user = this.buildUserFilter(user)
 		} else if (options.filterBy === 'others') {
+			// Exclude the user's proposals and DRAFT status for others
 			clause.user = { NOT: this.buildUserFilter(user) }
+			clause.status = { not: 'DRAFT' }
+		} else {
+			// filterBy = all or undefined
+			// Combine user's proposals (all statuses) with others (excluding DRAFT)
+			clause.OR = [
+				{ user: this.buildUserFilter(user) }, // User's proposals (including DRAFT)
+				{ user: { NOT: this.buildUserFilter(user) }, status: { not: 'DRAFT' } }, // Others (excluding DRAFT)
+			]
 		}
 
 		if (options.query) {
@@ -227,8 +234,18 @@ export class ProposalService {
 		return clause
 	}
 
-	private getAllProposalsCount() {
-		return this.prisma.proposal.count()
+	private getAllProposalsCount(user: UserLinked) {
+		return this.prisma.proposal.count({
+			where: {
+				OR: [
+					{ user: this.buildUserFilter(user) }, // User's proposals (including DRAFT)
+					{
+						user: { NOT: this.buildUserFilter(user) },
+						status: { not: 'DRAFT' },
+					},
+				],
+			},
+		})
 	}
 
 	private getMyProposalsCount(user: UserLinked) {
@@ -239,7 +256,10 @@ export class ProposalService {
 
 	private getOthersProposalsCount(user: UserLinked) {
 		return this.prisma.proposal.count({
-			where: { user: { NOT: this.buildUserFilter(user) } },
+			where: {
+				user: { NOT: this.buildUserFilter(user) },
+				status: { not: 'DRAFT' },
+			},
 		})
 	}
 
@@ -256,12 +276,7 @@ export class ProposalService {
 			return key !== options.sortBy
 		})
 
-		return [
-			{
-				[options.sortBy]: options.sortOrder,
-			},
-			...filteredDefault,
-		]
+		return [{ [options.sortBy]: options.sortOrder }, ...filteredDefault]
 	}
 
 	private buildUserInclude() {
@@ -338,11 +353,7 @@ export class ProposalService {
 			| 'considerationPhase'
 			| 'deliberationPhase'
 			| 'votingPhase',
-			{
-				id: string
-				startDate: Date
-				endDate: Date
-			} | null
+			{ id: string; startDate: Date; endDate: Date } | null
 		>,
 	) {
 		const phases = FundingRoundService.buildPhases(fundingRound)
