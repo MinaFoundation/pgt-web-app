@@ -131,3 +131,14 @@ export interface CoreProposalData
 		}
 	}
 }
+
+export interface ProposalCounts {
+	all: number
+	my: number
+	others: number
+}
+
+export interface ProposalsWithCounts {
+	proposals: ProposalSummaryWithUserAndFundingRound[]
+	counts: ProposalCounts
+}
