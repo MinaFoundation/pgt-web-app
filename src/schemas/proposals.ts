@@ -115,3 +115,17 @@ export const proposalCreateSchema = z.object({
 })
 
 export type CreateProposalInput = z.infer<typeof proposalCreateSchema>
+
+export const getProposalsOptionsSchema = z.object({
+	query: z.string().optional().nullable(),
+	filterBy: z.enum(['all', 'my', 'others']).optional().nullable(),
+	sortBy: z
+		.enum(['totalFundingRequired', 'createdAt', 'status'])
+		.optional()
+		.nullable(),
+	sortOrder: z.enum(['asc', 'desc']).optional().nullable(),
+})
+
+export type GetProposalsOptionsSchema = z.infer<
+	typeof getProposalsOptionsSchema
+>
