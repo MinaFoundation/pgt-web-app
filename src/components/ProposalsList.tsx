@@ -1,9 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { PenIcon, Trash2 } from 'lucide-react'
+import {
+	ArrowDownNarrowWideIcon,
+	ArrowDownWideNarrowIcon,
+	FilterIcon,
+	NotepadTextIcon,
+	PenIcon,
+	SearchIcon,
+	Trash2,
+} from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { SelectFundingRoundDialog } from '@/components/dialogs/SelectFundingRoundDialog'
 import { ViewFundingRoundDialog } from '@/components/dialogs/ViewFundingRoundDialog'
@@ -34,19 +42,50 @@ import {
 	CardTitle,
 } from './ui/card'
 import { useProposals } from '@/hooks/use-proposals'
-import { ProposalSummaryWithUserAndFundingRound } from '@/types/proposals'
+import {
+	ProposalCounts,
+	ProposalSummaryWithUserAndFundingRound,
+} from '@/types/proposals'
 import { useFundingRounds } from '@/hooks/use-funding-rounds'
-import { isWalletAddress, truncateWallet } from '@/lib/utils'
+import { cn, isWalletAddress, truncateWallet } from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
+import {
+	getProposalsOptionsSchema,
+	GetProposalsOptionsSchema,
+} from '@/schemas/proposals'
+import { useQueryState } from 'nuqs'
+import { Input } from './ui/input'
+import {
+	Select,
+	SelectContent,
+	SelectGroup,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from './ui/select'
+
+const SORT_OPTIONS: {
+	value: NonNullable<GetProposalsOptionsSchema['sortBy']>
+	label: string
+}[] = [
+	{ value: 'status', label: 'Status' },
+	{ value: 'createdAt', label: 'Date' },
+	{ value: 'totalFundingRequired', label: 'Budget' },
+]
 
 export function ProposalsList() {
 	const { toast } = useToast()
 
+	const searchParams = useProposalsSearchParams()
+
 	const {
-		data: proposals = [],
+		data: { proposals, counts } = {
+			proposals: [],
+			counts: { all: 0, my: 0, others: 0 },
+		},
 		isLoading,
 		refetch: refetchProposals,
-	} = useProposals()
+	} = useProposals(searchParams)
 
 	const [deleteId, setDeleteId] = useState<number | null>(null)
 	const [selectedProposalId, setSelectedProposalId] = useState<number | null>(
@@ -131,7 +170,6 @@ export function ProposalsList() {
 				description: 'Proposal withdrawn from funding round',
 			})
 
-			// Refresh proposals list
 			refetchProposals()
 		} catch (error) {
 			toast({
@@ -160,24 +198,13 @@ export function ProposalsList() {
 		return <ProposalsListSkeleton />
 	}
 
-	if (proposals.length === 0) {
-		return (
-			<div className="py-8 text-center">
-				<p className="mb-4 text-muted-foreground">No proposals found</p>
-				<Link href="/proposals/create">
-					<Button>Create your first proposal</Button>
-				</Link>
-			</div>
-		)
-	}
-
 	const selectedProposal = selectedProposalId
 		? proposals.find(p => p.id === selectedProposalId)
 		: null
 
 	return (
-		<div className="mx-auto w-full max-w-4xl p-6">
-			<ProposalsListHeader />
+		<div className="mx-auto w-full max-w-4xl space-y-6 p-6">
+			<ProposalsListHeader counts={counts} />
 
 			<div className="space-y-4">
 				{proposals.map(proposal => (
@@ -244,19 +271,228 @@ export function ProposalsList() {
 	)
 }
 
-function ProposalsListHeader() {
+function useProposalsSearchParams() {
+	const [query, setQuery] = useQueryState('query')
+	const [filterBy, setFilterBy] = useQueryState<
+		GetProposalsOptionsSchema['filterBy']
+	>('filterBy', {
+		defaultValue: 'all',
+		parse: value => getProposalsOptionsSchema.shape.filterBy.parse(value),
+	})
+	const [sortBy, setSortBy] = useQueryState<
+		GetProposalsOptionsSchema['sortBy']
+	>('sortBy', {
+		defaultValue: 'createdAt',
+		parse: value => getProposalsOptionsSchema.shape.sortBy.parse(value),
+	})
+	const [sortOrder, setSortOrder] = useQueryState<
+		GetProposalsOptionsSchema['sortOrder']
+	>('sortOrder', {
+		defaultValue: 'desc',
+		parse: value => getProposalsOptionsSchema.shape.sortOrder.parse(value),
+	})
+
+	return {
+		query,
+		setQuery,
+		filterBy,
+		setFilterBy,
+		sortBy,
+		setSortBy,
+		sortOrder,
+		setSortOrder,
+	}
+}
+
+function ProposalsControls({ disabled }: { disabled?: boolean }) {
+	const { sortBy, sortOrder, query, setSortBy, setSortOrder, setQuery } =
+		useProposalsSearchParams()
+
+	const [searchQuery, setSearchQuery] = useState(query || '')
+
+	const handleSearchKeyDown = useCallback(
+		(e: React.KeyboardEvent<HTMLInputElement>) => {
+			if (e.key === 'Enter') {
+				setQuery(e.currentTarget.value)
+			}
+		},
+		[setQuery],
+	)
+
+	const handleSortByChange = useCallback(
+		(value: NonNullable<GetProposalsOptionsSchema['sortBy']>) => {
+			setSortBy(value)
+		},
+		[setSortBy],
+	)
+
+	const handleSortOrderChange = useCallback(
+		(value: NonNullable<GetProposalsOptionsSchema['sortOrder']>) => {
+			setSortOrder(value)
+		},
+		[setSortOrder],
+	)
+
 	return (
-		<header className="mb-6 flex items-center justify-between border-b border-gray-200 pb-6">
-			<div>
-				<h1 className="text-3xl font-bold">Proposals</h1>
-				<p className="text-sm text-gray-600">
-					Browse and manage governance proposals for the Mina Protocol
-				</p>
+		<section className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+			{/* Search Form */}
+			<form
+				onSubmit={e => {
+					e.preventDefault()
+				}}
+				className="relative w-full md:max-w-md"
+				aria-label="Search funding rounds"
+			>
+				<label htmlFor="search-input" className="sr-only">
+					Search funding rounds
+				</label>
+				<SearchIcon
+					className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+					aria-hidden="true"
+				/>
+				<Input
+					id="search-input"
+					type="search"
+					placeholder="Search rounds..."
+					value={searchQuery}
+					onKeyDown={handleSearchKeyDown}
+					onChange={e => setSearchQuery(e.target.value)}
+					className="w- max-w-[420px] pl-9"
+					disabled={disabled}
+				/>
+			</form>
+
+			{/* Sorting Controls */}
+			<div className="flex gap-2">
+				{/* Sort by */}
+				<Select
+					value={sortBy || undefined}
+					onValueChange={handleSortByChange}
+					disabled={disabled}
+				>
+					<SelectTrigger className="w-[90px]" aria-label="Sort by">
+						<SelectValue placeholder="Sort by" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectGroup>
+							{SORT_OPTIONS.map(option => (
+								<SelectItem key={option.value} value={option.value}>
+									{option.label}
+								</SelectItem>
+							))}
+						</SelectGroup>
+					</SelectContent>
+				</Select>
+
+				{/* Sort order */}
+				<Select
+					value={sortOrder || undefined}
+					onValueChange={handleSortOrderChange}
+					disabled={disabled}
+				>
+					<SelectTrigger className="w-[50px]" aria-label="Sort order">
+						<SelectValue placeholder="Order" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectGroup>
+							<SelectItem value="asc">
+								<ArrowDownNarrowWideIcon className="mr-1 inline h-5 w-5" />
+								Asc
+							</SelectItem>
+							<SelectItem value="desc">
+								<ArrowDownWideNarrowIcon className="mr-1 inline h-5 w-5" />
+								Desc
+							</SelectItem>
+						</SelectGroup>
+					</SelectContent>
+				</Select>
+			</div>
+		</section>
+	)
+}
+
+function ProposalsListHeader({ counts }: { counts: ProposalCounts }) {
+	const tabs: {
+		label: string
+		count: number
+		icon: React.FC<{ className?: string }>
+		tab: GetProposalsOptionsSchema['filterBy']
+		description: string
+	}[] = [
+		{
+			label: 'All Proposals',
+			count: counts.all,
+			icon: NotepadTextIcon,
+			tab: 'all',
+			description: 'All proposals, including your drafts.',
+		},
+		{
+			label: 'My Proposals',
+			count: counts.my,
+			icon: ArrowDownNarrowWideIcon,
+			tab: 'my',
+			description: 'Your proposals, submmitted or drafts.',
+		},
+		{
+			label: 'Others Proposals',
+			count: counts.others,
+			icon: ArrowDownWideNarrowIcon,
+			tab: 'others',
+			description: 'Proposals submitted by other users.',
+		},
+	]
+
+	const { filterBy, setFilterBy } = useProposalsSearchParams()
+
+	return (
+		<header className="space-y-4">
+			<div className="flex items-center justify-between">
+				<div>
+					<h1 className="text-3xl font-bold">Proposals</h1>
+					<p className="text-sm text-gray-600">
+						Browse and manage governance proposals for the Mina Protocol
+					</p>
+				</div>
+
+				<Link href="/proposals/create">
+					<Button className="button-3d font-semibold">Create a proposal</Button>
+				</Link>
 			</div>
 
-			<Link href="/proposals/create">
-				<Button className="button-3d font-semibold">Create a proposal</Button>
-			</Link>
+			<div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+				{tabs.map(tab => (
+					<Button
+						key={tab.tab}
+						variant="outline"
+						onClick={() => setFilterBy(tab.tab ?? null)}
+						className={cn(
+							'flex items-center gap-1 font-semibold hover:bg-secondary/10',
+							filterBy === tab.tab
+								? 'border border-secondary/40 bg-secondary/20 text-secondary-dark hover:bg-secondary/20 hover:text-secondary-dark'
+								: 'text-muted-foreground hover:text-muted-foreground',
+						)}
+					>
+						<tab.icon className="h-4 w-4" />
+						{tab.count} {tab.label}
+					</Button>
+				))}
+			</div>
+
+			{filterBy !== 'all' && (
+				<div className="rounded-md border border-gray-200 p-4">
+					<h4 className="text-lg font-bold">
+						<span className="text-muted-foreground">
+							<FilterIcon className="inline h-4 w-4" /> Filtering by:
+						</span>{' '}
+						<span>{tabs.find(({ tab }) => tab === filterBy)?.label}</span>
+					</h4>
+					<p className="text-sm text-muted-foreground">
+						{tabs.find(tab => tab.tab === filterBy)?.description}
+					</p>
+				</div>
+			)}
+
+			<ProposalsControls />
 		</header>
 	)
 }
@@ -291,13 +527,19 @@ function ProposalCard({
 						{proposal.title}
 					</Link>
 				</CardTitle>
-				<CardDescription>
-					<div className="flex w-48 items-center gap-2 overflow-hidden truncate text-sm text-muted-foreground">
+				<CardDescription className="flex justify-between">
+					<span className="w-48 items-center gap-2 overflow-hidden truncate text-sm text-muted-foreground">
 						by{' '}
 						{!isWalletAddress(proposal.user.username)
 							? truncateWallet(proposal.user.username)
 							: proposal.user.username}
-					</div>
+					</span>
+					<span className="text-sm text-muted-foreground">
+						{new Date(proposal.createdAt).toLocaleDateString()}
+					</span>
+					<span className="text-sm text-muted-foreground">
+						{proposal.totalFundingRequired} MINA
+					</span>
 				</CardDescription>
 			</CardHeader>
 
@@ -384,8 +626,14 @@ function ProposalCard({
 
 function ProposalsListSkeleton() {
 	return (
-		<div className="mx-auto w-full max-w-4xl p-6">
-			<ProposalsListHeader />
+		<div className="mx-auto w-full max-w-4xl space-y-6 p-6">
+			<ProposalsListHeader
+				counts={{
+					all: 0,
+					my: 0,
+					others: 0,
+				}}
+			/>
 			<div className="space-y-4">
 				{Array.from({ length: 3 }).map((_, i) => (
 					<Card key={i}>
