@@ -194,10 +194,6 @@ export function ProposalsList() {
 		setSelectFundingRoundOpen(true)
 	}
 
-	if (isLoading) {
-		return <ProposalsListSkeleton />
-	}
-
 	const selectedProposal = selectedProposalId
 		? proposals.find(p => p.id === selectedProposalId)
 		: null
@@ -206,27 +202,31 @@ export function ProposalsList() {
 		<div className="mx-auto w-full max-w-4xl space-y-6 p-6">
 			<ProposalsListHeader counts={counts} />
 
-			<div className="space-y-4">
-				{proposals.map(proposal => (
-					<ProposalCard
-						key={proposal.id}
-						proposal={proposal}
-						isOwner={
-							user?.id === proposal.user.id ||
-							user?.linkId === proposal.user.linkId
-						}
-						checkingRounds={checkingSubmissionFundingRounds}
-						hasAvailableRounds={hasActiveSubmissionRounds}
-						deleteLoading={deleteLoading}
-						onSubmit={() => handleSubmitClick(proposal.id)}
-						onDelete={() => handleDelete(proposal.id)}
-						onViewFundingRound={() => {
-							setSelectedProposalId(proposal.id)
-							setViewFundingRoundOpen(true)
-						}}
-					/>
-				))}
-			</div>
+			{isLoading ? (
+				<ProposalsListSkeleton />
+			) : (
+				<div className="space-y-4">
+					{proposals.map(proposal => (
+						<ProposalCard
+							key={proposal.id}
+							proposal={proposal}
+							isOwner={
+								user?.id === proposal.user.id ||
+								user?.linkId === proposal.user.linkId
+							}
+							checkingRounds={checkingSubmissionFundingRounds}
+							hasAvailableRounds={hasActiveSubmissionRounds}
+							deleteLoading={deleteLoading}
+							onSubmit={() => handleSubmitClick(proposal.id)}
+							onDelete={() => handleDelete(proposal.id)}
+							onViewFundingRound={() => {
+								setSelectedProposalId(proposal.id)
+								setViewFundingRoundOpen(true)
+							}}
+						/>
+					))}
+				</div>
+			)}
 
 			<AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
 				<AlertDialogContent>
@@ -411,31 +411,31 @@ function ProposalsControls({ disabled }: { disabled?: boolean }) {
 	)
 }
 
-function ProposalsListHeader({ counts }: { counts: ProposalCounts }) {
+function ProposalsListHeader({ counts }: { counts?: ProposalCounts }) {
 	const tabs: {
 		label: string
-		count: number
+		count?: number
 		icon: React.FC<{ className?: string }>
 		tab: GetProposalsOptionsSchema['filterBy']
 		description: string
 	}[] = [
 		{
 			label: 'All Proposals',
-			count: counts.all,
+			count: counts?.all,
 			icon: NotepadTextIcon,
 			tab: 'all',
 			description: 'All proposals, including your drafts.',
 		},
 		{
 			label: 'My Proposals',
-			count: counts.my,
+			count: counts?.my,
 			icon: ArrowDownNarrowWideIcon,
 			tab: 'my',
 			description: 'Your proposals, submmitted or drafts.',
 		},
 		{
 			label: 'Others Proposals',
-			count: counts.others,
+			count: counts?.others,
 			icon: ArrowDownWideNarrowIcon,
 			tab: 'others',
 			description: 'Proposals submitted by other users.',
@@ -626,48 +626,39 @@ function ProposalCard({
 
 function ProposalsListSkeleton() {
 	return (
-		<div className="mx-auto w-full max-w-4xl space-y-6 p-6">
-			<ProposalsListHeader
-				counts={{
-					all: 0,
-					my: 0,
-					others: 0,
-				}}
-			/>
-			<div className="space-y-4">
-				{Array.from({ length: 3 }).map((_, i) => (
-					<Card key={i}>
-						<CardHeader>
-							<CardTitle>
-								<div className="h-6 w-1/2 animate-pulse rounded bg-gray-200" />
-							</CardTitle>
-							<CardDescription>
-								<div className="h-4 w-1/4 animate-pulse rounded bg-gray-200" />
-							</CardDescription>
-						</CardHeader>
-						<CardContent>
-							<div className="flex items-center justify-between gap-4">
-								<div className="flex items-center gap-4">
-									<div className="h-6 w-1/4 animate-pulse rounded bg-gray-200" />
-									<div className="h-6 w-1/4 animate-pulse rounded bg-gray-200" />
-								</div>
-								<div className="flex items-center gap-4">
-									<div className="h-6 w-1/4 animate-pulse rounded bg-gray-200" />
-									<div className="h-6 w-1/4 animate-pulse rounded bg-gray-200" />
-								</div>
-							</div>
-						</CardContent>
-						<CardFooter className="flex justify-between gap-4">
-							<div>
+		<div className="space-y-4">
+			{Array.from({ length: 3 }).map((_, i) => (
+				<Card key={i}>
+					<CardHeader>
+						<CardTitle>
+							<div className="h-6 w-1/2 animate-pulse rounded bg-gray-200" />
+						</CardTitle>
+						<CardDescription>
+							<div className="h-4 w-1/4 animate-pulse rounded bg-gray-200" />
+						</CardDescription>
+					</CardHeader>
+					<CardContent>
+						<div className="flex items-center justify-between gap-4">
+							<div className="flex items-center gap-4">
+								<div className="h-6 w-1/4 animate-pulse rounded bg-gray-200" />
 								<div className="h-6 w-1/4 animate-pulse rounded bg-gray-200" />
 							</div>
-							<div>
+							<div className="flex items-center gap-4">
+								<div className="h-6 w-1/4 animate-pulse rounded bg-gray-200" />
 								<div className="h-6 w-1/4 animate-pulse rounded bg-gray-200" />
 							</div>
-						</CardFooter>
-					</Card>
-				))}
-			</div>
+						</div>
+					</CardContent>
+					<CardFooter className="flex justify-between gap-4">
+						<div>
+							<div className="h-6 w-1/4 animate-pulse rounded bg-gray-200" />
+						</div>
+						<div>
+							<div className="h-6 w-1/4 animate-pulse rounded bg-gray-200" />
+						</div>
+					</CardFooter>
+				</Card>
+			))}
 		</div>
 	)
 }
