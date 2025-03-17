@@ -4,12 +4,16 @@ import { useCallback, useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import {
+	AlertCircleIcon,
 	ArrowDownNarrowWideIcon,
 	ArrowDownWideNarrowIcon,
 	FilterIcon,
+	InfoIcon,
 	NotepadTextIcon,
-	PenIcon,
 	SearchIcon,
+	SendIcon,
+	SquareArrowOutUpRightIcon,
+	SquarePenIcon,
 	Trash2,
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
@@ -47,7 +51,12 @@ import {
 	ProposalSummaryWithUserAndFundingRound,
 } from '@/types/proposals'
 import { useFundingRounds } from '@/hooks/use-funding-rounds'
-import { cn, isWalletAddress, truncateWallet } from '@/lib/utils'
+import {
+	cn,
+	formatNumberWithCommas,
+	isWalletAddress,
+	truncateWallet,
+} from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
 import {
 	getProposalsOptionsSchema,
@@ -522,65 +531,107 @@ function ProposalCard({
 				<CardTitle>
 					<Link
 						href={`/proposals/${proposal.id}`}
-						className="text-xl font-medium hover:underline"
+						className="flex items-center justify-between text-xl font-semibold hover:underline"
 					>
-						{proposal.title}
+						{proposal.title}{' '}
+						<SquareArrowOutUpRightIcon className="inline h-5 w-5" />
 					</Link>
 				</CardTitle>
 				<CardDescription className="flex justify-between">
 					<span className="w-48 items-center gap-2 overflow-hidden truncate text-sm text-muted-foreground">
 						by{' '}
-						{!isWalletAddress(proposal.user.username)
-							? truncateWallet(proposal.user.username)
-							: proposal.user.username}
+						<span className="font-semibold">
+							{isWalletAddress(proposal.user.username)
+								? truncateWallet(proposal.user.username)
+								: proposal.user.username}
+						</span>
 					</span>
-					<span className="text-sm text-muted-foreground">
-						{new Date(proposal.createdAt).toLocaleDateString()}
-					</span>
-					<span className="text-sm text-muted-foreground">
-						{proposal.totalFundingRequired} MINA
+					<span className="text-sm font-semibold text-gray-600">
+						{formatNumberWithCommas(proposal.totalFundingRequired)} MINA
 					</span>
 				</CardDescription>
 			</CardHeader>
 
-			<CardContent>
-				{proposal.status === 'DRAFT' && (
-					<div className="flex items-center justify-between gap-4">
-						{proposal.fundingRound ? (
-							<Button variant="secondary" onClick={onViewFundingRound}>
-								View Funding Round Details
+			<CardContent className="space-y-2">
+				<p className="text-sm text-gray-600">
+					<span className="font-semibold">Summary:</span>{' '}
+					{proposal.summary.substring(0, 240)}...
+				</p>
+				<p className="text-sm text-gray-600">
+					<span className="font-semibold">Created at:</span>{' '}
+					{formatDate(new Date(proposal.createdAt))}
+				</p>
+			</CardContent>
+			<CardFooter className="flex flex-col gap-4 sm:flex-row sm:justify-between">
+				<div>
+					{proposal.fundingRound && isOwner ? (
+						<>
+							<Button
+								variant="outline"
+								onClick={onViewFundingRound}
+								size="sm"
+								className="font-semibold"
+							>
+								<SquarePenIcon className="mr-1" />
+								{proposal.fundingRound.name}
 							</Button>
-						) : (
-							<TooltipProvider>
-								<Tooltip>
-									<TooltipTrigger asChild>
-										<div>
-											<Button
-												variant="secondary"
-												onClick={onSubmit}
-												disabled={checkingRounds || !hasAvailableRounds}
-											>
-												{checkingRounds
-													? 'Checking rounds...'
-													: 'Submit to funding round'}
-											</Button>
-										</div>
-									</TooltipTrigger>
-									{!hasAvailableRounds && (
-										<TooltipContent>
-											<p>No funding rounds are currently accepting proposals</p>
-										</TooltipContent>
-									)}
-								</Tooltip>
-							</TooltipProvider>
-						)}
-
+						</>
+					) : isOwner ? (
+						<TooltipProvider>
+							<Tooltip>
+								<TooltipTrigger asChild>
+									<div>
+										<Button
+											variant="secondary"
+											onClick={onSubmit}
+											disabled={checkingRounds || !hasAvailableRounds}
+											size="sm"
+											className="font-semibold"
+										>
+											<SendIcon className="mr-1" />
+											{checkingRounds
+												? 'Checking rounds...'
+												: 'Submit to funding round'}
+										</Button>
+									</div>
+								</TooltipTrigger>
+								{!hasAvailableRounds && (
+									<TooltipContent className="bg-secondary">
+										<InfoIcon className="mr-1 inline h-3 w-3" />
+										No funding rounds are currently accepting proposals
+									</TooltipContent>
+								)}
+							</Tooltip>
+						</TooltipProvider>
+					) : (
+						<Badge variant="outline">
+							<AlertCircleIcon className="mr-1 inline h-3 w-3" />
+							No funding round
+						</Badge>
+					)}
+				</div>
+				<div className="flex items-center gap-4">
+					<Badge
+						variant="outline"
+						className="border-gray-200 capitalize text-gray-600"
+					>
+						{proposal.status.toLowerCase()}
+					</Badge>
+					{proposal.status === 'DRAFT' && (
 						<div className="flex items-center">
 							<Link
 								href={`/proposals/${proposal.id}/edit`}
 								className="text-muted-foreground underline hover:text-foreground"
 							>
-								Edit
+								<Button
+									variant="ghost"
+									size="icon"
+									onClick={onDelete}
+									disabled={deleteLoading}
+									className="text-gray-600 hover:bg-secondary/20 hover:text-secondary-dark"
+								>
+									<SquarePenIcon className="h-5 w-5" />
+								</Button>
 							</Link>
 
 							<Button
@@ -588,37 +639,14 @@ function ProposalCard({
 								size="icon"
 								onClick={onDelete}
 								disabled={deleteLoading}
-								className="text-muted-foreground hover:text-foreground"
+								className="text-gray-600 hover:bg-destructive/20 hover:text-destructive"
+								loading={deleteLoading}
 							>
-								{deleteLoading ? (
-									<span className="animate-spin">⌛</span>
-								) : (
-									<Trash2 className="h-5 w-5" />
-								)}
-								<span className="sr-only">Delete proposal</span>
+								<Trash2 className="h-5 w-5" />
 							</Button>
 						</div>
-					</div>
-				)}
-			</CardContent>
-			<CardFooter className="flex justify-between gap-4">
-				<div>
-					{proposal.fundingRound && isOwner ? (
-						<>
-							<Button variant="outline" onClick={onViewFundingRound}>
-								<PenIcon className="mr-1 h-2 w-2" />
-								{proposal.fundingRound.name}
-							</Button>
-						</>
-					) : (
-						proposal.fundingRound && (
-							<Badge variant="outline">{proposal.fundingRound.name}</Badge>
-						)
 					)}
 				</div>
-				<Badge variant="outline" className="capitalize">
-					Status: {proposal.status.toLowerCase()}
-				</Badge>
 			</CardFooter>
 		</Card>
 	)
@@ -662,3 +690,6 @@ function ProposalsListSkeleton() {
 		</div>
 	)
 }
+
+const formatDate = (date: Date) =>
+	`${date.toLocaleString('default', { month: 'short' })} ${date.getDate()}, ${date.getFullYear()}`
