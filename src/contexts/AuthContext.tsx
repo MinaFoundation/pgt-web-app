@@ -10,6 +10,7 @@ import {
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 import { AuthSourceType, User } from '@/types/user'
+import { useQueryClient } from '@tanstack/react-query'
 
 interface AuthContextType {
 	user: User | null
