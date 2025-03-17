@@ -59,7 +59,7 @@ function Hero() {
 					Join the movement and help shape the future of the Mina Protocol.
 					Submit a proposal to drive community growth and innovation.
 				</p>
-				<Link href="/proposals">
+				<Link href="/proposals?filterBy=my">
 					<Button variant="secondary" size="lg" className="text-lg">
 						Submit a Proposal
 					</Button>

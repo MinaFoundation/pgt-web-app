@@ -110,18 +110,20 @@ export function SelectFundingRoundDialog({
 								onValueChange={setSelectedRoundId}
 								disabled={loading}
 							>
-								<SelectTrigger>
+								<SelectTrigger className="h-14">
 									<SelectValue placeholder="Select a funding round" />
 								</SelectTrigger>
 								<SelectContent>
 									{rounds.map(round => (
 										<SelectItem key={round.id} value={round.id}>
 											<div className="flex flex-col">
-												<span>📋 {round.name}</span>
-												<span className="text-xs text-muted-foreground">
+												<p className="text-base font-semibold">
+													📋 {round.name}
+												</p>
+												<p className="text-sm text-muted-foreground">
 													⏳ {getTimeRemaining(round.phases.submission.endDate)}{' '}
 													to submit
-												</span>
+												</p>
 											</div>
 										</SelectItem>
 									))}

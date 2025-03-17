@@ -4,23 +4,11 @@ import prisma from '@/lib/prisma'
 import { getOrCreateUserFromRequest } from '@/lib/auth'
 import { validatePhaseDates } from '@/lib/validation'
 import logger from '@/logging'
-
-interface DateRange {
-	from: string
-	to: string
-}
-
-interface FundingRoundRequestData {
-	name: string
-	description: string
-	topicId: string
-	totalBudget: number
-	fundingRoundDates: DateRange
-	submissionDates: DateRange
-	considerationDates: DateRange
-	deliberationDates: DateRange
-	votingDates: DateRange
-}
+import {
+	FundingRoundCreate,
+	fundingRoundCreateSchema,
+} from '@/schemas/funding-rounds'
+import { ApiResponse } from '@/lib/api-response'
 
 const adminService = new AdminService(prisma)
 
@@ -59,7 +47,7 @@ export async function POST(req: Request) {
 			return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 		}
 
-		const data: FundingRoundRequestData = await req.json()
+		const data: Omit<FundingRoundCreate, 'createdById'> = await req.json()
 
 		// Convert string dates to Date objects for validation
 		const fundingRoundDates = {
@@ -96,7 +84,7 @@ export async function POST(req: Request) {
 			return NextResponse.json({ error: datesValid.error }, { status: 400 })
 		}
 
-		const round = await adminService.createFundingRound({
+		const input = {
 			name: data.name,
 			description: data.description,
 			topicId: data.topicId,
@@ -107,13 +95,14 @@ export async function POST(req: Request) {
 			considerationDates,
 			deliberationDates,
 			votingDates,
-		})
+		}
+
+		fundingRoundCreateSchema.parse(input)
+
+		const round = await adminService.createFundingRound(input)
 		return NextResponse.json(round)
 	} catch (error) {
 		logger.error('Failed to create funding round:', error)
-		return NextResponse.json(
-			{ error: 'Internal server error' },
-			{ status: 500 },
-		)
+		return ApiResponse.error(error)
 	}
 }
