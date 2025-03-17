@@ -182,7 +182,8 @@ export function WalletAuthDialog({
 			} else {
 				toast({
 					title: 'Successfully authenticated',
-					description: 'You are now logged in with your wallet',
+					description:
+						'You are now logged in with your wallet. Redirecting you to your destination...',
 				})
 				onOpenChange(false)
 			}
