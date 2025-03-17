@@ -208,7 +208,7 @@ export function ProposalsList() {
 		: null
 
 	return (
-		<div className="mx-auto w-full max-w-4xl space-y-6 p-6">
+		<div className="mx-auto w-full max-w-4xl space-y-6 p-4">
 			<ProposalsListHeader counts={counts} />
 
 			{isLoading ? (
