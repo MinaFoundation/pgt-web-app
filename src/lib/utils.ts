@@ -35,3 +35,19 @@ export const slugify = (str: string): string => {
 		.slice(0, 80) // Limit the length of the slug.
 		.toLowerCase() // Lowercase the slug.
 }
+
+// Function to format number with commas
+export const formatNumberWithCommas = (value: number | string) => {
+	// Remove non-numeric characters except for the decimal point
+	const numericValue = value.toString().replace(/[^0-9.]/g, '')
+	const parts = numericValue.split('.')
+	// Add commas to the integer part
+	parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+	// Join back with decimal part if it exists
+	return parts.join('.')
+}
+
+// Function to parse formatted number back to raw value
+export const parseNumber = (value: string) => {
+	return value.replace(/,/g, '') // Remove commas for raw numeric value
+}

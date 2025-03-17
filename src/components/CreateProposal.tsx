@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/hooks/use-toast'
-import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ProposalValidation as PV } from '@/constants/validation'
 import { useRouter } from 'next/navigation'
@@ -22,7 +21,7 @@ import {
 	FilePlus2Icon,
 	InfoIcon,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn, formatNumberWithCommas, parseNumber } from '@/lib/utils'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import {
@@ -934,20 +933,4 @@ export function CreateProposal({
 			</Form>
 		</div>
 	)
-}
-
-// Function to format number with commas
-const formatNumberWithCommas = (value: number | string) => {
-	// Remove non-numeric characters except for the decimal point
-	const numericValue = value.toString().replace(/[^0-9.]/g, '')
-	const parts = numericValue.split('.')
-	// Add commas to the integer part
-	parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-	// Join back with decimal part if it exists
-	return parts.join('.')
-}
-
-// Function to parse formatted number back to raw value
-const parseNumber = (value: string) => {
-	return value.replace(/,/g, '') // Remove commas for raw numeric value
 }
