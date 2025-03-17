@@ -555,7 +555,7 @@ function ProposalCard({
 			</CardHeader>
 
 			<CardContent className="space-y-2">
-				<p className="text-sm text-gray-600">
+				<p className="break-words text-sm text-gray-600">
 					<span className="font-semibold">Summary:</span>{' '}
 					{proposal.summary.substring(0, 240)}...
 				</p>
