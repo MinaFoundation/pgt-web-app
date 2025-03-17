@@ -68,7 +68,7 @@ export function SubmissionPhase({ fundingRoundId }: Props) {
 							✨ Create A Proposal
 						</Button>
 					</Link>
-					<Link href="/proposals">
+					<Link href="/proposals?filterBy=my">
 						<Button variant="outline">📝 Submit a Proposal</Button>
 					</Link>
 				</div>
