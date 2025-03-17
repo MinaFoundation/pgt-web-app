@@ -455,17 +455,19 @@ function ProposalsListHeader({ counts }: { counts?: ProposalCounts }) {
 
 	return (
 		<header className="space-y-4">
-			<div className="flex items-center justify-between">
-				<div>
+			<div>
+				<div className="flex items-center justify-between">
 					<h1 className="text-3xl font-bold">Proposals</h1>
-					<p className="text-sm text-gray-600">
-						Browse and manage governance proposals for the Mina Protocol
-					</p>
+					<Link href="/proposals/create">
+						<Button className="button-3d font-semibold" size="sm">
+							Create a proposal
+						</Button>
+					</Link>
 				</div>
 
-				<Link href="/proposals/create">
-					<Button className="button-3d font-semibold">Create a proposal</Button>
-				</Link>
+				<p className="mt-2 text-sm text-gray-600 md:mt-1">
+					Browse and manage proposals for the Mina Ecosystem Funding
+				</p>
 			</div>
 
 			<div className="grid grid-cols-2 gap-2 md:grid-cols-3">
