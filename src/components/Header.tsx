@@ -34,6 +34,11 @@ export default function Header() {
 	const [openMobileNav, setOpenMobileNav] = useState(false)
 	const { isAdmin } = useAdminStatus()
 	const { user, isLoading: isAuthLoading } = useAuth()
+	const [isRedirecting, setIsRedirecting] = useState(false)
+	const handleRedirectClick = (href: string) => {
+		setIsRedirecting(true)
+		window.location.href = href // Redirect manually to ensure state updates
+	}
 
 	const handleOpenMobileNav = () => {
 		setOpenMobileNav(!openMobileNav)
@@ -82,7 +87,12 @@ export default function Header() {
 							<Tooltip>
 								<TooltipTrigger asChild>
 									<Link href="/admin">
-										<Button variant="ghost" size="icon">
+										<Button
+											variant="ghost"
+											size="icon"
+											onClick={() => handleRedirectClick('/admin')}
+											loading={isRedirecting}
+										>
 											<Settings className="h-4 w-4" />
 											<span className="sr-only">Admin Settings</span>
 										</Button>
@@ -143,6 +153,8 @@ export default function Header() {
 									pathname.startsWith('/admin') &&
 										'border-secondary/50 text-secondary',
 								)}
+								onClick={() => handleRedirectClick('/admin')}
+								loading={isRedirecting}
 							>
 								<Settings className="h-4 w-4" />
 								Admin Settings

@@ -33,7 +33,7 @@ export default function RootLayout({
 	return (
 		<html lang="en" suppressHydrationWarning>
 			<body
-				className={`${fontSans.className} flex min-h-screen flex-col antialiased`}
+				className={`${fontSans.className} flex min-h-screen flex-col text-dark antialiased`}
 			>
 				<ThemeProvider
 					attribute="class"
