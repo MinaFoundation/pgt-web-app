@@ -18,42 +18,10 @@ import {
 	SelectValue,
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
-import { format } from 'date-fns'
 import { AlertCircle } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { SubmitProposalConfirmDialog } from './SubmitProposalConfirmDialog'
-
-interface FundingRound {
-	id: string
-	name: string
-	description: string
-	status: 'DRAFT' | 'ACTIVE'
-	startDate: string
-	endDate: string
-	submissionPhase: {
-		startDate: string
-		endDate: string
-	}
-	considerationPhase: {
-		startDate: string
-		endDate: string
-	}
-	deliberationPhase: {
-		startDate: string
-		endDate: string
-	}
-	votingPhase: {
-		startDate: string
-		endDate: string
-	}
-}
-
-interface Props {
-	open: boolean
-	onOpenChange: (open: boolean) => void
-	proposalTitle: string
-	onSubmit: (roundId: string) => Promise<void>
-}
+import { useFundingRounds } from '@/hooks/use-funding-rounds'
 
 function getTimeRemaining(endDate: string): string {
 	const end = new Date(endDate)
@@ -75,46 +43,20 @@ export function SelectFundingRoundDialog({
 	onOpenChange,
 	proposalTitle,
 	onSubmit,
-}: Props) {
+}: {
+	open: boolean
+	onOpenChange: (open: boolean) => void
+	proposalTitle: string
+	onSubmit: (roundId: string) => Promise<void>
+}) {
 	const [loading, setLoading] = useState(false)
-	const [rounds, setRounds] = useState<FundingRound[]>([])
 	const [selectedRoundId, setSelectedRoundId] = useState<string>('')
-	const [isLoading, setIsLoading] = useState(true)
 	const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
 	const { toast } = useToast()
 
-	useEffect(() => {
-		const fetchRounds = async () => {
-			try {
-				setIsLoading(true)
-				const response = await fetch('/api/funding-rounds/active')
-				if (!response.ok) throw new Error('Failed to fetch funding rounds')
-				const data = await response.json()
-
-				// Filter rounds that are in submission phase
-				const now = new Date()
-				const activeRounds = data.filter((round: FundingRound) => {
-					const startDate = new Date(round.submissionPhase.startDate)
-					const endDate = new Date(round.submissionPhase.endDate)
-					return startDate <= now && now <= endDate
-				})
-
-				setRounds(activeRounds)
-			} catch (error) {
-				toast({
-					title: 'Error',
-					description: 'Failed to load funding rounds',
-					variant: 'destructive',
-				})
-			} finally {
-				setIsLoading(false)
-			}
-		}
-
-		if (open) {
-			fetchRounds()
-		}
-	}, [open, toast])
+	const { data: rounds = [], isLoading } = useFundingRounds({
+		filterBy: 'SUBMISSION',
+	})
 
 	const handleSubmit = () => {
 		if (!selectedRoundId) {
@@ -177,7 +119,7 @@ export function SelectFundingRoundDialog({
 											<div className="flex flex-col">
 												<span>📋 {round.name}</span>
 												<span className="text-xs text-muted-foreground">
-													⏳ {getTimeRemaining(round.submissionPhase.endDate)}{' '}
+													⏳ {getTimeRemaining(round.phases.submission.endDate)}{' '}
 													to submit
 												</span>
 											</div>

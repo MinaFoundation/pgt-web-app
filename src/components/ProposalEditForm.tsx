@@ -1,62 +1,37 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 import { CreateProposal } from './CreateProposal'
-import type { ProposalWithAccess } from '@/types/proposals'
-import { useFeedback } from '@/contexts/FeedbackContext'
-import { ProposalStatus } from '@prisma/client'
+import { useProposal } from '@/hooks/use-proposal'
+import { ProposalService } from '@/services'
+import { useAuth } from '@/contexts/AuthContext'
 
-interface Props {
-	proposalId: string
-}
-
-export function ProposalEditForm({ proposalId }: Props) {
+export function ProposalEditForm({ proposalId }: { proposalId: string }) {
 	const router = useRouter()
+	const { user } = useAuth()
 	const { toast } = useToast()
-	const [loading, setLoading] = useState(true)
-	const [error, setError] = useState<string | null>(null)
-	const [proposal, setProposal] = useState<ProposalWithAccess | null>(null)
-	const { error: showError } = useFeedback()
+
+	const { data: proposal, isLoading } = useProposal(proposalId)
 
 	useEffect(() => {
-		async function fetchProposal() {
-			try {
-				const response = await fetch(`/api/proposals/${proposalId}`)
-				if (!response.ok) {
-					throw new Error('Failed to fetch proposal')
-				}
-				const data = await response.json()
+		if (!proposal || !user) return
 
-				const canEdit: boolean =
-					data.isOwner && data.status === ProposalStatus.DRAFT
+		const canEdit = ProposalService.hasEditPermission(user, proposal)
 
-				if (!canEdit) {
-					showError('Only your draft proposals can be edited')
-					router.push('/proposals')
-					return
-				}
-
-				setProposal(data)
-			} catch (error) {
-				setError('Failed to load proposal')
-				showError('Failed to load proposal')
-				router.push('/proposals')
-			} finally {
-				setLoading(false)
-			}
+		if (!canEdit) {
+			toast({
+				title: 'Only your draft proposals can be edited',
+				variant: 'destructive',
+			})
+			router.push('/proposals')
+			return
 		}
+	}, [proposal, router, toast, user])
 
-		fetchProposal()
-	}, [proposalId, router, showError])
-
-	if (loading) {
+	if (isLoading || !user) {
 		return <div className="py-8 text-center">Loading proposal...</div>
-	}
-
-	if (error) {
-		return <div className="py-8 text-center text-red-500">{error}</div>
 	}
 
 	if (!proposal) {

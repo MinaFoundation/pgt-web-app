@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/hooks/use-toast'
-import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ProposalValidation as PV } from '@/constants/validation'
 import { useRouter } from 'next/navigation'
@@ -22,7 +21,7 @@ import {
 	FilePlus2Icon,
 	InfoIcon,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn, formatNumberWithCommas, parseNumber } from '@/lib/utils'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import {
@@ -34,136 +33,22 @@ import {
 	FormLabel,
 	FormMessage,
 } from '@/components/ui/form'
+import { CreateProposalInput, proposalCreateSchema } from '@/schemas/proposals'
 
-const proposalSchema = z.object({
-	title: z
-		.string()
-		.min(PV.TITLE.min, PV.TITLE.messages.min)
-		.max(PV.TITLE.max, PV.TITLE.messages.max),
-
-	proposalSummary: z
-		.string()
-		.min(PV.PROPOSAL_SUMMARY.min, PV.PROPOSAL_SUMMARY.messages.min)
-		.max(PV.PROPOSAL_SUMMARY.max, PV.PROPOSAL_SUMMARY.messages.max),
-
-	keyObjectives: z
-		.string()
-		.min(PV.KEY_OBJECTIVES.min, PV.KEY_OBJECTIVES.messages.min)
-		.max(PV.KEY_OBJECTIVES.max, PV.KEY_OBJECTIVES.messages.max),
-
-	problemStatement: z
-		.string()
-		.min(PV.PROBLEM_STATEMENT.min, PV.PROBLEM_STATEMENT.messages.min)
-		.max(PV.PROBLEM_STATEMENT.max, PV.PROBLEM_STATEMENT.messages.max),
-
-	problemImportance: z
-		.string()
-		.min(PV.PROBLEM_IMPORTANCE.min, PV.PROBLEM_IMPORTANCE.messages.min)
-		.max(PV.PROBLEM_IMPORTANCE.max, PV.PROBLEM_IMPORTANCE.messages.max),
-
-	proposedSolution: z
-		.string()
-		.min(PV.PROPOSED_SOLUTION.min, PV.PROPOSED_SOLUTION.messages.min)
-		.max(PV.PROPOSED_SOLUTION.max, PV.PROPOSED_SOLUTION.messages.max),
-
-	implementationDetails: z
-		.string()
-		.min(PV.IMPLEMENTATION_DETAILS.min, PV.IMPLEMENTATION_DETAILS.messages.min)
-		.max(PV.IMPLEMENTATION_DETAILS.max, PV.IMPLEMENTATION_DETAILS.messages.max),
-
-	communityBenefits: z
-		.string()
-		.min(PV.COMMUNITY_BENEFITS.min, PV.COMMUNITY_BENEFITS.messages.min)
-		.max(PV.COMMUNITY_BENEFITS.max, PV.COMMUNITY_BENEFITS.messages.max),
-
-	keyPerformanceIndicators: z
-		.string()
-		.min(PV.KPI.min, PV.KPI.messages.min)
-		.max(PV.KPI.max, PV.KPI.messages.max),
-
-	totalFundingRequired: z
-		.string()
-		.regex(/^\d+(\.\d{1,2})?$/, PV.TOTAL_FUNDING_REQUIRED.messages.type)
-		.refine(
-			(val: string) => parseFloat(val) <= PV.TOTAL_FUNDING_REQUIRED.max,
-			PV.TOTAL_FUNDING_REQUIRED.messages.max,
-		),
-
-	budgetBreakdown: z
-		.string()
-		.min(PV.BUDGET_BREAKDOWN.min, PV.BUDGET_BREAKDOWN.messages.min)
-		.max(PV.BUDGET_BREAKDOWN.max, PV.BUDGET_BREAKDOWN.messages.max),
-
-	estimatedCompletionDate: z.date(),
-
-	milestones: z
-		.string()
-		.min(PV.MILESTONES.min, PV.MILESTONES.messages.min)
-		.max(PV.MILESTONES.max, PV.MILESTONES.messages.max),
-
-	teamMembers: z
-		.string()
-		.min(PV.TEAM_MEMBERS.min, PV.TEAM_MEMBERS.messages.min)
-		.max(PV.TEAM_MEMBERS.max, PV.TEAM_MEMBERS.messages.max),
-
-	relevantExperience: z
-		.string()
-		.min(PV.RELEVANT_EXPERIENCE.min, PV.RELEVANT_EXPERIENCE.messages.min)
-		.max(PV.RELEVANT_EXPERIENCE.max, PV.RELEVANT_EXPERIENCE.messages.max),
-
-	potentialRisks: z
-		.string()
-		.min(PV.POTENTIAL_RISKS.min, PV.POTENTIAL_RISKS.messages.min)
-		.max(PV.POTENTIAL_RISKS.max, PV.POTENTIAL_RISKS.messages.max),
-
-	mitigationPlans: z
-		.string()
-		.min(PV.MITIGATION_PLANS.min, PV.MITIGATION_PLANS.messages.min)
-		.max(PV.MITIGATION_PLANS.max, PV.MITIGATION_PLANS.messages.max),
-
-	email: z
-		.string()
-		.email(PV.EMAIL.messages.email)
-		.max(PV.EMAIL.max, PV.EMAIL.messages.max),
-
-	discordHandle: z
-		.string()
-		.min(PV.DISCORD.min)
-		.max(PV.DISCORD.max, PV.DISCORD.messages.max),
-
-	website: z
-		.string()
-		.url()
-		.max(PV.WEBSITE.max, PV.WEBSITE.messages.max)
-		.optional()
-		.or(z.literal('')),
-
-	githubProfile: z
-		.string()
-		.url()
-		.max(PV.GITHUB_PROFILE.max, PV.GITHUB_PROFILE.messages.max)
-		.optional()
-		.or(z.literal('')),
-
-	otherLinks: z.string().max(PV.OTHER_LINKS.max, PV.OTHER_LINKS.messages.max),
-})
-
-// Define form data type from zod schema
-type ProposalFormValues = z.infer<typeof proposalSchema>
-
-interface Props {
+export function CreateProposal({
+	mode = 'create',
+	proposalId,
+}: {
 	mode?: 'create' | 'edit'
 	proposalId?: string
-}
-
-export function CreateProposal({ mode = 'create', proposalId }: Props) {
+}) {
 	const { toast } = useToast()
 	const router = useRouter()
 	const [isSaving, setIsSaving] = useState<boolean>(false)
 
 	// Initialize form with default values
-	const form = useForm<ProposalFormValues>({
-		resolver: zodResolver(proposalSchema),
+	const form = useForm<CreateProposalInput>({
+		resolver: zodResolver(proposalCreateSchema),
 		defaultValues: {
 			title: '',
 			proposalSummary: '',
@@ -176,7 +61,7 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 			keyPerformanceIndicators: '',
 			totalFundingRequired: '',
 			budgetBreakdown: '',
-			estimatedCompletionDate: new Date(),
+			estimatedCompletionDate: new Date().toISOString(),
 			milestones: '',
 			teamMembers: '',
 			relevantExperience: '',
@@ -192,7 +77,7 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 
 	// Helper function to get max length for a field
 	const getMaxLengthForField = (
-		fieldName: keyof ProposalFormValues,
+		fieldName: keyof CreateProposalInput,
 	): number => {
 		switch (fieldName) {
 			case 'title':
@@ -267,8 +152,8 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 						'',
 					budgetBreakdown: data.budgetBreakdown || '',
 					estimatedCompletionDate: data.estimatedCompletionDate
-						? new Date(data.estimatedCompletionDate)
-						: new Date(),
+						? new Date(data.estimatedCompletionDate).toISOString()
+						: new Date().toISOString(),
 					milestones: data.milestones || '',
 					teamMembers: data.teamMembers || '',
 					relevantExperience: data.relevantExperience || '',
@@ -298,14 +183,14 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 	}, [mode, proposalId, router, toast, form])
 
 	// Form submission handler
-	const onSubmit = async (values: ProposalFormValues) => {
+	const onSubmit = async (values: CreateProposalInput) => {
 		setIsSaving(true)
 
 		try {
 			// Format the data for submission
 			const submissionData = {
 				...values,
-				estimatedCompletionDate: values.estimatedCompletionDate.toISOString(),
+				estimatedCompletionDate: values.estimatedCompletionDate,
 			}
 
 			// Submit the proposal
@@ -759,8 +644,8 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 											<PopoverContent className="w-auto p-0" align="start">
 												<Calendar
 													mode="single"
-													selected={field.value}
-													onSelect={field.onChange}
+													selected={new Date(field.value)}
+													onSelect={date => field.onChange(date?.toISOString())}
 													disabled={date => date < new Date()}
 													initialFocus
 												/>
@@ -1048,20 +933,4 @@ export function CreateProposal({ mode = 'create', proposalId }: Props) {
 			</Form>
 		</div>
 	)
-}
-
-// Function to format number with commas
-const formatNumberWithCommas = (value: number | string) => {
-	// Remove non-numeric characters except for the decimal point
-	const numericValue = value.toString().replace(/[^0-9.]/g, '')
-	const parts = numericValue.split('.')
-	// Add commas to the integer part
-	parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-	// Join back with decimal part if it exists
-	return parts.join('.')
-}
-
-// Function to parse formatted number back to raw value
-const parseNumber = (value: string) => {
-	return value.replace(/,/g, '') // Remove commas for raw numeric value
 }

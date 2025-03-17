@@ -9,7 +9,19 @@ import { Prisma, PrismaClient } from '@prisma/client'
 import { z } from 'zod'
 
 export const getPublicFundingRoundsOptionsSchema = z.object({
-	filterName: z.string().optional().nullable(),
+	query: z.string().optional().nullable(),
+	filterBy: z
+		.enum([
+			'UPCOMING',
+			'SUBMISSION',
+			'CONSIDERATION',
+			'DELIBERATION',
+			'VOTING',
+			'COMPLETED',
+			'BETWEEN_PHASES',
+		])
+		.optional()
+		.nullable(),
 	sortBy: z.enum(['totalBudget', 'startDate', 'status']).optional().nullable(),
 	sortOrder: z.enum(['asc', 'desc']).optional().nullable(),
 })
@@ -65,10 +77,10 @@ export class FundingRoundService {
 				status: {
 					in: ['ACTIVE', 'COMPLETED'],
 				},
-				...(options.filterName
+				...(options.query
 					? {
 							name: {
-								contains: options.filterName,
+								contains: options.query,
 								mode: 'insensitive',
 							},
 						}
@@ -87,39 +99,33 @@ export class FundingRoundService {
 			orderBy: buildOrderBy(options.sortBy ? options : undefined),
 		})
 
-		return rounds.map(({ _count, ...round }) => {
-			const phases = this.buildPhases(round)
+		const fundingRounds = rounds.map(({ _count, ...round }) => {
+			const phases = FundingRoundService.buildPhases(round)
 
 			return {
 				...round,
 				totalBudget: round.totalBudget.toString(),
 				proposalsCount: _count.proposals,
-				status: this.fixFundingRoundStatus(round.status, round.startDate),
+				status: FundingRoundService.fixFundingRoundStatus(
+					round.status,
+					round.startDate,
+				),
 				startDate: round.startDate.toDateString(),
 				endDate: round.endDate.toDateString(),
-				phase: this.getCurrentPhase(round.endDate.toDateString(), phases),
+				phase: FundingRoundService.getCurrentPhase(
+					round.endDate.toDateString(),
+					phases,
+				),
 				phases,
 			}
 		})
-	}
 
-	async getActiveFundingRounds() {
-		const now = new Date()
-		return await this.prisma.fundingRound.findMany({
-			where: {
-				startDate: { lte: now },
-				endDate: { gte: now },
-				status: 'ACTIVE',
-			},
-			include: {
-				proposals: true,
-				submissionPhase: true,
-				considerationPhase: true,
-				deliberationPhase: true,
-				votingPhase: true,
-			},
-			orderBy: { startDate: 'asc' },
-		})
+		if (options.filterBy) {
+			// TODO: remember to move that to the db query when using pagination
+			return fundingRounds.filter(({ phase }) => phase === options.filterBy)
+		}
+
+		return fundingRounds
 	}
 
 	async getFundingRoundById(
@@ -145,16 +151,22 @@ export class FundingRoundService {
 			return null
 		}
 
-		const phases = this.buildPhases(round)
+		const phases = FundingRoundService.buildPhases(round)
 
 		return {
 			...round,
 			proposalsCount: round._count.proposals,
 			totalBudget: round.totalBudget.toString(),
-			status: this.fixFundingRoundStatus(round.status, round.startDate),
+			status: FundingRoundService.fixFundingRoundStatus(
+				round.status,
+				round.startDate,
+			),
 			startDate: round.startDate.toDateString(),
 			endDate: round.endDate.toDateString(),
-			phase: this.getCurrentPhase(round.endDate.toDateString(), phases),
+			phase: FundingRoundService.getCurrentPhase(
+				round.endDate.toDateString(),
+				phases,
+			),
 			phases,
 		}
 	}
@@ -227,10 +239,13 @@ export class FundingRoundService {
 			id: round.id,
 			name: round.name,
 			description: round.description,
-			status: this.fixFundingRoundStatus(round.status, round.startDate),
-			phase: this.getCurrentPhase(
+			status: FundingRoundService.fixFundingRoundStatus(
+				round.status,
+				round.startDate,
+			),
+			phase: FundingRoundService.getCurrentPhase(
 				round.endDate.toDateString(),
-				this.buildPhases(round),
+				FundingRoundService.buildPhases(round),
 			),
 			startDate: round.startDate.toDateString(),
 			endDate: round.endDate.toDateString(),
@@ -240,7 +255,7 @@ export class FundingRoundService {
 		}
 	}
 
-	private fixFundingRoundStatus(
+	static fixFundingRoundStatus(
 		status: string,
 		startDate: Date | string,
 	): FundingRoundStatus {
@@ -253,7 +268,7 @@ export class FundingRoundService {
 		return status as FundingRoundStatus
 	}
 
-	private buildPhases(
+	static buildPhases(
 		round: Record<
 			| 'submissionPhase'
 			| 'considerationPhase'
@@ -299,7 +314,7 @@ export class FundingRoundService {
 		}
 	}
 
-	getCurrentPhase(
+	static getCurrentPhase(
 		endDate: string,
 		phases: FundingRoundPhases,
 	): FundingRoundPhase {

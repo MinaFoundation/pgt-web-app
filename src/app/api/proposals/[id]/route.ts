@@ -1,16 +1,12 @@
-import { NextResponse } from 'next/server'
 import { ProposalService } from '@/services/ProposalService'
-import { UserService } from '@/services/UserService'
 import prisma from '@/lib/prisma'
 import { getOrCreateUserFromRequest } from '@/lib/auth'
-import { ZodError } from 'zod'
 import logger from '@/logging'
 import { ApiResponse } from '@/lib/api-response'
 import { AppError } from '@/lib/errors'
-import { AuthErrors, HTTPStatus } from '@/constants/errors'
+import { uintSchema } from '@/schemas'
 
 const proposalService = new ProposalService(prisma)
-const userService = new UserService(prisma)
 
 interface RouteContext {
 	params: Promise<{
@@ -18,83 +14,26 @@ interface RouteContext {
 	}>
 }
 
-export async function GET(request: Request, context: RouteContext) {
+export async function GET(request: Request, { params }: RouteContext) {
 	try {
-		const user = await getOrCreateUserFromRequest(request)
-		if (!user) {
-			return ApiResponse.unauthorized('Please log in to view proposals')
-		}
-
-		const proposal = await prisma.proposal.findUnique({
-			where: { id: parseInt((await context.params).id) },
-			include: {
-				user: {
-					select: {
-						id: true,
-						linkId: true,
-						metadata: true,
-					},
-				},
-				fundingRound: {
-					include: {
-						considerationPhase: true,
-						deliberationPhase: true,
-						votingPhase: true,
-					},
-				},
-			},
-		})
-
-		if (!proposal) {
-			return ApiResponse.notFound('Proposal not found')
-		}
-
-		// Get user info including linked accounts
-		const userInfo = await userService.getUserInfo(proposal.user.id)
-		if (!userInfo) {
-			throw new AppError(
-				'Failed to fetch user information',
-				HTTPStatus.INTERNAL_ERROR,
-			)
-		}
-
-		// Check if user is owner or linked user
-		const isOwner =
-			proposal.userId === user.id || proposal.user.linkId === user.linkId
-
-		// Combine proposal data with user info
-		const response = {
-			...proposal,
-			isOwner,
-			user: {
-				...proposal.user,
-				metadata: userInfo.user.metadata,
-				linkedAccounts: userInfo.linkedAccounts,
-			},
-		}
-
-		return ApiResponse.success(response)
+		const proposalId = uintSchema.parse(Number((await params).id))
+		const proposal = await proposalService.getProposalById(proposalId)
+		return ApiResponse.success(proposal)
 	} catch (error) {
 		logger.error('Failed to fetch proposal:', error)
 		return ApiResponse.error(error)
 	}
 }
 
-export async function DELETE(
-	req: Request,
-	{ params }: { params: Promise<{ id: string }> },
-) {
+export async function DELETE(req: Request, { params }: RouteContext) {
 	try {
+		const proposalId = uintSchema.parse(Number((await params).id))
 		const user = await getOrCreateUserFromRequest(req)
 		if (!user) {
-			throw AppError.unauthorized(AuthErrors.UNAUTHORIZED)
+			throw AppError.unauthorized('Please log in to delete proposals')
 		}
 
-		await proposalService.deleteProposal(
-			parseInt((await params).id),
-			user.id,
-			user.linkId,
-		)
+		await proposalService.deleteProposal(proposalId, user.id, user.linkId)
 
 		return ApiResponse.success({ success: true })
 	} catch (error) {
@@ -102,59 +41,28 @@ export async function DELETE(
 	}
 }
 
-export async function PUT(
-	req: Request,
-	{ params }: { params: Promise<{ id: string }> },
-) {
+export async function PUT(req: Request, { params }: RouteContext) {
 	try {
+		const proposalId = uintSchema.parse(Number((await params).id))
+
 		const user = await getOrCreateUserFromRequest(req)
 		if (!user) {
-			return NextResponse.json(
-				{ error: 'Please log in to update proposals' },
-				{ status: 401 },
-			)
+			return ApiResponse.unauthorized('Please log in to update proposals')
 		}
 
 		const data = await req.json()
 
-		// Verify user can edit this proposal
-		const existing = await proposalService.getProposalById(
-			parseInt((await params).id),
-			user.id,
-			user.linkId,
-		)
+		const canEdit = proposalService.checkEditPermission(proposalId, user)
 
-		if (!existing) {
-			return NextResponse.json({ error: 'Proposal not found' }, { status: 404 })
+		if (!canEdit) {
+			return ApiResponse.unauthorized('You cannot edit this proposal')
 		}
 
-		if (!existing.canEdit) {
-			return NextResponse.json(
-				{ error: 'You cannot edit this proposal' },
-				{ status: 403 },
-			)
-		}
+		await proposalService.updateProposal(proposalId, data)
 
-		// Update proposal
-		const updated = await proposalService.updateProposal(
-			parseInt((await params).id),
-			data,
-		)
-
-		return NextResponse.json(updated)
+		return ApiResponse.success({ success: true })
 	} catch (error) {
 		logger.error('Failed to update proposal:', error)
-
-		if (error instanceof ZodError) {
-			return NextResponse.json(
-				{ error: 'Validation failed', details: error.errors },
-				{ status: 400 },
-			)
-		}
-
-		return NextResponse.json(
-			{ error: 'Internal server error' },
-			{ status: 500 },
-		)
+		return ApiResponse.error(error)
 	}
 }

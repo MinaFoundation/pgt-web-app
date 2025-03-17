@@ -4,13 +4,15 @@ import { FundingRoundWithPhases } from '@/types/funding-round'
 import { useQuery } from '@tanstack/react-query'
 
 export function useFundingRounds({
-	filterName,
+	query,
+	filterBy,
 	sortBy,
 	sortOrder,
 }: GetPublicFundingRoundOptions) {
 	const searchParams = new URLSearchParams()
 
-	if (filterName) searchParams.set('filterName', filterName)
+	if (query) searchParams.set('query', query)
+	if (filterBy) searchParams.set('filterBy', filterBy)
 	if (sortBy) searchParams.set('sortBy', sortBy)
 	if (sortOrder) searchParams.set('sortOrder', sortOrder)
 

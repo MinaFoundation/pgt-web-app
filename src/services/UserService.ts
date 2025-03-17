@@ -1,8 +1,6 @@
-import { PrismaClient, User } from '@prisma/client'
+import { PrismaClient, User as PrismaUser } from '@prisma/client'
 import { deriveUserId, generateLinkId } from '@/lib/user/derive'
-import type { AuthSource } from '@/lib/user/types'
-
-type AuthSourceType = AuthSource['type']
+import { AuthSource, AuthSourceType, User } from '@/types/user'
 
 /**
  * Represents the factual structure of User.metadata in the database.
@@ -72,27 +70,14 @@ interface LinkedUserInfo {
 }
 
 interface UserInfoResponse {
-	user: {
-		id: string
-		linkId: string
-		createdAt: string
-		metadata: {
-			authSource: {
-				type: AuthSourceType
-				id: string
-				username: string
-			}
-			username: string
-			[key: string]: unknown
-		}
-	}
+	user: User
 	linkedAccounts: LinkedUserInfo[]
 }
 
 export class UserService {
 	constructor(private prisma: PrismaClient) {}
 
-	async findOrCreateUser(authSource: AuthSource): Promise<User> {
+	async findOrCreateUser(authSource: AuthSource): Promise<PrismaUser> {
 		const userId = deriveUserId(authSource)
 
 		const existingUser = await this.prisma.user.findUnique({
@@ -116,7 +101,7 @@ export class UserService {
 		})
 	}
 
-	async getLinkedAccounts(userId: string): Promise<User[]> {
+	async getLinkedAccounts(userId: string): Promise<PrismaUser[]> {
 		const user = await this.prisma.user.findUnique({
 			where: { id: userId },
 			select: { linkId: true },

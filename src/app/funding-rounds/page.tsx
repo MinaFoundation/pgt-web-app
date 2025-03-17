@@ -33,10 +33,10 @@ const SORT_OPTIONS: {
 type FundingRoundTab = 'details' | 'summary'
 
 export default function FundingRounds() {
-	const { tab, sortBy, sortOrder, filterName } = useFundingRoundsSearchParams()
+	const { tab, sortBy, sortOrder, query } = useFundingRoundsSearchParams()
 
 	const { isLoading, data: rounds = [] } = useFundingRounds({
-		filterName,
+		query,
 		sortBy,
 		sortOrder,
 	})
@@ -75,7 +75,7 @@ function useFundingRoundsSearchParams() {
 		parse: value =>
 			getPublicFundingRoundsOptionsSchema.shape.sortOrder.parse(value),
 	})
-	const [filterName, setFilterName] = useQueryState('filterName')
+	const [query, setQuery] = useQueryState('query')
 	const [tab, setTab] = useQueryState<FundingRoundTab>('tab', {
 		defaultValue: 'details',
 		parse: value => (value === 'summary' ? 'summary' : 'details'),
@@ -88,8 +88,8 @@ function useFundingRoundsSearchParams() {
 		setSortBy,
 		sortOrder,
 		setSortOrder,
-		filterName,
-		setFilterName,
+		query,
+		setQuery,
 	}
 }
 
@@ -131,24 +131,18 @@ function FundingRoundsTabs() {
 }
 
 function FundingRoundsControls({ disabled }: { disabled?: boolean }) {
-	const {
-		sortBy,
-		sortOrder,
-		filterName,
-		setSortBy,
-		setSortOrder,
-		setFilterName,
-	} = useFundingRoundsSearchParams()
+	const { sortBy, sortOrder, query, setSortBy, setSortOrder, setQuery } =
+		useFundingRoundsSearchParams()
 
-	const [searchQuery, setSearchQuery] = useState(filterName || '')
+	const [searchQuery, setSearchQuery] = useState(query || '')
 
 	const handleSearchKeyDown = useCallback(
 		(e: React.KeyboardEvent<HTMLInputElement>) => {
 			if (e.key === 'Enter') {
-				setFilterName(e.currentTarget.value)
+				setQuery(e.currentTarget.value)
 			}
 		},
-		[setFilterName],
+		[setQuery],
 	)
 
 	const handleSortByChange = useCallback(

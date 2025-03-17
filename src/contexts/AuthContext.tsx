@@ -9,26 +9,12 @@ import {
 } from 'react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
-import { useQueryClient } from '@tanstack/react-query'
-
-export type AuthSource = {
-	type: 'discord' | 'telegram' | 'wallet'
-	id: string
-	username: string
-}
-
-interface User {
-	id: string
-	metadata: {
-		username: string
-		authSource: AuthSource
-	}
-}
+import { AuthSourceType, User } from '@/types/user'
 
 interface AuthContextType {
 	user: User | null
 	isLoading: boolean
-	login: (provider: AuthSource['type']) => void
+	login: (provider: AuthSourceType) => void
 	logout: () => Promise<void>
 	refresh: () => Promise<void>
 }
@@ -92,7 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 		}
 	}, [refresh])
 
-	const login = useCallback((provider: AuthSource['type']) => {
+	const login = useCallback((provider: AuthSourceType) => {
 		// TODO: Implement login logic
 	}, [])
 

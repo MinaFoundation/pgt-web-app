@@ -176,7 +176,7 @@ export class ConsiderationVotingService {
 		}
 
 		// Now we can safely pass the funding round with its phases
-		const currentPhase = this.fundingRoundService.getCurrentPhase(
+		const currentPhase = FundingRoundService.getCurrentPhase(
 			fundingRound.endDate,
 			fundingRound.phases,
 		)
