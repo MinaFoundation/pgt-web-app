@@ -1,3 +1,7 @@
+import {
+	FundingRoundCreate,
+	fundingRoundCreateSchema,
+} from '@/schemas/funding-rounds'
 import { PrismaClient, Prisma, ProposalStatus } from '@prisma/client'
 import type { User, ReviewerGroup, ReviewerGroupMember } from '@prisma/client'
 
@@ -457,96 +461,73 @@ export class AdminService {
 		})
 	}
 
-	async createFundingRound(data: {
-		name: string
-		description: string
-		topicId: string
-		totalBudget: number
-		createdById: string
-		fundingRoundDates: { from: Date; to: Date }
-		submissionDates: { from: Date; to: Date }
-		considerationDates: { from: Date; to: Date }
-		deliberationDates: { from: Date; to: Date }
-		votingDates: { from: Date; to: Date }
-	}) {
-		return this.prisma.$transaction(async tx => {
-			// Create the funding round with proper createdById
-			const fundingRound = await tx.fundingRound.create({
-				data: {
-					name: data.name,
-					description: data.description,
-					topic: {
-						connect: { id: data.topicId },
+	async createFundingRound(data: FundingRoundCreate) {
+		fundingRoundCreateSchema.parse(data)
+		return this.prisma
+			.$transaction(async tx => {
+				const fundingRound = await tx.fundingRound.create({
+					data: {
+						name: data.name,
+						description: data.description,
+						topic: { connect: { id: data.topicId } },
+						createdBy: { connect: { id: data.createdById } },
+						totalBudget: data.totalBudget,
+						startDate: data.fundingRoundDates.from,
+						endDate: data.fundingRoundDates.to,
+						status: 'DRAFT',
 					},
-					createdBy: {
-						connect: { id: data.createdById },
-					},
-					totalBudget: data.totalBudget,
-					startDate: data.fundingRoundDates.from,
-					endDate: data.fundingRoundDates.to,
-					status: 'DRAFT',
-				},
-			})
+				})
 
-			// Create all phases
-			await tx.submissionPhase.create({
-				data: {
-					fundingRound: { connect: { id: fundingRound.id } },
-					startDate: data.submissionDates.from,
-					endDate: data.submissionDates.to,
-				},
-			})
-
-			await tx.considerationPhase.create({
-				data: {
-					fundingRound: { connect: { id: fundingRound.id } },
-					startDate: data.considerationDates.from,
-					endDate: data.considerationDates.to,
-				},
-			})
-
-			await tx.deliberationPhase.create({
-				data: {
-					fundingRound: { connect: { id: fundingRound.id } },
-					startDate: data.deliberationDates.from,
-					endDate: data.deliberationDates.to,
-				},
-			})
-
-			await tx.votingPhase.create({
-				data: {
-					fundingRound: { connect: { id: fundingRound.id } },
-					startDate: data.votingDates.from,
-					endDate: data.votingDates.to,
-				},
-			})
-
-			// Return the complete funding round with all relations
-			return tx.fundingRound.findUnique({
-				where: { id: fundingRound.id },
-				include: {
-					topic: {
-						include: {
-							reviewerGroups: {
-								include: {
-									reviewerGroup: true,
-								},
-							},
+				const phaseCreators = [
+					tx.submissionPhase.create({
+						data: {
+							fundingRoundId: fundingRound.id,
+							startDate: data.submissionDates.from,
+							endDate: data.submissionDates.to,
 						},
-					},
-					submissionPhase: true,
-					considerationPhase: true,
-					deliberationPhase: true,
-					votingPhase: true,
-					createdBy: {
-						select: {
-							id: true,
-							metadata: true,
+					}),
+					tx.considerationPhase.create({
+						data: {
+							fundingRoundId: fundingRound.id,
+							startDate: data.considerationDates.from,
+							endDate: data.considerationDates.to,
 						},
+					}),
+					tx.deliberationPhase.create({
+						data: {
+							fundingRoundId: fundingRound.id,
+							startDate: data.deliberationDates.from,
+							endDate: data.deliberationDates.to,
+						},
+					}),
+					tx.votingPhase.create({
+						data: {
+							fundingRoundId: fundingRound.id,
+							startDate: data.votingDates.from,
+							endDate: data.votingDates.to,
+						},
+					}),
+				]
+
+				await Promise.all(phaseCreators)
+
+				return tx.fundingRound.findUniqueOrThrow({
+					where: { id: fundingRound.id },
+					include: {
+						topic: {
+							include: { reviewerGroups: { include: { reviewerGroup: true } } },
+						},
+						submissionPhase: true,
+						considerationPhase: true,
+						deliberationPhase: true,
+						votingPhase: true,
+						createdBy: { select: { id: true, metadata: true } },
 					},
-				},
+				})
 			})
-		})
+			.catch(error => {
+				throw new Error(`Failed to create funding round: ${error.message}`)
+			})
 	}
 
 	async updateFundingRound(
