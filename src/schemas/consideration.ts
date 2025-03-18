@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-export const considerationOptionsSchema = z.object({
+export const getConsiderationProposalsOptionsSchema = z.object({
 	query: z.string().optional().nullable(),
 	filterBy: z
 		.enum(['all', 'approved', 'rejected', 'pending'])
@@ -10,6 +10,6 @@ export const considerationOptionsSchema = z.object({
 	sortOrder: z.enum(['asc', 'desc']).optional().nullable(),
 })
 
-export type ConsiderationOptionsSchema = z.infer<
-	typeof considerationOptionsSchema
+export type GetConsiderationProposalsOptions = z.infer<
+	typeof getConsiderationProposalsOptionsSchema
 >

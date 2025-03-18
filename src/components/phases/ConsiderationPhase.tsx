@@ -46,15 +46,15 @@ import { Input } from '../ui/input'
 import { useQueryState } from 'nuqs'
 import { z } from 'zod'
 import {
-	ConsiderationOptionsSchema,
-	considerationOptionsSchema,
+	getConsiderationProposalsOptionsSchema,
+	GetConsiderationProposalsOptions,
 } from '@/schemas/consideration'
 import { ConsiderationProposal } from '@/types'
 
 type ReviewState = 'initial' | 'decided' | 'editing'
 
 const SORT_OPTIONS: {
-	value: NonNullable<ConsiderationOptionsSchema['sortBy']>
+	value: NonNullable<GetConsiderationProposalsOptions['sortBy']>
 	label: string
 }[] = [
 	{ value: 'createdAt', label: 'Date' },
@@ -413,7 +413,7 @@ export function ConsiderationPhase({
 		label: string
 		count: number
 		icon: React.FC<{ className?: string }>
-		tab: ConsiderationOptionsSchema['filterBy']
+		tab: GetConsiderationProposalsOptions['filterBy']
 		description: string
 	}[] = [
 		{
@@ -937,20 +937,22 @@ export function ConsiderationPhase({
 
 function useConsiderationPhaseSearchParams() {
 	const [sortBy, setSortBy] = useQueryState<
-		ConsiderationOptionsSchema['sortBy']
+		GetConsiderationProposalsOptions['sortBy']
 	>('sortBy', {
 		defaultValue: 'createdAt',
-		parse: value => considerationOptionsSchema.shape.sortBy.parse(value),
+		parse: value =>
+			getConsiderationProposalsOptionsSchema.shape.sortBy.parse(value),
 	})
 	const [sortOrder, setSortOrder] = useQueryState<
-		ConsiderationOptionsSchema['sortOrder']
+		GetConsiderationProposalsOptions['sortOrder']
 	>('sortOrder', {
 		defaultValue: 'desc',
-		parse: value => considerationOptionsSchema.shape.sortOrder.parse(value),
+		parse: value =>
+			getConsiderationProposalsOptionsSchema.shape.sortOrder.parse(value),
 	})
 	const [query, setQuery] = useQueryState('query')
 	const [filterBy, setFilterBy] = useQueryState<
-		ConsiderationOptionsSchema['filterBy']
+		GetConsiderationProposalsOptions['filterBy']
 	>('filterBy', {
 		defaultValue: 'all',
 		parse: value =>
@@ -985,14 +987,14 @@ function ConsiderationPhaseControls({ disabled }: { disabled?: boolean }) {
 	)
 
 	const handleSortByChange = useCallback(
-		(value: NonNullable<ConsiderationOptionsSchema['sortBy']>) => {
+		(value: NonNullable<GetConsiderationProposalsOptions['sortBy']>) => {
 			setSortBy(value)
 		},
 		[setSortBy],
 	)
 
 	const handleSortOrderChange = useCallback(
-		(value: NonNullable<ConsiderationOptionsSchema['sortOrder']>) => {
+		(value: NonNullable<GetConsiderationProposalsOptions['sortOrder']>) => {
 			setSortOrder(value)
 		},
 		[setSortOrder],

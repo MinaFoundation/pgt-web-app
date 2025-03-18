@@ -3,7 +3,7 @@ import prisma from '@/lib/prisma'
 import { getOrCreateUserFromRequest } from '@/lib/auth'
 import logger from '@/logging'
 import { ConsiderationVotingService } from '@/services'
-import { considerationOptionsSchema } from '@/schemas/consideration'
+import { getConsiderationProposalsOptionsSchema } from '@/schemas/consideration'
 import { ApiResponse } from '@/lib/api-response'
 
 export async function GET(
@@ -15,7 +15,7 @@ export async function GET(
 
 		// TODO: implement filters and sorting
 		const { data: { query, filterBy, sortBy, sortOrder } = {}, error } =
-			considerationOptionsSchema.safeParse({
+			getConsiderationProposalsOptionsSchema.safeParse({
 				query: request.nextUrl.searchParams.get('query'),
 				sortBy: request.nextUrl.searchParams.get('sortBy'),
 				sortOrder: request.nextUrl.searchParams.get('sortOrder'),
