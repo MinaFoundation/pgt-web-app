@@ -2,8 +2,7 @@ import { NextRequest } from 'next/server'
 import prisma from '@/lib/prisma'
 import { getOrCreateUserFromRequest } from '@/lib/auth'
 import logger from '@/logging'
-import type { ConsiderationProposal } from '@/types/consideration'
-import { ConsiderationVotingService, FundingRoundService } from '@/services'
+import { ConsiderationVotingService } from '@/services'
 import { considerationOptionsSchema } from '@/schemas/consideration'
 import { ApiResponse } from '@/lib/api-response'
 
@@ -31,16 +30,6 @@ export async function GET(
 			return ApiResponse.unauthorized('Unauthorized')
 		}
 
-		const fundingRoundService = new FundingRoundService(prisma)
-
-		const isReviewer = await fundingRoundService.isReviewer(
-			{
-				id: user.id,
-				linkId: user.linkId,
-			},
-			fundingRoundId,
-		)
-
 		const considerationVotingService = new ConsiderationVotingService(prisma)
 
 		const proposalsWithVotes =
@@ -49,21 +38,11 @@ export async function GET(
 				user,
 			)
 
-		const formattedProposals: ConsiderationProposal[] = proposalsWithVotes.map(
-			proposal => ({
-				...proposal,
-				status: proposal.userVote?.decision || 'PENDING',
-				submitter: proposal.user.username,
-				isReviewerEligible: isReviewer,
-				currentPhase: proposal.status,
-			}),
-		)
-
 		// Sort proposals:
 		// 1. Consideration phase pending first
 		// 2. Consideration phase voted
 		// 3. Deliberation phase
-		const sortedProposals = formattedProposals.sort((a, b) => {
+		const sortedProposals = proposalsWithVotes.sort((a, b) => {
 			if (
 				a.currentPhase === 'CONSIDERATION' &&
 				b.currentPhase === 'DELIBERATION'

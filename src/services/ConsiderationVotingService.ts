@@ -9,7 +9,13 @@ import { ProposalStatusMoveService } from './ProposalStatusMoveService'
 import { FundingRoundService } from './FundingRoundService'
 import logger from '@/logging'
 import { UserMetadata } from '@/services'
-import { OCVVote, OCVVoteData, UserVote, VoteStats } from '@/types'
+import {
+	ConsiderationProposal,
+	OCVVote,
+	OCVVoteData,
+	UserVote,
+	VoteStats,
+} from '@/types'
 import type { JsonValue } from '@prisma/client/runtime/library'
 import { FullProposal } from '@/types/proposals'
 
@@ -76,11 +82,6 @@ interface ConsiderationPhaseSummaryResult {
 			isEligible: boolean
 		}
 	}>
-}
-
-interface ProposalWithVotes extends Omit<FullProposal, 'fundingRound'> {
-	voteStats: VoteStats
-	userVote: UserVote | null
 }
 
 const voteIncludeQuery = {
@@ -480,8 +481,18 @@ export class ConsiderationVotingService {
 	async getProposalsWithVotes(
 		fundingRoundId: string,
 		user: { id: string; linkId: string },
-	): Promise<Omit<ConsiderationProposal, 'isReviewerEligible'>[]> {
+	): Promise<ConsiderationProposal[]> {
 		try {
+			const fundingRoundService = new FundingRoundService(this.prisma)
+
+			const isReviewerEligible = await fundingRoundService.isReviewer(
+				{
+					id: user.id,
+					linkId: user.linkId,
+				},
+				fundingRoundId,
+			)
+
 			const proposals = await this.prisma.proposal.findMany({
 				where: {
 					fundingRoundId,
@@ -536,7 +547,6 @@ export class ConsiderationVotingService {
 					id: proposal.id,
 					title: proposal.title,
 					summary: proposal.proposalSummary,
-					status: proposal.status,
 					totalFundingRequired: proposal.totalFundingRequired.toNumber(),
 					createdAt: proposal.createdAt.toISOString(),
 					updatedAt: proposal.updatedAt.toISOString(),
@@ -575,6 +585,9 @@ export class ConsiderationVotingService {
 							}
 						: null,
 
+					status: userVotes[0]?.decision || 'PENDING',
+					currentPhase: proposal.status,
+
 					voteStats: {
 						approved,
 						rejected,
@@ -595,6 +608,8 @@ export class ConsiderationVotingService {
 						reviewerEligible: approved >= minReviewerApprovals,
 						requiredReviewerApprovals: minReviewerApprovals,
 					},
+
+					isReviewerEligible,
 				}
 			})
 
