@@ -507,6 +507,9 @@ export class ConsiderationVotingService {
 				where: {
 					fundingRoundId,
 					status: { in: ['CONSIDERATION', 'DELIBERATION'] },
+					...(options?.query
+						? { title: { contains: options.query, mode: 'insensitive' } }
+						: {}),
 				},
 				include: {
 					user: {
