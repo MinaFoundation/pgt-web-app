@@ -24,6 +24,7 @@ import { useAuth } from '@/contexts/AuthContext'
 interface WalletAuthDialogProps {
 	open: boolean
 	onOpenChange: (open: boolean) => void
+	onSuccess?: () => void
 }
 
 interface LinkingDialogProps {
@@ -118,6 +119,7 @@ function LinkingDialog({
 export function WalletAuthDialog({
 	open,
 	onOpenChange,
+	onSuccess,
 }: WalletAuthDialogProps) {
 	const { state } = useWallet()
 	const { toast } = useToast()
@@ -182,10 +184,13 @@ export function WalletAuthDialog({
 			} else {
 				toast({
 					title: 'Successfully authenticated',
-					description:
-						'You are now logged in with your wallet. Redirecting you to your destination...',
+					description: 'You are now logged in with your wallet.',
 				})
 				onOpenChange(false)
+				// Call onSuccess if provided
+				if (onSuccess) {
+					onSuccess()
+				}
 			}
 		} catch (error) {
 			toast({
@@ -245,10 +250,18 @@ export function WalletAuthDialog({
 							description: 'Your accounts have been successfully linked',
 						})
 						onOpenChange(false)
+						// Call onSuccess if provided
+						if (onSuccess) {
+							onSuccess()
+						}
 					}}
 					onCancel={() => {
 						setShowLinkingDialog(false)
 						onOpenChange(false)
+						// Call onSuccess if we still have successful auth
+						if (onSuccess && authTokens?.walletToken) {
+							onSuccess()
+						}
 					}}
 				/>
 			)}

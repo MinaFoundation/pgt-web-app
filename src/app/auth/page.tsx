@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import {
@@ -76,6 +76,8 @@ function AuthenticationOptions() {
 	const [showDiscordDialog, setShowDiscordDialog] = useState(false)
 	const [showWalletDialog, setShowWalletDialog] = useState(false)
 	const { state } = useWallet()
+	const router = useRouter()
+	const [walletAuthSuccess, setWalletAuthSuccess] = useState(false)
 
 	const handleWalletAuth = () => {
 		if (state.wallet) {
@@ -97,6 +99,48 @@ function AuthenticationOptions() {
 			setShowWalletDialog(true)
 		}
 	}, [state.wallet, showWalletConnector])
+
+	// Add effect to redirect after successful wallet authentication
+	useEffect(() => {
+		if (walletAuthSuccess) {
+			const timer = setTimeout(() => {
+				router.push('/')
+			}, 2000)
+
+			return () => clearTimeout(timer)
+		}
+	}, [walletAuthSuccess, router])
+
+	// Handler for when wallet auth is successful
+	const handleWalletAuthSuccess = useCallback(() => {
+		setShowWalletDialog(false)
+		setWalletAuthSuccess(true)
+	}, [])
+
+	if (walletAuthSuccess) {
+		return (
+			<Card className="w-full max-w-md">
+				<CardHeader>
+					<CardTitle>Authentication Successful</CardTitle>
+					<CardDescription>
+						Redirecting you to your destination...
+					</CardDescription>
+				</CardHeader>
+				<CardContent>
+					<Alert
+						variant="default"
+						className="border-green-200 bg-green-50 text-green-800"
+					>
+						<CheckCircle2 className="h-4 w-4 text-green-600" />
+						<AlertTitle>Success!</AlertTitle>
+						<AlertDescription className="text-green-700">
+							Authentication with wallet completed successfully.
+						</AlertDescription>
+					</Alert>
+				</CardContent>
+			</Card>
+		)
+	}
 
 	return (
 		<Card className="w-full max-w-md">
@@ -171,6 +215,7 @@ function AuthenticationOptions() {
 				<WalletAuthDialog
 					open={showWalletDialog}
 					onOpenChange={setShowWalletDialog}
+					onSuccess={handleWalletAuthSuccess}
 				/>
 			</CardContent>
 		</Card>
