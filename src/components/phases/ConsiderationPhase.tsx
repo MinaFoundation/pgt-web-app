@@ -68,9 +68,17 @@ export function ConsiderationPhase({
 	fundingRoundId: string
 	fundingRoundMEFId: number
 }) {
+	const { query, filterBy, sortBy, sortOrder, setFilterBy } =
+		useConsiderationPhaseSearchParams()
+
 	const [proposals, setProposals] = useState<ConsiderationProposal[]>([])
 
-	const { data, isLoading } = useConsiderationPhase(fundingRoundId)
+	const { data, isLoading } = useConsiderationPhase(fundingRoundId, {
+		query,
+		filterBy,
+		sortBy,
+		sortOrder,
+	})
 
 	useEffect(() => {
 		if (data) setProposals(data)
@@ -85,7 +93,6 @@ export function ConsiderationPhase({
 	const [expanded, setExpanded] = useState<{
 		[key: number]: boolean
 	}>({})
-	const { filterBy, setFilterBy } = useConsiderationPhaseSearchParams()
 
 	const handleVoteSuccess = useCallback(
 		(proposalId: number, newStatus: ProposalStatus) => {

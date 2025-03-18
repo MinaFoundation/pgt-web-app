@@ -2,18 +2,27 @@
 
 import { UndefinedInitialDataOptions, useQuery } from '@tanstack/react-query'
 import logger from '@/logging'
-import { ConsiderationProposalResponseJson } from '@/app/api/funding-rounds/[id]/consideration-proposals/route'
+import { GetConsiderationProposalsOptions } from '@/schemas'
+import { ConsiderationProposal } from '@/types'
 
 export function useConsiderationPhase(
 	fundingRoundId: string,
+	{ query, filterBy, sortBy, sortOrder }: GetConsiderationProposalsOptions = {},
 	options: Omit<
-		UndefinedInitialDataOptions<ConsiderationProposalResponseJson[]>,
+		UndefinedInitialDataOptions<ConsiderationProposal[]>,
 		'queryKey' | 'queryFn'
 	> = {},
 ) {
-	const url = `/api/funding-rounds/${fundingRoundId}/consideration-proposals`
+	const searchParams = new URLSearchParams()
 
-	return useQuery<ConsiderationProposalResponseJson[]>({
+	if (query) searchParams.set('query', query)
+	if (filterBy) searchParams.set('filterBy', filterBy)
+	if (sortBy) searchParams.set('sortBy', sortBy)
+	if (sortOrder) searchParams.set('sortOrder', sortOrder)
+
+	const url = `/api/funding-rounds/${fundingRoundId}/consideration-proposals${searchParams.size > 0 ? `?${searchParams.toString()}` : ''}`
+
+	return useQuery<ConsiderationProposal[]>({
 		...options,
 		queryKey: [url],
 		queryFn: async () => {
