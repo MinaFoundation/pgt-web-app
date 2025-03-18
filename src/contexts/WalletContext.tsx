@@ -330,6 +330,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 			<WalletAuthDialog
 				open={showAuthDialog}
 				onOpenChange={setShowAuthDialog}
+				onSuccess={undefined}
 			/>
 		</WalletContext.Provider>
 	)
