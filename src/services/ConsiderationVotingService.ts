@@ -479,8 +479,8 @@ export class ConsiderationVotingService {
 
 	async getProposalsWithVotes(
 		fundingRoundId: string,
-		userId: string,
-	): Promise<ProposalWithVotes[]> {
+		user: { id: string; linkId: string },
+	): Promise<Omit<ConsiderationProposal, 'isReviewerEligible'>[]> {
 		try {
 			const proposals = await this.prisma.proposal.findMany({
 				where: {
@@ -497,7 +497,13 @@ export class ConsiderationVotingService {
 					},
 					considerationVotes: {
 						select: {
-							voterId: true,
+							voter: {
+								select: {
+									id: true,
+									linkId: true,
+								},
+							},
+
 							decision: true,
 							feedback: true,
 						},
@@ -515,7 +521,9 @@ export class ConsiderationVotingService {
 
 			const proposalVoteCounts = proposals.map(proposal => {
 				const allVotes = proposal.considerationVotes
-				const userVotes = allVotes.filter(v => v.voterId === userId)
+				const userVotes = allVotes.filter(
+					v => v.voter.id === user.id || v.voter.linkId === user.linkId,
+				)
 
 				// Calculate counts from all votes
 				const approved = allVotes.filter(v => v.decision === 'APPROVED').length
