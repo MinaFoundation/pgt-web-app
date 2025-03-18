@@ -529,7 +529,7 @@ export function ConsiderationPhase({
 										)}
 									</div>
 									<CardDescription className="break-all">
-										👤 Submitted by {proposal.submitter}
+										👤 Submitted by {proposal.user.username}
 									</CardDescription>
 									<div className="mt-4">
 										<div className="grid grid-cols-1 gap-4 md:grid-cols-2">

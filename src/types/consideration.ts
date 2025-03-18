@@ -70,7 +70,6 @@ export interface UserVote {
 
 export interface ConsiderationProposal
 	extends Omit<FullProposal, 'status' | 'fundingRound'> {
-	submitter: string
 	status: 'PENDING' | 'APPROVED' | 'REJECTED'
 	userVote: UserVote | null
 	isReviewerEligible: boolean
