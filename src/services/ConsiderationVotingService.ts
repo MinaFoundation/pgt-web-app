@@ -1,5 +1,3 @@
-// src/services/ConsiderationVotingService.ts
-
 import {
 	PrismaClient,
 	ConsiderationDecision,
@@ -11,7 +9,9 @@ import { ProposalStatusMoveService } from './ProposalStatusMoveService'
 import { FundingRoundService } from './FundingRoundService'
 import logger from '@/logging'
 import { UserMetadata } from '@/services'
-import { OCVVote } from '@/types'
+import { OCVVote, OCVVoteData, UserVote, VoteStats } from '@/types'
+import type { JsonValue } from '@prisma/client/runtime/library'
+import { FullProposal } from '@/types/proposals'
 
 interface VoteInput {
 	proposalId: number
@@ -78,25 +78,9 @@ interface ConsiderationPhaseSummaryResult {
 	}>
 }
 
-interface ProposalWithVotes {
-	id: number
-	title: string
-	status: ProposalStatus
-	totalFundingRequired: Prisma.Decimal
-	user: {
-		metadata: UserMetadata
-	}
-	considerationVotes: Array<{
-		decision: ConsiderationDecision
-	}>
-	OCVConsiderationVote: Array<{
-		voteData: {
-			total_community_votes: number
-			total_positive_community_votes: number
-			total_negative_community_votes: number
-			elegible: boolean
-		}
-	}>
+interface ProposalWithVotes extends Omit<FullProposal, 'fundingRound'> {
+	voteStats: VoteStats
+	userVote: UserVote | null
 }
 
 const voteIncludeQuery = {
@@ -490,6 +474,159 @@ export class ConsiderationVotingService {
 			movedForwardProposals: movedForwardCount,
 			notMovedForwardProposals: notMovedForwardCount,
 			proposalVotes: proposals,
+		}
+	}
+
+	async getProposalsWithVotes(
+		fundingRoundId: string,
+		userId: string,
+	): Promise<ProposalWithVotes[]> {
+		try {
+			const proposals = await this.prisma.proposal.findMany({
+				where: {
+					fundingRoundId,
+					status: { in: ['CONSIDERATION', 'DELIBERATION'] },
+				},
+				include: {
+					user: {
+						select: {
+							id: true,
+							linkId: true,
+							metadata: true,
+						},
+					},
+					considerationVotes: {
+						select: {
+							voterId: true,
+							decision: true,
+							feedback: true,
+						},
+					},
+					OCVConsiderationVote: {
+						select: {
+							voteData: true,
+						},
+					},
+				},
+			})
+
+			const statusMoveService = new ProposalStatusMoveService(this.prisma)
+			const minReviewerApprovals = statusMoveService.minReviewerApprovals
+
+			const proposalVoteCounts = proposals.map(proposal => {
+				const allVotes = proposal.considerationVotes
+				const userVotes = allVotes.filter(v => v.voterId === userId)
+
+				// Calculate counts from all votes
+				const approved = allVotes.filter(v => v.decision === 'APPROVED').length
+				const rejected = allVotes.filter(v => v.decision === 'REJECTED').length
+				const ocvVotes = this.parseOCVVoteData(
+					proposal.OCVConsiderationVote?.voteData,
+				)
+
+				return {
+					id: proposal.id,
+					title: proposal.title,
+					summary: proposal.proposalSummary,
+					status: proposal.status,
+					totalFundingRequired: proposal.totalFundingRequired.toNumber(),
+					createdAt: proposal.createdAt.toISOString(),
+					updatedAt: proposal.updatedAt.toISOString(),
+
+					problemStatement: proposal.problemStatement,
+					problemImportance: proposal.problemImportance,
+					proposedSolution: proposal.proposedSolution,
+					implementationDetails: proposal.implementationDetails,
+					keyObjectives: proposal.keyObjectives,
+					communityBenefits: proposal.communityBenefits,
+					keyPerformanceIndicators: proposal.keyPerformanceIndicators,
+					budgetBreakdown: proposal.budgetBreakdown,
+					estimatedCompletionDate:
+						proposal.estimatedCompletionDate.toISOString(),
+					milestones: proposal.milestones,
+					teamMembers: proposal.teamMembers,
+					relevantExperience: proposal.relevantExperience,
+					potentialRisks: proposal.potentialRisks,
+					mitigationPlans: proposal.mitigationPlans,
+					discordHandle: proposal.discordHandle,
+					email: proposal.email,
+					website: proposal.website,
+					githubProfile: proposal.githubProfile,
+					otherLinks: proposal.otherLinks,
+
+					user: {
+						id: proposal.user.id,
+						linkId: proposal.user.linkId,
+						username: (proposal.user.metadata as UserMetadata).username,
+					},
+
+					userVote: userVotes[0]
+						? {
+								decision: userVotes[0].decision,
+								feedback: userVotes[0].feedback,
+							}
+						: null,
+
+					voteStats: {
+						approved,
+						rejected,
+						total: approved + rejected,
+						communityVotes: {
+							total: ocvVotes.total_community_votes ?? 0,
+							positive: ocvVotes.total_positive_community_votes ?? 0,
+							positiveStakeWeight: ocvVotes.positive_stake_weight ?? '0',
+							isEligible: ocvVotes.elegible ?? false,
+							voters: (ocvVotes.votes ?? []).map((vote: OCVVote) => ({
+								address: vote.account,
+								timestamp: vote.timestamp,
+								hash: vote.hash,
+								height: vote.height,
+								status: vote.status,
+							})),
+						},
+						reviewerEligible: approved >= minReviewerApprovals,
+						requiredReviewerApprovals: minReviewerApprovals,
+					},
+				}
+			})
+
+			return proposalVoteCounts
+		} catch (error) {
+			console.error('Error fetching proposals with votes:', error)
+			throw new Error('Failed to retrieve proposal vote data')
+		}
+	}
+
+	private parseOCVVoteData(data: JsonValue | null | undefined): OCVVoteData {
+		const defaultData: OCVVoteData = {
+			total_community_votes: 0,
+			total_positive_community_votes: 0,
+			positive_stake_weight: '0',
+			elegible: false,
+			votes: [],
+		}
+
+		if (!data || typeof data !== 'object') {
+			return defaultData
+		}
+
+		const voteData = data as Record<string, unknown>
+
+		return {
+			total_community_votes:
+				typeof voteData.total_community_votes === 'number'
+					? voteData.total_community_votes
+					: 0,
+			total_positive_community_votes:
+				typeof voteData.total_positive_community_votes === 'number'
+					? voteData.total_positive_community_votes
+					: 0,
+			positive_stake_weight:
+				typeof voteData.positive_stake_weight === 'string'
+					? voteData.positive_stake_weight
+					: '0',
+			elegible: Boolean(voteData.elegible),
+			votes: Array.isArray(voteData.votes) ? voteData.votes : [],
 		}
 	}
 }

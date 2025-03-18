@@ -1,47 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { getOrCreateUserFromRequest } from '@/lib/auth'
-import type { UserMetadata } from '@/services/UserService'
 import logger from '@/logging'
 import { ProposalStatusMoveService } from '@/services/ProposalStatusMoveService'
-import type { OCVVoteData, OCVVote, VoteStats } from '@/types/consideration'
-import { FundingRoundService, UserService } from '@/services'
-import { ConsiderationDecision, ProposalStatus } from '@prisma/client'
-import { CoreProposalData } from '@/types/proposals'
+import type { ConsiderationProposal, VoteStats } from '@/types/consideration'
+import { ConsiderationVotingService, FundingRoundService } from '@/services'
 import { considerationOptionsSchema } from '@/schemas/consideration'
-
-function parseOCVVoteData(data: JsonValue | null | undefined): OCVVoteData {
-	const defaultData: OCVVoteData = {
-		total_community_votes: 0,
-		total_positive_community_votes: 0,
-		positive_stake_weight: '0',
-		elegible: false,
-		votes: [],
-	}
-
-	if (!data || typeof data !== 'object') {
-		return defaultData
-	}
-
-	const voteData = data as Record<string, unknown>
-
-	return {
-		total_community_votes:
-			typeof voteData.total_community_votes === 'number'
-				? voteData.total_community_votes
-				: 0,
-		total_positive_community_votes:
-			typeof voteData.total_positive_community_votes === 'number'
-				? voteData.total_positive_community_votes
-				: 0,
-		positive_stake_weight:
-			typeof voteData.positive_stake_weight === 'string'
-				? voteData.positive_stake_weight
-				: '0',
-		elegible: Boolean(voteData.elegible),
-		votes: Array.isArray(voteData.votes) ? voteData.votes : [],
-	}
-}
 
 class VoteStatsEmpty {
 	/**
@@ -88,6 +52,8 @@ export async function GET(
 	{ params }: { params: Promise<{ id: string }> },
 ) {
 	try {
+		const fundingRoundId = (await params).id
+
 		// TODO: implement filters and sorting
 		const { data: { query, filterBy, sortBy, sortOrder } = {}, error } =
 			considerationOptionsSchema.safeParse({
@@ -105,9 +71,6 @@ export async function GET(
 			return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 		}
 
-		const fundingRoundId = (await params).id
-		const userService = new UserService(prisma)
-
 		const fundingRoundService = new FundingRoundService(prisma)
 
 		const isReviewer = await fundingRoundService.isReviewer(
@@ -118,163 +81,59 @@ export async function GET(
 			fundingRoundId,
 		)
 
-		// Get both consideration and deliberation proposals for this funding round
-		const proposals = await prisma.proposal.findMany({
-			where: {
-				fundingRoundId,
-				status: {
-					in: ['CONSIDERATION', 'DELIBERATION'],
-				},
-			},
-			include: {
-				user: {
-					select: {
-						id: true,
-						metadata: true,
-					},
-				},
-				considerationVotes: {
-					where: {
-						voterId: user.id,
-					},
-					select: {
-						decision: true,
-						feedback: true,
-					},
-				},
-				OCVConsiderationVote: true,
-				_count: {
-					select: {
-						considerationVotes: true,
-					},
-				},
-			},
-		})
-
 		const statusMoveService = new ProposalStatusMoveService(prisma)
 		const minReviewerApprovals = statusMoveService.minReviewerApprovals
 
-		// Get vote counts for each proposal
-		const proposalVoteCounts = await Promise.all(
-			proposals.map(async proposal => {
-				const [reviewerVotes, ocvVotes] = await Promise.all([
-					prisma.considerationVote.groupBy({
-						by: ['decision'],
-						where: {
-							proposalId: proposal.id,
-						},
-						_count: true,
-					}),
-					parseOCVVoteData(proposal.OCVConsiderationVote?.voteData),
-				])
+		const considerationVotingService = new ConsiderationVotingService(prisma)
 
-				const approved =
-					reviewerVotes.find(v => v.decision === 'APPROVED')?._count || 0
-				const rejected =
-					reviewerVotes.find(v => v.decision === 'REJECTED')?._count || 0
+		const proposalsWithVotes =
+			await considerationVotingService.getProposalsWithVotes(
+				fundingRoundId,
+				user.id,
+			)
 
-				return {
-					proposalId: proposal.id,
-					voteStats: {
-						approved,
-						rejected,
-						total: approved + rejected,
-						communityVotes: {
-							total: ocvVotes.total_community_votes || 0,
-							positive: ocvVotes.total_positive_community_votes || 0,
-							positiveStakeWeight: ocvVotes.positive_stake_weight || '0',
-							isEligible: ocvVotes.elegible || false,
-							voters:
-								ocvVotes.votes?.map((v: OCVVote) => ({
-									address: v.account,
-									timestamp: v.timestamp,
-									hash: v.hash,
-									height: v.height,
-									status: v.status,
-								})) || [],
-						},
-						reviewerEligible: approved >= minReviewerApprovals,
-						requiredReviewerApprovals: minReviewerApprovals,
-					},
-				}
-			}),
-		)
-
-		// Transform the data to match the expected format
-		const formattedProposals = await Promise.all(
-			proposals.map(async p => {
-				const voteCounts = proposalVoteCounts.find(
-					vc => vc.proposalId === p.id,
-				)?.voteStats
-				const linkedAccounts = await userService.getLinkedAccounts(p.user.id)
-				const linkedAccountsMetadata = linkedAccounts.map(account => ({
-					id: account.id,
-					authSource: (account.metadata as UserMetadata)?.authSource || {
-						type: '',
-						id: '',
-						username: '',
-					},
-				}))
-
-				const consdierationProposal: ConsiderationProposal = {
-					id: p.id,
-					fundingRoundId: p.fundingRoundId,
-					title: p.title,
-					submitter: (p.user.metadata as unknown as UserMetadata).username,
-					proposalSummary: p.proposalSummary,
-					status: p.considerationVotes[0]?.decision?.toLowerCase() || 'pending',
-					problemImportance: p.problemImportance,
-					problemStatement: p.problemStatement,
-					proposedSolution: p.proposedSolution,
-					implementationDetails: p.implementationDetails,
-					totalFundingRequired: p.totalFundingRequired,
-					keyObjectives: p.keyObjectives,
-					communityBenefits: p.communityBenefits,
-					keyPerformanceIndicators: p.keyPerformanceIndicators,
-					budgetBreakdown: p.budgetBreakdown,
-					estimatedCompletionDate: p.estimatedCompletionDate,
-					milestones: p.milestones,
-					teamMembers: p.teamMembers,
-					relevantExperience: p.relevantExperience,
-					potentialRisks: p.potentialRisks,
-					mitigationPlans: p.mitigationPlans,
-					discordHandle: p.discordHandle,
-					email: p.email || '',
-					website: p.website || '',
-					githubProfile: p.githubProfile || '',
-					otherLinks: p.otherLinks || '',
-					createdAt: p.createdAt,
-					updatedAt: p.updatedAt,
-					userVote: p.considerationVotes[0]
-						? {
-								decision: p.considerationVotes[0].decision,
-								feedback: p.considerationVotes[0].feedback,
-							}
-						: undefined,
-					isReviewerEligible: isReviewer,
-					voteStats: VoteStatsEmpty.getVoteStats(
-						minReviewerApprovals,
-						voteCounts,
-						p.id,
-					),
-					currentPhase: p.status,
-					submitterMetadata: {
-						authSource: {
-							type:
-								(p.user.metadata as unknown as UserMetadata)?.authSource
-									?.type || '',
-							id:
-								(p.user.metadata as unknown as UserMetadata)?.authSource?.id ||
-								'',
-							username:
-								(p.user.metadata as unknown as UserMetadata)?.authSource
-									?.username || '',
-						},
-						linkedAccounts: linkedAccountsMetadata,
-					},
-				}
-
-				return consdierationProposal
+		const formattedProposals: ConsiderationProposal[] = proposalsWithVotes.map(
+			p => ({
+				id: p.id,
+				title: p.title,
+				submitter: p.user.username,
+				summary: p.summary,
+				status: p.userVote?.decision || 'PENDING',
+				problemImportance: p.problemImportance,
+				problemStatement: p.problemStatement,
+				proposedSolution: p.proposedSolution,
+				implementationDetails: p.implementationDetails,
+				totalFundingRequired: p.totalFundingRequired,
+				keyObjectives: p.keyObjectives,
+				communityBenefits: p.communityBenefits,
+				keyPerformanceIndicators: p.keyPerformanceIndicators,
+				budgetBreakdown: p.budgetBreakdown,
+				estimatedCompletionDate: p.estimatedCompletionDate,
+				milestones: p.milestones,
+				teamMembers: p.teamMembers,
+				relevantExperience: p.relevantExperience,
+				potentialRisks: p.potentialRisks,
+				mitigationPlans: p.mitigationPlans,
+				discordHandle: p.discordHandle,
+				email: p.email,
+				website: p.website,
+				githubProfile: p.githubProfile,
+				otherLinks: p.otherLinks,
+				createdAt: p.createdAt,
+				updatedAt: p.updatedAt,
+				userVote: p.userVote || null,
+				isReviewerEligible: isReviewer,
+				user: {
+					id: p.user.id,
+					linkId: p.user.linkId,
+					username: p.user.username,
+				},
+				voteStats: VoteStatsEmpty.getVoteStats(
+					minReviewerApprovals,
+					p.voteStats,
+					p.id,
+				),
+				currentPhase: p.status,
 			}),
 		)
 
@@ -294,8 +153,8 @@ export async function GET(
 			)
 				return 1
 			if (a.currentPhase === b.currentPhase) {
-				if (a.status === 'pending' && b.status !== 'pending') return -1
-				if (a.status !== 'pending' && b.status === 'pending') return 1
+				if (a.status === 'PENDING' && b.status !== 'PENDING') return -1
+				if (a.status !== 'PENDING' && b.status === 'PENDING') return 1
 			}
 			return 0
 		})
