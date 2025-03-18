@@ -6,7 +6,7 @@ import type { JsonValue } from '@prisma/client/runtime/library'
 import logger from '@/logging'
 import { ProposalStatusMoveService } from '@/services/ProposalStatusMoveService'
 import type { OCVVoteData, OCVVote } from '@/types/consideration'
-import { UserService } from '@/services'
+import { FundingRoundService, UserService } from '@/services'
 import { ConsiderationDecision, ProposalStatus } from '@prisma/client'
 import { CoreProposalData } from '@/types/proposals'
 import { Decimal } from 'decimal.js'
@@ -210,38 +210,14 @@ export async function GET(
 		const fundingRoundId = (await params).id
 		const userService = new UserService(prisma)
 
-		// Get the funding round with topic and reviewer groups
-		const fundingRound = await prisma.fundingRound.findUnique({
-			where: { id: fundingRoundId },
-			include: {
-				topic: {
-					include: {
-						reviewerGroups: {
-							include: {
-								reviewerGroup: {
-									include: {
-										members: true,
-									},
-								},
-							},
-						},
-					},
-				},
+		const fundingRoundService = new FundingRoundService(prisma)
+
+		const isReviewer = await fundingRoundService.isReviewer(
+			{
+				id: user.id,
+				linkId: user.linkId,
 			},
-		})
-
-		if (!fundingRound) {
-			return NextResponse.json(
-				{ error: 'Funding round not found' },
-				{ status: 404 },
-			)
-		}
-
-		// Check if user is a reviewer
-		const isReviewer = fundingRound.topic.reviewerGroups.some(trg =>
-			trg.reviewerGroup.members.some(
-				m => m.userId === user.id || m.userId === user.linkId,
-			),
+			fundingRoundId,
 		)
 
 		// Get both consideration and deliberation proposals for this funding round
