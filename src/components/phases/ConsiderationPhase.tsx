@@ -21,8 +21,6 @@ import {
 	ArrowDownWideNarrowIcon,
 	SearchIcon,
 	FilterIcon,
-	StarIcon,
-	ArrowBigRightDash,
 	PartyPopper,
 } from 'lucide-react'
 import { useConsiderationPhase } from '@/hooks/use-consideration-phase'
@@ -36,7 +34,6 @@ import {
 	HoverCardContent,
 	HoverCardTrigger,
 } from '@/components/ui/hover-card'
-import type { ConsiderationProposalResponseJson } from '@/app/api/funding-rounds/[id]/consideration-proposals/route'
 import {
 	Select,
 	SelectContent,
@@ -52,6 +49,7 @@ import {
 	ConsiderationOptionsSchema,
 	considerationOptionsSchema,
 } from '@/schemas/consideration'
+import { ConsiderationProposal } from '@/types'
 
 type ReviewState = 'initial' | 'decided' | 'editing'
 
@@ -70,9 +68,7 @@ export function ConsiderationPhase({
 	fundingRoundId: string
 	fundingRoundMEFId: number
 }) {
-	const [proposals, setProposals] = useState<
-		ConsiderationProposalResponseJson[]
-	>([])
+	const [proposals, setProposals] = useState<ConsiderationProposal[]>([])
 
 	const { data, isLoading } = useConsiderationPhase(fundingRoundId)
 
@@ -110,7 +106,7 @@ export function ConsiderationPhase({
 	})
 
 	useEffect(() => {
-		proposals.forEach((proposal: ConsiderationProposalResponseJson) => {
+		proposals.forEach((proposal: ConsiderationProposal) => {
 			if (proposal.userVote) {
 				setReviewStates(prev => ({ ...prev, [proposal.id]: 'decided' }))
 				setDecisions(prev => ({
@@ -139,12 +135,12 @@ export function ConsiderationPhase({
 
 		const result = await submitVote(proposalId, decision, decisions[proposalId])
 		if (result) {
-			setProposals((prev: ConsiderationProposalResponseJson[]) => {
+			setProposals((prev: ConsiderationProposal[]) => {
 				const updatedProposals = prev.filter(
-					(p: ConsiderationProposalResponseJson) => p.id !== proposalId,
+					(p: ConsiderationProposal) => p.id !== proposalId,
 				)
 				const votedProposal = prev.find(
-					(p: ConsiderationProposalResponseJson) => p.id === proposalId,
+					(p: ConsiderationProposal) => p.id === proposalId,
 				)
 				if (votedProposal) {
 					const newVoteStats = calculateVoteStats(votedProposal, { decision })
@@ -152,7 +148,7 @@ export function ConsiderationPhase({
 						...updatedProposals,
 						{
 							...votedProposal,
-							status: decision.toLowerCase() as 'approved' | 'rejected',
+							status: decision as 'APPROVED' | 'REJECTED',
 							userVote: {
 								decision,
 								feedback: decisions[proposalId],
@@ -198,13 +194,13 @@ export function ConsiderationPhase({
 			newDecision[proposalId],
 		)
 		if (result) {
-			setProposals((prev: ConsiderationProposalResponseJson[]) =>
-				prev.map((p: ConsiderationProposalResponseJson) => {
+			setProposals((prev: ConsiderationProposal[]) =>
+				prev.map((p: ConsiderationProposal) => {
 					if (p.id === proposalId) {
 						const newVoteStats = calculateVoteStats(p, { decision })
 						return {
 							...p,
-							status: decision.toLowerCase() as 'approved' | 'rejected',
+							status: decision as 'APPROVED' | 'REJECTED',
 							userVote: {
 								decision,
 								feedback: newDecision[proposalId],
@@ -226,7 +222,7 @@ export function ConsiderationPhase({
 		}
 	}
 
-	const renderVoteButtons = (proposal: ConsiderationProposalResponseJson) => {
+	const renderVoteButtons = (proposal: ConsiderationProposal) => {
 		if (!proposal.isReviewerEligible) {
 			return (
 				<div className="flex flex-col gap-2 md:flex-row">
@@ -270,7 +266,7 @@ export function ConsiderationPhase({
 		)
 	}
 
-	const renderEditButtons = (proposal: ConsiderationProposalResponseJson) => {
+	const renderEditButtons = (proposal: ConsiderationProposal) => {
 		if (!proposal.isReviewerEligible) {
 			return (
 				<div className="flex gap-2">
@@ -313,21 +309,19 @@ export function ConsiderationPhase({
 		)
 	}
 
-	const renderFeedbackSection = (
-		proposal: ConsiderationProposalResponseJson,
-	) => {
+	const renderFeedbackSection = (proposal: ConsiderationProposal) => {
 		if (!proposal.isReviewerEligible) {
-			if (proposal.status !== 'pending') {
+			if (proposal.status !== 'PENDING') {
 				return (
 					<div className="rounded-md bg-muted p-4">
 						<h4 className="mb-2 font-medium">📋 Status:</h4>
 						<div className="flex items-center gap-2">
 							<Badge
 								variant={
-									proposal.status === 'approved' ? 'default' : 'destructive'
+									proposal.status === 'APPROVED' ? 'default' : 'destructive'
 								}
 							>
-								{proposal.status === 'approved' ? '✅ Approved' : '❌ Rejected'}{' '}
+								{proposal.status === 'APPROVED' ? '✅ Approved' : '❌ Rejected'}{' '}
 								for Deliberation
 							</Badge>
 						</div>
@@ -345,10 +339,10 @@ export function ConsiderationPhase({
 						<div className="mb-2 flex items-center gap-2">
 							<Badge
 								variant={
-									proposal.status === 'approved' ? 'default' : 'destructive'
+									proposal.status === 'APPROVED' ? 'default' : 'destructive'
 								}
 							>
-								{proposal.status === 'approved' ? '✅ Approved' : '❌ Rejected'}
+								{proposal.status === 'APPROVED' ? '✅ Approved' : '❌ Rejected'}
 							</Badge>
 						</div>
 						<p className="text-muted-foreground">{decisions[proposal.id]}</p>
@@ -379,10 +373,10 @@ export function ConsiderationPhase({
 					<div className="mb-2 flex items-center gap-2">
 						<Badge
 							variant={
-								proposal.status === 'approved' ? 'default' : 'destructive'
+								proposal.status === 'APPROVED' ? 'default' : 'destructive'
 							}
 						>
-							{proposal.status === 'approved' ? '✅ Approved' : '❌ Rejected'}
+							{proposal.status === 'APPROVED' ? '✅ Approved' : '❌ Rejected'}
 						</Badge>
 					</div>
 					<p className="text-muted-foreground">
@@ -432,7 +426,7 @@ export function ConsiderationPhase({
 		{
 			label: 'Approved',
 			count: proposals.filter(
-				(p: ConsiderationProposalResponseJson) => p.status === 'approved',
+				(p: ConsiderationProposal) => p.status === 'APPROVED',
 			).length,
 			icon: ArrowDownNarrowWideIcon,
 			tab: 'approved',
@@ -442,17 +436,17 @@ export function ConsiderationPhase({
 		{
 			label: 'Rejected',
 			count: proposals.filter(
-				(p: ConsiderationProposalResponseJson) => p.status === 'rejected',
+				(p: ConsiderationProposal) => p.status === 'REJECTED',
 			).length,
 			icon: ArrowDownWideNarrowIcon,
 			tab: 'rejected',
 			description:
-				'These proposals have been rejected and will not receive funding.',
+				'These proposals have been REJECTED and will not receive funding.',
 		},
 		{
 			label: 'Pending',
 			count: proposals.filter(
-				(p: ConsiderationProposalResponseJson) => p.status === 'pending',
+				(p: ConsiderationProposal) => p.status === 'PENDING',
 			).length,
 			icon: CircleDashedIcon,
 			tab: 'pending',
@@ -517,9 +511,9 @@ export function ConsiderationPhase({
 							key={proposal.id}
 							className={cn(
 								'relative transition-all duration-200',
-								proposal.status === 'approved' &&
+								proposal.status === 'APPROVED' &&
 									'border-green-500/20 bg-green-50/50 dark:bg-green-900/10',
-								proposal.status === 'rejected' &&
+								proposal.status === 'REJECTED' &&
 									'border-red-500/20 bg-red-50/50 dark:bg-red-900/10',
 							)}
 						>
@@ -551,8 +545,8 @@ export function ConsiderationPhase({
 												isEligible={proposal.voteStats.reviewerEligible}
 												stats={
 													<VoteProgress
-														approved={proposal.voteStats.approved}
-														rejected={proposal.voteStats.rejected}
+														APPROVED={proposal.voteStats.approved}
+														REJECTED={proposal.voteStats.rejected}
 														total={proposal.voteStats.total}
 													/>
 												}
@@ -672,13 +666,13 @@ export function ConsiderationPhase({
 										</div>
 									</div>
 								</div>
-								{proposal.status !== 'pending' && (
+								{proposal.status !== 'PENDING' && (
 									<Badge
 										variant={
-											proposal.status === 'approved' ? 'default' : 'destructive'
+											proposal.status === 'APPROVED' ? 'default' : 'destructive'
 										}
 									>
-										{proposal.status === 'approved'
+										{proposal.status === 'APPROVED'
 											? '✅ Approved'
 											: '❌ Rejected'}
 									</Badge>
@@ -690,7 +684,7 @@ export function ConsiderationPhase({
 									{expanded[proposal.id] ? (
 										<>
 											<p className="mb-4 text-muted-foreground">
-												{proposal.proposalSummary}
+												{proposal.summary}
 											</p>
 											<div className="space-y-4">
 												<div>
@@ -867,7 +861,7 @@ export function ConsiderationPhase({
 										</>
 									) : (
 										<p className="line-clamp-3 text-muted-foreground">
-											{proposal.proposalSummary}
+											{proposal.summary}
 										</p>
 									)}
 								</div>
@@ -917,12 +911,12 @@ export function ConsiderationPhase({
 											)}
 											<Badge
 												variant={
-													proposal.status === 'approved'
+													proposal.status === 'APPROVED'
 														? 'default'
 														: 'destructive'
 												}
 											>
-												{proposal.status === 'approved'
+												{proposal.status === 'APPROVED'
 													? '✅ Approved'
 													: '❌ Rejected'}{' '}
 												for Deliberation
@@ -1083,7 +1077,7 @@ function ConsiderationPhaseControls({ disabled }: { disabled?: boolean }) {
 }
 
 function calculateVoteStats(
-	proposal: ConsiderationProposalResponseJson,
+	proposal: ConsiderationProposal,
 	newVote?: { decision: 'APPROVED' | 'REJECTED' },
 ) {
 	const stats = { ...proposal.voteStats }
@@ -1151,26 +1145,26 @@ function VoteStatusCard({
 
 // Add this helper component for vote progress
 function VoteProgress({
-	approved,
-	rejected,
+	APPROVED,
+	REJECTED,
 	total,
 }: {
-	approved: number
-	rejected: number
+	APPROVED: number
+	REJECTED: number
 	total: number
 }) {
-	const approvedPercent = total > 0 ? (approved / total) * 100 : 0
-	const rejectedPercent = total > 0 ? (rejected / total) * 100 : 0
+	const APPROVEDPercent = total > 0 ? (APPROVED / total) * 100 : 0
+	const REJECTEDPercent = total > 0 ? (REJECTED / total) * 100 : 0
 
 	return (
 		<div className="space-y-1">
 			<div className="flex justify-between text-xs text-muted-foreground">
 				<div className="flex gap-4">
 					<span className="font-medium text-green-600">
-						{approved} Approved ({Math.round(approvedPercent)}%)
+						{APPROVED} Approved ({Math.round(APPROVEDPercent)}%)
 					</span>
 					<span className="font-medium text-red-600">
-						{rejected} Rejected ({Math.round(rejectedPercent)}%)
+						{REJECTED} Rejected ({Math.round(REJECTEDPercent)}%)
 					</span>
 				</div>
 				<span>&nbsp;{total} total</span>
@@ -1179,11 +1173,11 @@ function VoteProgress({
 				<div className="absolute inset-0 flex w-full">
 					<div
 						className="bg-green-500 transition-all duration-300"
-						style={{ width: `${approvedPercent}%` }}
+						style={{ width: `${APPROVEDPercent}%` }}
 					/>
 					<div
 						className="bg-red-500 transition-all duration-300"
-						style={{ width: `${rejectedPercent}%` }}
+						style={{ width: `${REJECTEDPercent}%` }}
 					/>
 				</div>
 			</div>
