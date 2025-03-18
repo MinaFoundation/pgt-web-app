@@ -2,50 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { getOrCreateUserFromRequest } from '@/lib/auth'
 import logger from '@/logging'
-import { ProposalStatusMoveService } from '@/services/ProposalStatusMoveService'
-import type { ConsiderationProposal, VoteStats } from '@/types/consideration'
+import type { ConsiderationProposal } from '@/types/consideration'
 import { ConsiderationVotingService, FundingRoundService } from '@/services'
 import { considerationOptionsSchema } from '@/schemas/consideration'
-
-class VoteStatsEmpty {
-	/**
-	 * Returns default vote statistics when actual data is not available
-	 * @param minReviewerApprovals The minimum required reviewer approvals
-	 * @param actualStats The actual vote statistics if available
-	 * @param proposalId Optional ID for logging purposes
-	 * @returns VoteStats object with default or actual values
-	 */
-	static getVoteStats(
-		minReviewerApprovals: number,
-		actualStats?: VoteStats,
-		proposalId?: number,
-	): VoteStats {
-		if (actualStats) {
-			return actualStats
-		}
-
-		logger.debug(
-			proposalId
-				? `Using default vote stats for proposal #${proposalId}`
-				: 'Using default vote stats for a proposal',
-		)
-
-		return {
-			approved: 0,
-			rejected: 0,
-			total: 0,
-			communityVotes: {
-				total: 0,
-				positive: 0,
-				positiveStakeWeight: '0',
-				isEligible: false,
-				voters: [],
-			},
-			reviewerEligible: false,
-			requiredReviewerApprovals: minReviewerApprovals,
-		}
-	}
-}
 
 export async function GET(
 	request: NextRequest,
@@ -80,9 +39,6 @@ export async function GET(
 			},
 			fundingRoundId,
 		)
-
-		const statusMoveService = new ProposalStatusMoveService(prisma)
-		const minReviewerApprovals = statusMoveService.minReviewerApprovals
 
 		const considerationVotingService = new ConsiderationVotingService(prisma)
 
@@ -128,11 +84,7 @@ export async function GET(
 					linkId: p.user.linkId,
 					username: p.user.username,
 				},
-				voteStats: VoteStatsEmpty.getVoteStats(
-					minReviewerApprovals,
-					p.voteStats,
-					p.id,
-				),
+				voteStats: p.voteStats,
 				currentPhase: p.status,
 			}),
 		)
