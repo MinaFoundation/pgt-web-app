@@ -1,33 +1,5 @@
-import type {
-	FundingRoundStatus,
-	Proposal as PrismaProposal,
-	ProposalStatus,
-} from '@prisma/client'
+import type { Proposal as PrismaProposal, ProposalStatus } from '@prisma/client'
 import { FundingRoundWithPhases } from './funding-round'
-
-export type ProposalField =
-	| 'title'
-	| 'proposalSummary'
-	| 'keyObjectives'
-	| 'problemStatement'
-	| 'problemImportance'
-	| 'proposedSolution'
-	| 'implementationDetails'
-	| 'communityBenefits'
-	| 'keyPerformanceIndicators'
-	| 'totalFundingRequired'
-	| 'budgetBreakdown'
-	| 'estimatedCompletionDate'
-	| 'milestones'
-	| 'teamMembers'
-	| 'relevantExperience'
-	| 'potentialRisks'
-	| 'mitigationPlans'
-	| 'discordHandle'
-	| 'email'
-	| 'website'
-	| 'githubProfile'
-	| 'otherLinks'
 
 export interface ProposalWithUser extends PrismaProposal {
 	user: {

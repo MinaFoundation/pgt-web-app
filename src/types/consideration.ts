@@ -68,28 +68,12 @@ export interface UserVote {
 	feedback: string
 }
 
-export interface SubmitterMetadata {
-	authSource: {
-		type: string
-		id: string
-		username: string
-	}
-	linkedAccounts: {
-		id: string
-		authSource: {
-			type: string
-			id: string
-			username: string
-		}
-	}[]
-}
-
-export interface ConsiderationProposal extends Omit<FullProposal, 'status'> {
+export interface ConsiderationProposal
+	extends Omit<FullProposal, 'status' | 'fundingRound'> {
 	submitter: string
 	status: 'PENDING' | 'APPROVED' | 'REJECTED'
-	userVote?: UserVote
+	userVote: UserVote | null
 	isReviewerEligible: boolean
 	voteStats: VoteStats
 	currentPhase: ProposalStatus
-	submitterMetadata: SubmitterMetadata
 }
