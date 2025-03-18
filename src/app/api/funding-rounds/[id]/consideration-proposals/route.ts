@@ -1,10 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import prisma from '@/lib/prisma'
 import { getOrCreateUserFromRequest } from '@/lib/auth'
 import logger from '@/logging'
 import type { ConsiderationProposal } from '@/types/consideration'
 import { ConsiderationVotingService, FundingRoundService } from '@/services'
 import { considerationOptionsSchema } from '@/schemas/consideration'
+import { ApiResponse } from '@/lib/api-response'
 
 export async function GET(
 	request: NextRequest,
@@ -22,12 +23,12 @@ export async function GET(
 			})
 
 		if (error) {
-			return NextResponse.json({ error: error.message }, { status: 400 })
+			return ApiResponse.badRequest(error.message)
 		}
 
 		const user = await getOrCreateUserFromRequest(request)
 		if (!user) {
-			return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+			return ApiResponse.unauthorized('Unauthorized')
 		}
 
 		const fundingRoundService = new FundingRoundService(prisma)
@@ -80,12 +81,9 @@ export async function GET(
 			return 0
 		})
 
-		return NextResponse.json(sortedProposals)
+		return ApiResponse.success(sortedProposals)
 	} catch (error) {
 		logger.error('Failed to fetch consideration proposals:', error)
-		return NextResponse.json(
-			{ error: 'Internal server error' },
-			{ status: 500 },
-		)
+		return ApiResponse.error(error)
 	}
 }
