@@ -1,6 +1,6 @@
-import { ProposalStatus } from '@prisma/client'
-import { Decimal } from '@prisma/client/runtime/library'
+import { ConsiderationDecision, ProposalStatus } from '@prisma/client'
 import { VoteStatus } from './phase-summary'
+import { FullProposal } from './proposals'
 
 export interface ConsiderationVoteStats {
 	approved: number
@@ -24,57 +24,6 @@ export interface ConsiderationVoteStats {
 export interface ConsiderationUserVote {
 	decision: 'APPROVED' | 'REJECTED'
 	feedback: string
-}
-
-export interface ConsiderationProposal {
-	// Core Proposal Fields
-	id: number
-	title: string
-	proposalSummary: string
-	keyObjectives: string
-	problemStatement: string
-	problemImportance: string
-	proposedSolution: string
-	implementationDetails: string
-	totalFundingRequired: Decimal
-	communityBenefits: string
-	keyPerformanceIndicators: string
-	budgetBreakdown: string
-	milestones: string
-	estimatedCompletionDate: Date
-	teamMembers: string
-	relevantExperience: string
-	potentialRisks: string
-	mitigationPlans: string
-	discordHandle: string
-	email: string
-	website?: string | null
-	githubProfile?: string | null
-	otherLinks?: string | null
-	createdAt: Date
-
-	submitter: string
-
-	status: 'pending' | 'approved' | 'rejected'
-	userVote?: ConsiderationUserVote
-	isReviewerEligible?: boolean
-	voteStats: ConsiderationVoteStats
-	currentPhase: ProposalStatus
-	submitterMetadata: {
-		authSource: {
-			type: string
-			id: string
-			username: string
-		}
-		linkedAccounts?: Array<{
-			id: string
-			authSource: {
-				type: string
-				id: string
-				username: string
-			}
-		}>
-	}
 }
 
 export interface OCVVote {
@@ -112,4 +61,35 @@ export interface VoteStats {
 	communityVotes: CommunityVoteStats
 	reviewerEligible: boolean
 	requiredReviewerApprovals: number
+}
+
+export interface UserVote {
+	decision: ConsiderationDecision
+	feedback: string
+}
+
+export interface SubmitterMetadata {
+	authSource: {
+		type: string
+		id: string
+		username: string
+	}
+	linkedAccounts: {
+		id: string
+		authSource: {
+			type: string
+			id: string
+			username: string
+		}
+	}[]
+}
+
+export interface ConsiderationProposal extends Omit<FullProposal, 'status'> {
+	submitter: string
+	status: 'PENDING' | 'APPROVED' | 'REJECTED'
+	userVote?: UserVote
+	isReviewerEligible: boolean
+	voteStats: VoteStats
+	currentPhase: ProposalStatus
+	submitterMetadata: SubmitterMetadata
 }

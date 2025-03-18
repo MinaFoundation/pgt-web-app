@@ -2,14 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { getOrCreateUserFromRequest } from '@/lib/auth'
 import type { UserMetadata } from '@/services/UserService'
-import type { JsonValue } from '@prisma/client/runtime/library'
 import logger from '@/logging'
 import { ProposalStatusMoveService } from '@/services/ProposalStatusMoveService'
 import type { OCVVoteData, OCVVote, VoteStats } from '@/types/consideration'
 import { FundingRoundService, UserService } from '@/services'
 import { ConsiderationDecision, ProposalStatus } from '@prisma/client'
 import { CoreProposalData } from '@/types/proposals'
-import { Decimal } from 'decimal.js'
 import { considerationOptionsSchema } from '@/schemas/consideration'
 
 function parseOCVVoteData(data: JsonValue | null | undefined): OCVVoteData {
@@ -44,83 +42,6 @@ function parseOCVVoteData(data: JsonValue | null | undefined): OCVVoteData {
 		votes: Array.isArray(voteData.votes) ? voteData.votes : [],
 	}
 }
-
-// Type for user vote information
-export interface UserVote {
-	decision: ConsiderationDecision
-	feedback: string
-}
-
-// Type for submitter metadata
-export interface SubmitterMetadata {
-	authSource: {
-		type: string
-		id: string
-		username: string
-	}
-	linkedAccounts: {
-		id: string
-		authSource: {
-			type: string
-			id: string
-			username: string
-		}
-	}[]
-}
-
-// Main response type for consideration proposals
-export interface ConsiderationProposalResponse
-	extends Pick<
-		CoreProposalData,
-		| 'id'
-		| 'fundingRoundId'
-		| 'title'
-		| 'proposalSummary'
-		| 'problemStatement'
-		| 'problemImportance'
-		| 'proposedSolution'
-		| 'implementationDetails'
-		| 'totalFundingRequired'
-		| 'keyObjectives'
-		| 'communityBenefits'
-		| 'keyPerformanceIndicators'
-		| 'budgetBreakdown'
-		| 'estimatedCompletionDate'
-		| 'milestones'
-		| 'teamMembers'
-		| 'relevantExperience'
-		| 'potentialRisks'
-		| 'mitigationPlans'
-		| 'discordHandle'
-		| 'email'
-		| 'website'
-		| 'githubProfile'
-		| 'otherLinks'
-		| 'createdAt'
-		| 'updatedAt'
-	> {
-	submitter: string
-	status: string
-	userVote?: UserVote
-	isReviewerEligible: boolean
-	voteStats: VoteStats
-	currentPhase: ProposalStatus
-	submitterMetadata: SubmitterMetadata
-	totalFundingRequired: Decimal
-}
-
-type JsonResponse<T> = {
-	[P in keyof T]: T[P] extends Decimal
-		? string
-		: T[P] extends Date
-			? string
-			: T[P] extends object
-				? JsonResponse<T[P]>
-				: T[P]
-}
-
-export type ConsiderationProposalResponseJson =
-	JsonResponse<ConsiderationProposalResponse>
 
 class VoteStatsEmpty {
 	/**
@@ -295,7 +216,7 @@ export async function GET(
 					},
 				}))
 
-				const consdierationProposal: ConsiderationProposalResponse = {
+				const consdierationProposal: ConsiderationProposal = {
 					id: p.id,
 					fundingRoundId: p.fundingRoundId,
 					title: p.title,
