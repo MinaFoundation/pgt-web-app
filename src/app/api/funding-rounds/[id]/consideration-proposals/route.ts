@@ -49,43 +49,12 @@ export async function GET(
 			)
 
 		const formattedProposals: ConsiderationProposal[] = proposalsWithVotes.map(
-			p => ({
-				id: p.id,
-				title: p.title,
-				submitter: p.user.username,
-				summary: p.summary,
-				status: p.userVote?.decision || 'PENDING',
-				problemImportance: p.problemImportance,
-				problemStatement: p.problemStatement,
-				proposedSolution: p.proposedSolution,
-				implementationDetails: p.implementationDetails,
-				totalFundingRequired: p.totalFundingRequired,
-				keyObjectives: p.keyObjectives,
-				communityBenefits: p.communityBenefits,
-				keyPerformanceIndicators: p.keyPerformanceIndicators,
-				budgetBreakdown: p.budgetBreakdown,
-				estimatedCompletionDate: p.estimatedCompletionDate,
-				milestones: p.milestones,
-				teamMembers: p.teamMembers,
-				relevantExperience: p.relevantExperience,
-				potentialRisks: p.potentialRisks,
-				mitigationPlans: p.mitigationPlans,
-				discordHandle: p.discordHandle,
-				email: p.email,
-				website: p.website,
-				githubProfile: p.githubProfile,
-				otherLinks: p.otherLinks,
-				createdAt: p.createdAt,
-				updatedAt: p.updatedAt,
-				userVote: p.userVote || null,
+			proposal => ({
+				...proposal,
+				status: proposal.userVote?.decision || 'PENDING',
+				submitter: proposal.user.username,
 				isReviewerEligible: isReviewer,
-				user: {
-					id: p.user.id,
-					linkId: p.user.linkId,
-					username: p.user.username,
-				},
-				voteStats: p.voteStats,
-				currentPhase: p.status,
+				currentPhase: proposal.status,
 			}),
 		)
 
