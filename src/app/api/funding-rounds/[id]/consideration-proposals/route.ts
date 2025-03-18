@@ -5,7 +5,7 @@ import type { UserMetadata } from '@/services/UserService'
 import type { JsonValue } from '@prisma/client/runtime/library'
 import logger from '@/logging'
 import { ProposalStatusMoveService } from '@/services/ProposalStatusMoveService'
-import type { OCVVoteData, OCVVote } from '@/types/consideration'
+import type { OCVVoteData, OCVVote, VoteStats } from '@/types/consideration'
 import { FundingRoundService, UserService } from '@/services'
 import { ConsiderationDecision, ProposalStatus } from '@prisma/client'
 import { CoreProposalData } from '@/types/proposals'
@@ -43,29 +43,6 @@ function parseOCVVoteData(data: JsonValue | null | undefined): OCVVoteData {
 		elegible: Boolean(voteData.elegible),
 		votes: Array.isArray(voteData.votes) ? voteData.votes : [],
 	}
-}
-
-// Type for the community votes statistics
-export interface CommunityVoteStats {
-	total: number
-	positive: number
-	positiveStakeWeight: string
-	isEligible: boolean
-	voters: Array<{
-		address: string
-		timestamp: number
-		hash: string
-	}>
-}
-
-// Type for vote statistics
-export interface VoteStats {
-	approved: number
-	rejected: number
-	total: number
-	communityVotes: CommunityVoteStats
-	reviewerEligible: boolean
-	requiredReviewerApprovals: number
 }
 
 // Type for user vote information

@@ -92,3 +92,24 @@ export interface OCVVoteData {
 	elegible: boolean
 	votes: OCVVote[]
 }
+
+export interface CommunityVoteStats {
+	total: number
+	positive: number
+	positiveStakeWeight: string
+	isEligible: boolean
+	voters: Array<{
+		address: string
+		timestamp: number
+		hash: string
+	}>
+}
+
+export interface VoteStats {
+	approved: number
+	rejected: number
+	total: number
+	communityVotes: CommunityVoteStats
+	reviewerEligible: boolean
+	requiredReviewerApprovals: number
+}
