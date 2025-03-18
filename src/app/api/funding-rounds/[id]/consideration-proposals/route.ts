@@ -14,9 +14,10 @@ export async function GET(
 		const fundingRoundId = (await params).id
 
 		// TODO: implement filters and sorting
-		const { data: { query, filterBy, sortBy, sortOrder } = {}, error } =
+		const { data: options, error } =
 			getConsiderationProposalsOptionsSchema.safeParse({
 				query: request.nextUrl.searchParams.get('query'),
+				filterBy: request.nextUrl.searchParams.get('filterBy'),
 				sortBy: request.nextUrl.searchParams.get('sortBy'),
 				sortOrder: request.nextUrl.searchParams.get('sortOrder'),
 			})
@@ -36,31 +37,10 @@ export async function GET(
 			await considerationVotingService.getProposalsWithVotes(
 				fundingRoundId,
 				user,
+				options,
 			)
 
-		// Sort proposals:
-		// 1. Consideration phase pending first
-		// 2. Consideration phase voted
-		// 3. Deliberation phase
-		const sortedProposals = proposalsWithVotes.sort((a, b) => {
-			if (
-				a.currentPhase === 'CONSIDERATION' &&
-				b.currentPhase === 'DELIBERATION'
-			)
-				return -1
-			if (
-				a.currentPhase === 'DELIBERATION' &&
-				b.currentPhase === 'CONSIDERATION'
-			)
-				return 1
-			if (a.currentPhase === b.currentPhase) {
-				if (a.status === 'PENDING' && b.status !== 'PENDING') return -1
-				if (a.status !== 'PENDING' && b.status === 'PENDING') return 1
-			}
-			return 0
-		})
-
-		return ApiResponse.success(sortedProposals)
+		return ApiResponse.success(proposalsWithVotes)
 	} catch (error) {
 		logger.error('Failed to fetch consideration proposals:', error)
 		return ApiResponse.error(error)

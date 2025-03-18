@@ -18,6 +18,10 @@ import {
 } from '@/types'
 import type { JsonValue } from '@prisma/client/runtime/library'
 import { FullProposal } from '@/types/proposals'
+import {
+	GetConsiderationProposalsOptions,
+	getConsiderationProposalsOptionsSchema,
+} from '@/schemas'
 
 interface VoteInput {
 	proposalId: number
@@ -481,8 +485,14 @@ export class ConsiderationVotingService {
 	async getProposalsWithVotes(
 		fundingRoundId: string,
 		user: { id: string; linkId: string },
+		options?: GetConsiderationProposalsOptions,
 	): Promise<ConsiderationProposal[]> {
 		try {
+			// Validate options if provided
+			const parsedOptions = options
+				? getConsiderationProposalsOptionsSchema.parse(options)
+				: { query: null, filterBy: null, sortBy: 'status', sortOrder: 'asc' }
+
 			const fundingRoundService = new FundingRoundService(this.prisma)
 
 			const isReviewerEligible = await fundingRoundService.isReviewer(
@@ -514,7 +524,6 @@ export class ConsiderationVotingService {
 									linkId: true,
 								},
 							},
-
 							decision: true,
 							feedback: true,
 						},
@@ -530,88 +539,148 @@ export class ConsiderationVotingService {
 			const statusMoveService = new ProposalStatusMoveService(this.prisma)
 			const minReviewerApprovals = statusMoveService.minReviewerApprovals
 
-			const proposalVoteCounts = proposals.map(proposal => {
-				const allVotes = proposal.considerationVotes
-				const userVotes = allVotes.filter(
-					v => v.voter.id === user.id || v.voter.linkId === user.linkId,
-				)
+			let proposalVoteCounts: ConsiderationProposal[] = proposals.map(
+				proposal => {
+					const allVotes = proposal.considerationVotes
+					const userVotes = allVotes.filter(
+						v => v.voter.id === user.id || v.voter.linkId === user.linkId,
+					)
 
-				// Calculate counts from all votes
-				const approved = allVotes.filter(v => v.decision === 'APPROVED').length
-				const rejected = allVotes.filter(v => v.decision === 'REJECTED').length
-				const ocvVotes = this.parseOCVVoteData(
-					proposal.OCVConsiderationVote?.voteData,
-				)
+					const approved = allVotes.filter(
+						v => v.decision === 'APPROVED',
+					).length
+					const rejected = allVotes.filter(
+						v => v.decision === 'REJECTED',
+					).length
+					const ocvVotes = this.parseOCVVoteData(
+						proposal.OCVConsiderationVote?.voteData,
+					)
 
-				return {
-					id: proposal.id,
-					title: proposal.title,
-					summary: proposal.proposalSummary,
-					totalFundingRequired: proposal.totalFundingRequired.toNumber(),
-					createdAt: proposal.createdAt.toISOString(),
-					updatedAt: proposal.updatedAt.toISOString(),
+					return {
+						id: proposal.id,
+						title: proposal.title,
+						summary: proposal.proposalSummary,
+						totalFundingRequired: proposal.totalFundingRequired.toNumber(),
+						createdAt: proposal.createdAt.toISOString(),
+						updatedAt: proposal.updatedAt.toISOString(),
 
-					problemStatement: proposal.problemStatement,
-					problemImportance: proposal.problemImportance,
-					proposedSolution: proposal.proposedSolution,
-					implementationDetails: proposal.implementationDetails,
-					keyObjectives: proposal.keyObjectives,
-					communityBenefits: proposal.communityBenefits,
-					keyPerformanceIndicators: proposal.keyPerformanceIndicators,
-					budgetBreakdown: proposal.budgetBreakdown,
-					estimatedCompletionDate:
-						proposal.estimatedCompletionDate.toISOString(),
-					milestones: proposal.milestones,
-					teamMembers: proposal.teamMembers,
-					relevantExperience: proposal.relevantExperience,
-					potentialRisks: proposal.potentialRisks,
-					mitigationPlans: proposal.mitigationPlans,
-					discordHandle: proposal.discordHandle,
-					email: proposal.email,
-					website: proposal.website,
-					githubProfile: proposal.githubProfile,
-					otherLinks: proposal.otherLinks,
+						problemStatement: proposal.problemStatement,
+						problemImportance: proposal.problemImportance,
+						proposedSolution: proposal.proposedSolution,
+						implementationDetails: proposal.implementationDetails,
+						keyObjectives: proposal.keyObjectives,
+						communityBenefits: proposal.communityBenefits,
+						keyPerformanceIndicators: proposal.keyPerformanceIndicators,
+						budgetBreakdown: proposal.budgetBreakdown,
+						estimatedCompletionDate:
+							proposal.estimatedCompletionDate.toISOString(),
+						milestones: proposal.milestones,
+						teamMembers: proposal.teamMembers,
+						relevantExperience: proposal.relevantExperience,
+						potentialRisks: proposal.potentialRisks,
+						mitigationPlans: proposal.mitigationPlans,
+						discordHandle: proposal.discordHandle,
+						email: proposal.email,
+						website: proposal.website,
+						githubProfile: proposal.githubProfile,
+						otherLinks: proposal.otherLinks,
 
-					user: {
-						id: proposal.user.id,
-						linkId: proposal.user.linkId,
-						username: (proposal.user.metadata as UserMetadata).username,
-					},
-
-					userVote: userVotes[0]
-						? {
-								decision: userVotes[0].decision,
-								feedback: userVotes[0].feedback,
-							}
-						: null,
-
-					status: userVotes[0]?.decision || 'PENDING',
-					currentPhase: proposal.status,
-
-					voteStats: {
-						approved,
-						rejected,
-						total: approved + rejected,
-						communityVotes: {
-							total: ocvVotes.total_community_votes ?? 0,
-							positive: ocvVotes.total_positive_community_votes ?? 0,
-							positiveStakeWeight: ocvVotes.positive_stake_weight ?? '0',
-							isEligible: ocvVotes.elegible ?? false,
-							voters: (ocvVotes.votes ?? []).map((vote: OCVVote) => ({
-								address: vote.account,
-								timestamp: vote.timestamp,
-								hash: vote.hash,
-								height: vote.height,
-								status: vote.status,
-							})),
+						user: {
+							id: proposal.user.id,
+							linkId: proposal.user.linkId,
+							username: (proposal.user.metadata as UserMetadata).username,
 						},
-						reviewerEligible: approved >= minReviewerApprovals,
-						requiredReviewerApprovals: minReviewerApprovals,
-					},
 
-					isReviewerEligible,
-				}
-			})
+						userVote: userVotes[0]
+							? {
+									decision: userVotes[0].decision,
+									feedback: userVotes[0].feedback,
+								}
+							: null,
+
+						status: userVotes[0]?.decision || 'PENDING',
+						currentPhase: proposal.status,
+
+						voteStats: {
+							approved,
+							rejected,
+							total: approved + rejected,
+							communityVotes: {
+								total: ocvVotes.total_community_votes ?? 0,
+								positive: ocvVotes.total_positive_community_votes ?? 0,
+								positiveStakeWeight: ocvVotes.positive_stake_weight ?? '0',
+								isEligible: ocvVotes.elegible ?? false,
+								voters: (ocvVotes.votes ?? []).map((vote: OCVVote) => ({
+									address: vote.account,
+									timestamp: vote.timestamp,
+									hash: vote.hash,
+									height: vote.height,
+									status: vote.status,
+								})),
+							},
+							reviewerEligible: approved >= minReviewerApprovals,
+							requiredReviewerApprovals: minReviewerApprovals,
+						},
+						isReviewerEligible,
+					}
+				},
+			)
+
+			// Apply filtering based on filterBy
+			if (parsedOptions.filterBy && parsedOptions.filterBy !== 'all') {
+				proposalVoteCounts = proposalVoteCounts.filter(proposal => {
+					console.log(proposal.status)
+					switch (parsedOptions.filterBy) {
+						case 'approved':
+							return proposal.status === 'APPROVED'
+						case 'rejected':
+							return proposal.status === 'REJECTED'
+						case 'pending':
+							return proposal.status === 'PENDING'
+						default:
+							return true
+					}
+				})
+			}
+
+			// Apply sorting based on sortBy and sortOrder
+			if (parsedOptions.sortBy) {
+				proposalVoteCounts.sort((a, b) => {
+					const order = parsedOptions.sortOrder === 'desc' ? -1 : 1
+
+					if (parsedOptions.sortBy === 'createdAt') {
+						return (
+							order *
+							(new Date(a.createdAt).getTime() -
+								new Date(b.createdAt).getTime())
+						)
+					}
+
+					if (parsedOptions.sortBy === 'status') {
+						// Custom status sorting: CONSIDERATION (PENDING first), then DELIBERATION
+						if (
+							a.currentPhase === 'CONSIDERATION' &&
+							b.currentPhase === 'DELIBERATION'
+						)
+							return -order
+						if (
+							a.currentPhase === 'DELIBERATION' &&
+							b.currentPhase === 'CONSIDERATION'
+						)
+							return order
+						if (a.currentPhase === b.currentPhase) {
+							if (a.status === 'PENDING' && b.status !== 'PENDING')
+								return -order
+							if (a.status !== 'PENDING' && b.status === 'PENDING') return order
+							// If both are voted or both are PENDING, maintain original order or sort alphabetically
+							return a.status.localeCompare(b.status) * order
+						}
+						return 0
+					}
+
+					return 0
+				})
+			}
 
 			return proposalVoteCounts
 		} catch (error) {
