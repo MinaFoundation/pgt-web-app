@@ -81,7 +81,7 @@ export function ConsiderationPhase({
 	})
 
 	useEffect(() => {
-		if (data) setProposals(data)
+		if (data?.proposals) setProposals(data.proposals)
 	}, [data])
 
 	const [reviewStates, setReviewStates] = useState<Record<number, ReviewState>>(

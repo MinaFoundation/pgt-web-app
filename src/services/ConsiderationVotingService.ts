@@ -16,6 +16,7 @@ import {
 	OCVVoteData,
 	ReviewerVoteStats,
 	ConsiderationVoteStats,
+	ConsiderationProposalsCounts,
 } from '@/types'
 import type { JsonValue } from '@prisma/client/runtime/library'
 import {
@@ -480,6 +481,72 @@ export class ConsiderationVotingService {
 			notMovedForwardProposals: notMovedForwardCount,
 			proposalVotes: proposals,
 		}
+	}
+
+	async getProposalsStatusCounts(
+		fundingRoundId: string,
+	): Promise<ConsiderationProposalsCounts> {
+		const proposals = await this.prisma.proposal.findMany({
+			where: {
+				fundingRoundId,
+				status: { in: ['CONSIDERATION', 'DELIBERATION'] },
+			},
+			include: {
+				considerationVotes: {
+					select: {
+						voter: {
+							select: {
+								id: true,
+								linkId: true,
+							},
+						},
+						decision: true,
+						feedback: true,
+					},
+				},
+				OCVConsiderationVote: {
+					select: {
+						voteData: true,
+					},
+				},
+			},
+		})
+
+		const statusMoveService = new ProposalStatusMoveService(this.prisma)
+		const minReviewerApprovals = statusMoveService.minReviewerApprovals
+
+		const proposalVoteCounts = proposals.reduce(
+			(acc, proposal) => {
+				const allVotes = proposal.considerationVotes
+				const approved = allVotes.filter(v => v.decision === 'APPROVED').length
+				const rejected = allVotes.filter(v => v.decision === 'REJECTED').length
+				const ocvVotes = this.parseOCVVoteData(
+					proposal.OCVConsiderationVote?.voteData,
+				)
+
+				// TODO: ensure this logic is right to our business rules
+
+				const communityVoteEligible = ocvVotes.elegible
+				const reviewerVoteEligible = approved >= minReviewerApprovals
+				const isEligible = communityVoteEligible || reviewerVoteEligible
+				const isRejected = rejected >= minReviewerApprovals
+
+				if (isEligible) {
+					acc.approved++
+				} else if (isRejected) {
+					acc.rejected++
+				} else {
+					acc.pending++
+				}
+
+				acc.total++
+
+				return acc
+			},
+			{ total: 0, approved: 0, rejected: 0, pending: 0 },
+		)
+
+		return proposalVoteCounts
 	}
 
 	async getProposalsWithVotes(

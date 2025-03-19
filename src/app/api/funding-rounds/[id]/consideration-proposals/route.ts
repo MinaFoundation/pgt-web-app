@@ -5,6 +5,7 @@ import logger from '@/logging'
 import { ConsiderationVotingService } from '@/services'
 import { getConsiderationProposalsOptionsSchema } from '@/schemas/consideration'
 import { ApiResponse } from '@/lib/api-response'
+import { ConsiderationProposalsApiResponse } from '@/types'
 
 export async function GET(
 	request: NextRequest,
@@ -33,14 +34,21 @@ export async function GET(
 
 		const considerationVotingService = new ConsiderationVotingService(prisma)
 
-		const proposalsWithVotes =
-			await considerationVotingService.getProposalsWithVotes(
+		const [prosalsCounts, proposalsWithVotes] = await Promise.all([
+			considerationVotingService.getProposalsStatusCounts(fundingRoundId),
+			considerationVotingService.getProposalsWithVotes(
 				fundingRoundId,
 				user,
 				options,
-			)
+			),
+		])
 
-		return ApiResponse.success(proposalsWithVotes)
+		const response: ConsiderationProposalsApiResponse = {
+			counts: prosalsCounts,
+			proposals: proposalsWithVotes,
+		}
+
+		return ApiResponse.success(response)
 	} catch (error) {
 		logger.error('Failed to fetch consideration proposals:', error)
 		return ApiResponse.error(error)

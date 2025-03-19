@@ -62,3 +62,15 @@ export interface ConsiderationProposal
 	currentPhase: ProposalStatus
 	isReviewerEligible: boolean
 }
+
+export interface ConsiderationProposalsCounts {
+	total: number
+	pending: number
+	approved: number
+	rejected: number
+}
+
+export interface ConsiderationProposalsApiResponse {
+	proposals: ConsiderationProposal[]
+	counts: ConsiderationProposalsCounts
+}
