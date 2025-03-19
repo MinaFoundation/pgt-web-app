@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { Trash2, UserPlus, Users, ChevronDown } from 'lucide-react'
+import { Trash2, UserPlus, Users, ChevronDown, Loader2Icon } from 'lucide-react'
 import {
 	Table,
 	TableBody,
@@ -37,11 +37,15 @@ interface ReviewerGroup {
 
 export function ManageReviewersComponent() {
 	const [groups, setGroups] = useState<ReviewerGroup[]>([])
-	const [loading, setLoading] = useState(true)
+	const [loading, setLoading] = useState(false)
+	const [loadingButton, setLoadingButton] = useState<string | null>(null)
+
 	const { toast } = useToast()
 
 	const fetchGroups = useCallback(async () => {
 		try {
+			setLoading(true)
+			setLoadingButton(null)
 			const response = await fetch('/api/admin/reviewer-groups')
 			if (!response.ok) throw new Error('Failed to fetch groups')
 			const data = await response.json()
@@ -128,14 +132,34 @@ export function ManageReviewersComponent() {
 				</div>
 
 				<div className="flex flex-wrap gap-4">
-					<Button variant="outline" className="gap-2" disabled={loading}>
-						<UserPlus className="h-4 w-4" />
+					<Button
+						variant="outline"
+						className="gap-2"
+						disabled={loading || loadingButton == 'add-reviewer'}
+						onClick={() => setLoadingButton('add-reviewer')}
+					>
+						{loadingButton == 'add-reviewer' ? (
+							<Loader2Icon className="h-4 w-4 animate-spin" />
+						) : (
+							<UserPlus className="h-4 w-4" />
+						)}
 						Add Reviewer
 					</Button>
 
-					<Link href="/admin/reviewers/group/new">
-						<Button variant="outline" className="gap-2" disabled={loading}>
-							<Users className="h-4 w-4" />
+					<Link
+						href="/admin/reviewers/group/new"
+						onClick={() => setLoadingButton('add-group')}
+					>
+						<Button
+							variant="outline"
+							className="gap-2"
+							disabled={loading || loadingButton == 'add-group'}
+						>
+							{loadingButton == 'add-group' ? (
+								<Loader2Icon className="h-4 w-4 animate-spin" />
+							) : (
+								<Users className="h-4 w-4" />
+							)}
 							Add Group
 						</Button>
 					</Link>
