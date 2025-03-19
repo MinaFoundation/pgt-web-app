@@ -443,7 +443,7 @@ export function ConsiderationPhase({
 			icon: ArrowDownWideNarrowIcon,
 			tab: 'rejected',
 			description:
-				'These proposals have been REJECTED and will not receive funding.',
+				'These proposals were rejected by reviewers. Community can still vote to overturn the decision.',
 		},
 		{
 			label: 'Pending',
