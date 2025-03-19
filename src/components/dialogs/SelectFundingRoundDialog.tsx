@@ -92,7 +92,7 @@ export function SelectFundingRoundDialog({
 	return (
 		<>
 			<Dialog open={open} onOpenChange={onOpenChange}>
-				<DialogContent className="sm:max-w-[425px]">
+				<DialogContent className="max-w-[500px]">
 					<DialogHeader>
 						<DialogTitle>Submit to Funding Round</DialogTitle>
 						<DialogDescription>
@@ -110,14 +110,14 @@ export function SelectFundingRoundDialog({
 								onValueChange={setSelectedRoundId}
 								disabled={loading}
 							>
-								<SelectTrigger className="h-14">
+								<SelectTrigger className="h-14 w-full overflow-hidden">
 									<SelectValue placeholder="Select a funding round" />
 								</SelectTrigger>
 								<SelectContent>
 									{rounds.map(round => (
 										<SelectItem key={round.id} value={round.id}>
-											<div className="flex flex-col">
-												<p className="text-base font-semibold">
+											<div className="max-w-96">
+												<p className="truncate text-base font-semibold">
 													📋 {round.name}
 												</p>
 												<p className="text-sm text-muted-foreground">
