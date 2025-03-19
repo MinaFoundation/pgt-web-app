@@ -73,7 +73,10 @@ export function ConsiderationPhase({
 
 	const [proposals, setProposals] = useState<ConsiderationProposal[]>([])
 
-	const { data, isLoading } = useConsiderationPhase(fundingRoundId, {
+	const {
+		data: { proposals: _proposals, counts },
+		isLoading,
+	} = useConsiderationPhase(fundingRoundId, {
 		query,
 		filterBy,
 		sortBy,
@@ -81,8 +84,8 @@ export function ConsiderationPhase({
 	})
 
 	useEffect(() => {
-		if (data?.proposals) setProposals(data.proposals)
-	}, [data])
+		if (_proposals) setProposals(_proposals)
+	}, [_proposals])
 
 	const [reviewStates, setReviewStates] = useState<Record<number, ReviewState>>(
 		{},
@@ -425,14 +428,14 @@ export function ConsiderationPhase({
 	}[] = [
 		{
 			label: 'Proposals',
-			count: data?.counts.total,
+			count: counts?.total,
 			icon: NotepadTextIcon,
 			tab: 'all',
 			description: 'All proposals submitted for consideration.',
 		},
 		{
 			label: 'Approved',
-			count: data?.counts.approved,
+			count: counts?.approved,
 			icon: ArrowDownNarrowWideIcon,
 			tab: 'approved',
 			description:
@@ -440,7 +443,7 @@ export function ConsiderationPhase({
 		},
 		{
 			label: 'Rejected',
-			count: data?.counts.rejected,
+			count: counts?.rejected,
 			icon: ArrowDownWideNarrowIcon,
 			tab: 'rejected',
 			description:
@@ -448,7 +451,7 @@ export function ConsiderationPhase({
 		},
 		{
 			label: 'Pending',
-			count: data?.counts.pending,
+			count: counts?.pending,
 			icon: CircleDashedIcon,
 			tab: 'pending',
 			description:

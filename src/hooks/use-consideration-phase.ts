@@ -3,7 +3,11 @@
 import { UndefinedInitialDataOptions, useQuery } from '@tanstack/react-query'
 import logger from '@/logging'
 import { GetConsiderationProposalsOptions } from '@/schemas'
-import { ConsiderationProposalsApiResponse } from '@/types'
+import {
+	ConsiderationProposalsApiResponse,
+	ConsiderationProposalsCounts,
+} from '@/types'
+import { useEffect, useState } from 'react'
 
 export function useConsiderationPhase(
 	fundingRoundId: string,
@@ -22,7 +26,7 @@ export function useConsiderationPhase(
 
 	const url = `/api/funding-rounds/${fundingRoundId}/consideration-proposals${searchParams.size > 0 ? `?${searchParams.toString()}` : ''}`
 
-	return useQuery<ConsiderationProposalsApiResponse>({
+	const { data, ...result } = useQuery<ConsiderationProposalsApiResponse>({
 		...options,
 		queryKey: [url],
 		queryFn: async () => {
@@ -34,4 +38,21 @@ export function useConsiderationPhase(
 			return response.json()
 		},
 	})
+
+	// Cache the counts to prevent flickering when refetching
+	const [cachedCounts, setCachedCounts] =
+		useState<ConsiderationProposalsCounts | null>(null)
+	useEffect(() => {
+		if (data) {
+			setCachedCounts(data.counts)
+		}
+	}, [data])
+
+	return {
+		...result,
+		data: {
+			proposals: data?.proposals,
+			counts: cachedCounts ?? data?.counts,
+		},
+	}
 }
