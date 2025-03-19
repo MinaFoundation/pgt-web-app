@@ -709,14 +709,19 @@ export class ConsiderationVotingService {
 			// Apply filtering based on filterBy
 			if (parsedOptions.filterBy && parsedOptions.filterBy !== 'all') {
 				proposalVoteCounts = proposalVoteCounts.filter(proposal => {
-					console.log(proposal.status)
 					switch (parsedOptions.filterBy) {
 						case 'approved':
-							return proposal.status === 'APPROVED'
+							return proposal.voteStats.isEligible
 						case 'rejected':
-							return proposal.status === 'REJECTED'
+							// TODO: ensure this logic is right to our business rules
+							return (
+								proposal.voteStats.reviewerVote.rejected >= minReviewerApprovals
+							)
 						case 'pending':
-							return proposal.status === 'PENDING'
+							return (
+								!proposal.voteStats.isEligible &&
+								!proposal.voteStats.reviewerVote.isEligible
+							)
 						default:
 							return true
 					}
