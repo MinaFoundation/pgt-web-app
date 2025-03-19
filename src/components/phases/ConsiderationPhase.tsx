@@ -545,16 +545,16 @@ export function ConsiderationPhase({
 												icon="👥"
 												title="Reviewer Votes"
 												eligibilityStatus={
-													proposal.voteStats.reviewerEligible
+													proposal.voteStats.reviewerVote.isEligible
 														? 'Eligible'
-														: `Need ${proposal.voteStats.requiredReviewerApprovals - proposal.voteStats.approved} more`
+														: `Need ${proposal.voteStats.reviewerVote.requiredReviewerApprovals - proposal.voteStats.reviewerVote.approved} more`
 												}
-												isEligible={proposal.voteStats.reviewerEligible}
+												isEligible={proposal.voteStats.reviewerVote.isEligible}
 												stats={
 													<VoteProgress
-														APPROVED={proposal.voteStats.approved}
-														REJECTED={proposal.voteStats.rejected}
-														total={proposal.voteStats.total}
+														APPROVED={proposal.voteStats.reviewerVote.approved}
+														REJECTED={proposal.voteStats.reviewerVote.rejected}
+														total={proposal.voteStats.reviewerVote.total}
 													/>
 												}
 											>
@@ -566,26 +566,24 @@ export function ConsiderationPhase({
 												icon="🌍"
 												title="Community Votes"
 												eligibilityStatus={
-													proposal.voteStats.communityVotes.isEligible
+													proposal.voteStats.communityVote.isEligible
 														? 'Eligible'
 														: 'Not Eligible'
 												}
-												isEligible={
-													proposal.voteStats.communityVotes.isEligible
-												}
+												isEligible={proposal.voteStats.communityVote.isEligible}
 											>
 												<HoverCard>
 													<HoverCardTrigger asChild>
 														<div className="flex cursor-help items-center justify-between">
 															<div className="flex items-center gap-2">
 																<span className="text-sm font-medium text-green-600">
-																	{proposal.voteStats.communityVotes.positive}{' '}
+																	{proposal.voteStats.communityVote.positive}{' '}
 																	votes
 																</span>
 																<span className="text-xs text-muted-foreground">
 																	(
 																	{
-																		proposal.voteStats.communityVotes
+																		proposal.voteStats.communityVote
 																			.positiveStakeWeight
 																	}{' '}
 																	stake)
@@ -612,7 +610,7 @@ export function ConsiderationPhase({
 																</h4>
 																<Badge variant="outline" className="text-xs">
 																	{
-																		proposal.voteStats.communityVotes.voters
+																		proposal.voteStats.communityVote.voters
 																			.length
 																	}{' '}
 																	total
@@ -625,10 +623,10 @@ export function ConsiderationPhase({
 																doesn&apos;t show up immediately after voting.
 															</div>
 
-															{proposal.voteStats.communityVotes.voters.length >
+															{proposal.voteStats.communityVote.voters.length >
 															0 ? (
 																<div className="-mr-2 max-h-[240px] space-y-1.5 overflow-y-auto pr-2">
-																	{proposal.voteStats.communityVotes.voters.map(
+																	{proposal.voteStats.communityVote.voters.map(
 																		(voter, i) => (
 																			<div
 																				key={i}
@@ -661,7 +659,7 @@ export function ConsiderationPhase({
 																<p className="text-xs text-muted-foreground">
 																	Total Stake Weight:{' '}
 																	{
-																		proposal.voteStats.communityVotes
+																		proposal.voteStats.communityVote
 																			.positiveStakeWeight
 																	}
 																</p>
@@ -1093,19 +1091,20 @@ function calculateVoteStats(
 
 	// Update vote counts
 	if (proposal.userVote && newVote) {
-		if (proposal.userVote.decision === 'APPROVED') stats.approved--
-		if (proposal.userVote.decision === 'REJECTED') stats.rejected--
-		stats.total--
+		if (proposal.userVote.decision === 'APPROVED') stats.reviewerVote.approved--
+		if (proposal.userVote.decision === 'REJECTED') stats.reviewerVote.rejected--
+		stats.reviewerVote.total--
 	}
 
 	if (newVote) {
-		if (newVote.decision === 'APPROVED') stats.approved++
-		if (newVote.decision === 'REJECTED') stats.rejected++
-		stats.total++
+		if (newVote.decision === 'APPROVED') stats.reviewerVote.approved++
+		if (newVote.decision === 'REJECTED') stats.reviewerVote.rejected++
+		stats.reviewerVote.total++
 	}
 
 	// Recalculate reviewer eligibility based on new vote counts
-	stats.reviewerEligible = stats.approved >= stats.requiredReviewerApprovals
+	stats.reviewerVote.isEligible =
+		stats.reviewerVote.total >= stats.reviewerVote.requiredReviewerApprovals
 
 	return stats
 }

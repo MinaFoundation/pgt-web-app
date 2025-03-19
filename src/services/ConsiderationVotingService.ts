@@ -10,14 +10,14 @@ import { FundingRoundService } from './FundingRoundService'
 import logger from '@/logging'
 import { UserMetadata } from '@/services'
 import {
+	CommunityVoteStats,
 	ConsiderationProposal,
 	OCVVote,
 	OCVVoteData,
-	UserVote,
-	VoteStats,
+	ReviewerVoteStats,
+	ConsiderationVoteStats,
 } from '@/types'
 import type { JsonValue } from '@prisma/client/runtime/library'
-import { FullProposal } from '@/types/proposals'
 import {
 	GetConsiderationProposalsOptions,
 	getConsiderationProposalsOptionsSchema,
@@ -559,6 +559,34 @@ export class ConsiderationVotingService {
 						proposal.OCVConsiderationVote?.voteData,
 					)
 
+					const communityVote: CommunityVoteStats = {
+						total: ocvVotes.total_community_votes,
+						positive: ocvVotes.total_positive_community_votes,
+						positiveStakeWeight: ocvVotes.positive_stake_weight ?? '0',
+						isEligible: ocvVotes.elegible,
+						voters: (ocvVotes.votes ?? []).map((vote: OCVVote) => ({
+							address: vote.account,
+							timestamp: vote.timestamp,
+							hash: vote.hash,
+							height: vote.height,
+							status: vote.status,
+						})),
+					}
+
+					const reviewerVote: ReviewerVoteStats = {
+						approved,
+						rejected,
+						total: approved + rejected,
+						requiredReviewerApprovals: minReviewerApprovals,
+						isEligible: approved >= minReviewerApprovals,
+					}
+
+					const voteStats: ConsiderationVoteStats = {
+						communityVote,
+						reviewerVote,
+						isEligible: communityVote.isEligible || reviewerVote.isEligible,
+					}
+
 					return {
 						id: proposal.id,
 						title: proposal.title,
@@ -604,26 +632,8 @@ export class ConsiderationVotingService {
 						status: userVotes[0]?.decision || 'PENDING',
 						currentPhase: proposal.status,
 
-						voteStats: {
-							approved,
-							rejected,
-							total: approved + rejected,
-							communityVotes: {
-								total: ocvVotes.total_community_votes ?? 0,
-								positive: ocvVotes.total_positive_community_votes ?? 0,
-								positiveStakeWeight: ocvVotes.positive_stake_weight ?? '0',
-								isEligible: ocvVotes.elegible ?? false,
-								voters: (ocvVotes.votes ?? []).map((vote: OCVVote) => ({
-									address: vote.account,
-									timestamp: vote.timestamp,
-									hash: vote.hash,
-									height: vote.height,
-									status: vote.status,
-								})),
-							},
-							reviewerEligible: approved >= minReviewerApprovals,
-							requiredReviewerApprovals: minReviewerApprovals,
-						},
+						voteStats,
+
 						isReviewerEligible,
 					}
 				},

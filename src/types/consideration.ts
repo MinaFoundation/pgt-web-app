@@ -2,25 +2,6 @@ import { ConsiderationDecision, ProposalStatus } from '@prisma/client'
 import { VoteStatus } from './phase-summary'
 import { FullProposal } from './proposals'
 
-export interface ConsiderationVoteStats {
-	approved: number
-	rejected: number
-	total: number
-	communityVotes: {
-		total: number
-		positive: number
-		positiveStakeWeight: string
-		isEligible: boolean
-		voters: Array<{
-			address: string
-			timestamp: number
-			hash: string
-		}>
-	}
-	reviewerEligible: boolean
-	requiredReviewerApprovals: number
-}
-
 export interface ConsiderationUserVote {
 	decision: 'APPROVED' | 'REJECTED'
 	feedback: string
@@ -54,13 +35,18 @@ export interface CommunityVoteStats {
 	}>
 }
 
-export interface VoteStats {
+export interface ReviewerVoteStats {
 	approved: number
 	rejected: number
 	total: number
-	communityVotes: CommunityVoteStats
-	reviewerEligible: boolean
+	isEligible: boolean
 	requiredReviewerApprovals: number
+}
+
+export interface ConsiderationVoteStats {
+	communityVote: CommunityVoteStats
+	reviewerVote: ReviewerVoteStats
+	isEligible: boolean
 }
 
 export interface UserVote {
@@ -72,7 +58,7 @@ export interface ConsiderationProposal
 	extends Omit<FullProposal, 'status' | 'fundingRound'> {
 	status: 'PENDING' | 'APPROVED' | 'REJECTED'
 	userVote: UserVote | null
-	voteStats: VoteStats
+	voteStats: ConsiderationVoteStats
 	currentPhase: ProposalStatus
 	isReviewerEligible: boolean
 }
