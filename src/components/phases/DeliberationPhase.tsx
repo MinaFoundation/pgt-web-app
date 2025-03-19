@@ -71,7 +71,7 @@ export function DeliberationPhase({
 }) {
 	const { user } = useAuth()
 
-	const { query, sortBy, sortOrder, filterBy, setFilterBy } =
+	const { query, sortBy, sortOrder, filterBy } =
 		useDeliberationPhaseSearchParams()
 
 	const [proposals, setProposals] = useState([] as DeliberationProposal[])

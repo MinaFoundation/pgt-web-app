@@ -180,6 +180,7 @@ export class DeliberationService {
 				user: {
 					select: {
 						id: true,
+						linkId: true,
 						metadata: true,
 					},
 				},
@@ -211,7 +212,7 @@ export class DeliberationService {
 		})) as unknown as ProposalWithVotes[]
 
 		// Transform the proposals
-		const transformedProposals = await Promise.all(
+		const transformedProposals: DeliberationProposal[] = await Promise.all(
 			proposals.map(async proposal => {
 				// Get reviewer comments
 				const reviewerComments = proposal.deliberationReviewerVotes.map(
@@ -252,18 +253,6 @@ export class DeliberationService {
 				)
 				const userDeliberation = userReviewerVote || userCommunityVote
 
-				const linkedAccounts = await this.userService.getLinkedAccounts(
-					proposal.user.id,
-				)
-				const linkedAccountsMetadata = linkedAccounts.map(account => ({
-					id: account.id,
-					authSource: (account.metadata as UserMetadata)?.authSource || {
-						type: '',
-						id: '',
-						username: '',
-					},
-				}))
-
 				const votes = proposal.deliberationReviewerVotes
 				const yesVotes = votes.filter(v => v.recommendation).length
 				const noVotes = votes.filter(v => !v.recommendation).length
@@ -271,21 +260,27 @@ export class DeliberationService {
 				const isNotRecommended = noVotes > yesVotes
 				const isPendingRecommendation = yesVotes == 0 && noVotes == 0
 
+				const isReviewerEligible =
+					proposal.fundingRound.topic.reviewerGroups.some(
+						group => group.reviewerGroup.members.length > 0,
+					)
+
 				return {
 					id: proposal.id,
 					title: proposal.title,
-					proposalSummary: proposal.proposalSummary,
+					summary: proposal.proposalSummary,
 					keyObjectives: proposal.keyObjectives,
 					problemStatement: proposal.problemStatement,
 					problemImportance: proposal.problemImportance,
 					proposedSolution: proposal.proposedSolution,
 					implementationDetails: proposal.implementationDetails,
-					totalFundingRequired: proposal.totalFundingRequired,
+					totalFundingRequired: proposal.totalFundingRequired.toNumber(),
 					communityBenefits: proposal.communityBenefits,
 					keyPerformanceIndicators: proposal.keyPerformanceIndicators,
 					budgetBreakdown: proposal.budgetBreakdown,
 					milestones: proposal.milestones,
-					estimatedCompletionDate: proposal.estimatedCompletionDate,
+					estimatedCompletionDate:
+						proposal.estimatedCompletionDate.toISOString(),
 					teamMembers: proposal.teamMembers,
 					relevantExperience: proposal.relevantExperience,
 					potentialRisks: proposal.potentialRisks,
@@ -294,12 +289,16 @@ export class DeliberationService {
 					email: proposal.email,
 					website: proposal.website,
 					githubProfile: proposal.githubProfile,
-					createdAt: proposal.createdAt,
-					submitter:
-						(proposal.user?.metadata as UserMetadata)?.username || 'Unknown',
-					isReviewerEligible: fundingRound.topic.reviewerGroups.some(
-						group => group.reviewerGroup.members.length > 0,
-					),
+					otherLinks: proposal.otherLinks,
+					createdAt: proposal.createdAt.toISOString(),
+					updatedAt: proposal.updatedAt.toISOString(),
+
+					user: {
+						id: proposal.user.id,
+						linkId: proposal.user.linkId,
+						username: (proposal.user.metadata as UserMetadata).username,
+					},
+
 					reviewerComments: allComments,
 					userDeliberation: userDeliberation
 						? {
@@ -313,23 +312,11 @@ export class DeliberationService {
 							}
 						: undefined,
 					hasVoted: Boolean(userDeliberation),
-					submitterMetadata: {
-						authSource: {
-							type:
-								(proposal.user?.metadata as UserMetadata)?.authSource?.type ||
-								'',
-							id:
-								(proposal.user?.metadata as UserMetadata)?.authSource?.id || '',
-							username:
-								(proposal.user?.metadata as UserMetadata)?.authSource
-									?.username || '',
-						},
-						linkedAccounts: linkedAccountsMetadata,
-					},
 					isPendingRecommendation,
 					isRecommended,
 					isNotRecommended,
 					gptSurveySummary: proposal.GptSurveySummarizerProposal,
+					isReviewerEligible,
 				}
 			}),
 		)
