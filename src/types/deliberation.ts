@@ -1,4 +1,5 @@
 import type { ConsiderationProposal } from './consideration'
+import { FullProposal } from './proposals'
 
 export interface DeliberationComment {
 	id: string
@@ -24,30 +25,15 @@ export interface GptSurveySummary {
 }
 
 export interface DeliberationProposal
-	extends Omit<ConsiderationProposal, 'status' | 'currentPhase' | 'voteStats'> {
+	extends Omit<FullProposal, 'status' | 'fundingRound'> {
 	reviewerComments: DeliberationComment[]
 	userDeliberation?: DeliberationVote
 	hasVoted: boolean
-	email: string
-	submitterMetadata: {
-		authSource: {
-			type: string
-			id: string
-			username: string
-		}
-		linkedAccounts?: Array<{
-			id: string
-			authSource: {
-				type: string
-				id: string
-				username: string
-			}
-		}>
-	}
 	gptSurveySummary: GptSurveySummary | null
 	isRecommended: boolean
 	isNotRecommended: boolean
 	isPendingRecommendation: boolean
+	isReviewerEligible: boolean
 }
 
 export interface ProposalComment {

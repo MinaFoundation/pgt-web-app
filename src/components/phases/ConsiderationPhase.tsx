@@ -21,8 +21,6 @@ import {
 	ArrowDownWideNarrowIcon,
 	SearchIcon,
 	FilterIcon,
-	StarIcon,
-	ArrowBigRightDash,
 	PartyPopper,
 } from 'lucide-react'
 import { useConsiderationPhase } from '@/hooks/use-consideration-phase'
@@ -36,7 +34,6 @@ import {
 	HoverCardContent,
 	HoverCardTrigger,
 } from '@/components/ui/hover-card'
-import type { ConsiderationProposalResponseJson } from '@/app/api/funding-rounds/[id]/consideration-proposals/route'
 import {
 	Select,
 	SelectContent,
@@ -49,14 +46,15 @@ import { Input } from '../ui/input'
 import { useQueryState } from 'nuqs'
 import { z } from 'zod'
 import {
-	ConsiderationOptionsSchema,
-	considerationOptionsSchema,
+	getConsiderationProposalsOptionsSchema,
+	GetConsiderationProposalsOptions,
 } from '@/schemas/consideration'
+import { ConsiderationProposal } from '@/types'
 
 type ReviewState = 'initial' | 'decided' | 'editing'
 
 const SORT_OPTIONS: {
-	value: NonNullable<ConsiderationOptionsSchema['sortBy']>
+	value: NonNullable<GetConsiderationProposalsOptions['sortBy']>
 	label: string
 }[] = [
 	{ value: 'createdAt', label: 'Date' },
@@ -70,15 +68,24 @@ export function ConsiderationPhase({
 	fundingRoundId: string
 	fundingRoundMEFId: number
 }) {
-	const [proposals, setProposals] = useState<
-		ConsiderationProposalResponseJson[]
-	>([])
+	const { query, filterBy, sortBy, sortOrder, setFilterBy } =
+		useConsiderationPhaseSearchParams()
 
-	const { data, isLoading } = useConsiderationPhase(fundingRoundId)
+	const [proposals, setProposals] = useState<ConsiderationProposal[]>([])
+
+	const {
+		data: { proposals: _proposals, counts },
+		isLoading,
+	} = useConsiderationPhase(fundingRoundId, {
+		query,
+		filterBy,
+		sortBy,
+		sortOrder,
+	})
 
 	useEffect(() => {
-		if (data) setProposals(data)
-	}, [data])
+		if (_proposals) setProposals(_proposals)
+	}, [_proposals])
 
 	const [reviewStates, setReviewStates] = useState<Record<number, ReviewState>>(
 		{},
@@ -89,7 +96,6 @@ export function ConsiderationPhase({
 	const [expanded, setExpanded] = useState<{
 		[key: number]: boolean
 	}>({})
-	const { filterBy, setFilterBy } = useConsiderationPhaseSearchParams()
 
 	const handleVoteSuccess = useCallback(
 		(proposalId: number, newStatus: ProposalStatus) => {
@@ -110,7 +116,7 @@ export function ConsiderationPhase({
 	})
 
 	useEffect(() => {
-		proposals.forEach((proposal: ConsiderationProposalResponseJson) => {
+		proposals.forEach((proposal: ConsiderationProposal) => {
 			if (proposal.userVote) {
 				setReviewStates(prev => ({ ...prev, [proposal.id]: 'decided' }))
 				setDecisions(prev => ({
@@ -139,12 +145,12 @@ export function ConsiderationPhase({
 
 		const result = await submitVote(proposalId, decision, decisions[proposalId])
 		if (result) {
-			setProposals((prev: ConsiderationProposalResponseJson[]) => {
+			setProposals((prev: ConsiderationProposal[]) => {
 				const updatedProposals = prev.filter(
-					(p: ConsiderationProposalResponseJson) => p.id !== proposalId,
+					(p: ConsiderationProposal) => p.id !== proposalId,
 				)
 				const votedProposal = prev.find(
-					(p: ConsiderationProposalResponseJson) => p.id === proposalId,
+					(p: ConsiderationProposal) => p.id === proposalId,
 				)
 				if (votedProposal) {
 					const newVoteStats = calculateVoteStats(votedProposal, { decision })
@@ -152,7 +158,7 @@ export function ConsiderationPhase({
 						...updatedProposals,
 						{
 							...votedProposal,
-							status: decision.toLowerCase() as 'approved' | 'rejected',
+							status: decision as 'APPROVED' | 'REJECTED',
 							userVote: {
 								decision,
 								feedback: decisions[proposalId],
@@ -198,13 +204,13 @@ export function ConsiderationPhase({
 			newDecision[proposalId],
 		)
 		if (result) {
-			setProposals((prev: ConsiderationProposalResponseJson[]) =>
-				prev.map((p: ConsiderationProposalResponseJson) => {
+			setProposals((prev: ConsiderationProposal[]) =>
+				prev.map((p: ConsiderationProposal) => {
 					if (p.id === proposalId) {
 						const newVoteStats = calculateVoteStats(p, { decision })
 						return {
 							...p,
-							status: decision.toLowerCase() as 'approved' | 'rejected',
+							status: decision as 'APPROVED' | 'REJECTED',
 							userVote: {
 								decision,
 								feedback: newDecision[proposalId],
@@ -226,7 +232,7 @@ export function ConsiderationPhase({
 		}
 	}
 
-	const renderVoteButtons = (proposal: ConsiderationProposalResponseJson) => {
+	const renderVoteButtons = (proposal: ConsiderationProposal) => {
 		if (!proposal.isReviewerEligible) {
 			return (
 				<div className="flex flex-col gap-2 md:flex-row">
@@ -270,7 +276,7 @@ export function ConsiderationPhase({
 		)
 	}
 
-	const renderEditButtons = (proposal: ConsiderationProposalResponseJson) => {
+	const renderEditButtons = (proposal: ConsiderationProposal) => {
 		if (!proposal.isReviewerEligible) {
 			return (
 				<div className="flex gap-2">
@@ -313,21 +319,19 @@ export function ConsiderationPhase({
 		)
 	}
 
-	const renderFeedbackSection = (
-		proposal: ConsiderationProposalResponseJson,
-	) => {
+	const renderFeedbackSection = (proposal: ConsiderationProposal) => {
 		if (!proposal.isReviewerEligible) {
-			if (proposal.status !== 'pending') {
+			if (proposal.status !== 'PENDING') {
 				return (
 					<div className="rounded-md bg-muted p-4">
 						<h4 className="mb-2 font-medium">📋 Status:</h4>
 						<div className="flex items-center gap-2">
 							<Badge
 								variant={
-									proposal.status === 'approved' ? 'default' : 'destructive'
+									proposal.status === 'APPROVED' ? 'default' : 'destructive'
 								}
 							>
-								{proposal.status === 'approved' ? '✅ Approved' : '❌ Rejected'}{' '}
+								{proposal.status === 'APPROVED' ? '✅ Approved' : '❌ Rejected'}{' '}
 								for Deliberation
 							</Badge>
 						</div>
@@ -345,10 +349,10 @@ export function ConsiderationPhase({
 						<div className="mb-2 flex items-center gap-2">
 							<Badge
 								variant={
-									proposal.status === 'approved' ? 'default' : 'destructive'
+									proposal.status === 'APPROVED' ? 'default' : 'destructive'
 								}
 							>
-								{proposal.status === 'approved' ? '✅ Approved' : '❌ Rejected'}
+								{proposal.status === 'APPROVED' ? '✅ Approved' : '❌ Rejected'}
 							</Badge>
 						</div>
 						<p className="text-muted-foreground">{decisions[proposal.id]}</p>
@@ -379,10 +383,10 @@ export function ConsiderationPhase({
 					<div className="mb-2 flex items-center gap-2">
 						<Badge
 							variant={
-								proposal.status === 'approved' ? 'default' : 'destructive'
+								proposal.status === 'APPROVED' ? 'default' : 'destructive'
 							}
 						>
-							{proposal.status === 'approved' ? '✅ Approved' : '❌ Rejected'}
+							{proposal.status === 'APPROVED' ? '✅ Approved' : '❌ Rejected'}
 						</Badge>
 					</div>
 					<p className="text-muted-foreground">
@@ -411,29 +415,23 @@ export function ConsiderationPhase({
 		)
 	}
 
-	if (isLoading) {
-		return <ConsiderationPhaseSkeleton />
-	}
-
 	const tabs: {
 		label: string
-		count: number
+		count?: number
 		icon: React.FC<{ className?: string }>
-		tab: ConsiderationOptionsSchema['filterBy']
+		tab: GetConsiderationProposalsOptions['filterBy']
 		description: string
 	}[] = [
 		{
 			label: 'Proposals',
-			count: proposals.length,
+			count: counts?.total,
 			icon: NotepadTextIcon,
 			tab: 'all',
 			description: 'All proposals submitted for consideration.',
 		},
 		{
 			label: 'Approved',
-			count: proposals.filter(
-				(p: ConsiderationProposalResponseJson) => p.status === 'approved',
-			).length,
+			count: counts?.approved,
 			icon: ArrowDownNarrowWideIcon,
 			tab: 'approved',
 			description:
@@ -441,19 +439,15 @@ export function ConsiderationPhase({
 		},
 		{
 			label: 'Rejected',
-			count: proposals.filter(
-				(p: ConsiderationProposalResponseJson) => p.status === 'rejected',
-			).length,
+			count: counts?.rejected,
 			icon: ArrowDownWideNarrowIcon,
 			tab: 'rejected',
 			description:
-				'These proposals have been rejected and will not receive funding.',
+				'These proposals were rejected by reviewers. Community can still vote to overturn the decision.',
 		},
 		{
 			label: 'Pending',
-			count: proposals.filter(
-				(p: ConsiderationProposalResponseJson) => p.status === 'pending',
-			).length,
+			count: counts?.pending,
 			icon: CircleDashedIcon,
 			tab: 'pending',
 			description:
@@ -509,454 +503,470 @@ export function ConsiderationPhase({
 				<ConsiderationPhaseControls />
 			</header>
 
-			<div className="space-y-6">
-				{/* Consideration Phase Proposals */}
-				<div className="grid gap-4">
-					{proposals.map(proposal => (
-						<Card
-							key={proposal.id}
-							className={cn(
-								'relative transition-all duration-200',
-								proposal.status === 'approved' &&
-									'border-green-500/20 bg-green-50/50 dark:bg-green-900/10',
-								proposal.status === 'rejected' &&
-									'border-red-500/20 bg-red-50/50 dark:bg-red-900/10',
-							)}
-						>
-							<CardHeader className="flex items-start justify-between">
-								<div className="w-full">
-									<div className="flex flex-col-reverse items-center gap-2 md:flex-row md:justify-between">
-										<CardTitle className="text-2xl">{proposal.title}</CardTitle>
-										{proposal.currentPhase === 'DELIBERATION' && (
-											<div className="flex w-full items-center justify-center gap-1 rounded-full border border-green-900/30 bg-green-100 px-4 py-1 text-sm font-semibold text-green-900 md:w-fit">
-												<PartyPopper className="h-3 w-3" /> Moving to
-												Deliberation
+			{isLoading ? (
+				<ConsiderationProposalsSkeleton />
+			) : (
+				<div className="space-y-6">
+					{/* Consideration Phase Proposals */}
+					<div className="grid gap-4">
+						{proposals.map(proposal => (
+							<Card
+								key={proposal.id}
+								className={cn(
+									'relative transition-all duration-200',
+									proposal.status === 'APPROVED' &&
+										'border-green-500/20 bg-green-50/50 dark:bg-green-900/10',
+									proposal.status === 'REJECTED' &&
+										'border-red-500/20 bg-red-50/50 dark:bg-red-900/10',
+								)}
+							>
+								<CardHeader className="flex items-start justify-between">
+									<div className="w-full">
+										<div className="flex flex-col-reverse items-center gap-2 md:flex-row md:justify-between">
+											<CardTitle className="text-2xl">
+												{proposal.title}
+											</CardTitle>
+											{proposal.currentPhase === 'DELIBERATION' && (
+												<div className="flex w-full items-center justify-center gap-1 rounded-full border border-green-900/30 bg-green-100 px-4 py-1 text-sm font-semibold text-green-900 md:w-fit">
+													<PartyPopper className="h-3 w-3" /> Moving to
+													Deliberation
+												</div>
+											)}
+										</div>
+										<CardDescription className="break-all">
+											👤 Submitted by {proposal.user.username}
+										</CardDescription>
+										<div className="mt-4">
+											<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+												{/* Reviewer Votes */}
+												<VoteStatusCard
+													icon="👥"
+													title="Reviewer Votes"
+													eligibilityStatus={
+														proposal.voteStats.reviewerVote.isEligible
+															? 'Eligible'
+															: `Need ${proposal.voteStats.reviewerVote.requiredReviewerApprovals - proposal.voteStats.reviewerVote.approved} more`
+													}
+													isEligible={
+														proposal.voteStats.reviewerVote.isEligible
+													}
+													stats={
+														<VoteProgress
+															APPROVED={
+																proposal.voteStats.reviewerVote.approved
+															}
+															REJECTED={
+																proposal.voteStats.reviewerVote.rejected
+															}
+															total={proposal.voteStats.reviewerVote.total}
+														/>
+													}
+												>
+													<div />
+												</VoteStatusCard>
+
+												{/* Community Votes */}
+												<VoteStatusCard
+													icon="🌍"
+													title="Community Votes"
+													eligibilityStatus={
+														proposal.voteStats.communityVote.isEligible
+															? 'Eligible'
+															: 'Not Eligible'
+													}
+													isEligible={
+														proposal.voteStats.communityVote.isEligible
+													}
+												>
+													<HoverCard>
+														<HoverCardTrigger asChild>
+															<div className="flex cursor-help items-center justify-between">
+																<div className="flex items-center gap-2">
+																	<span className="text-sm font-medium text-green-600">
+																		{proposal.voteStats.communityVote.positive}{' '}
+																		votes
+																	</span>
+																	<span className="text-xs text-muted-foreground">
+																		(
+																		{
+																			proposal.voteStats.communityVote
+																				.positiveStakeWeight
+																		}{' '}
+																		stake)
+																	</span>
+																</div>
+																<Button
+																	variant="ghost"
+																	size="sm"
+																	className="text-xs text-muted-foreground"
+																>
+																	View Voters ↗
+																</Button>
+															</div>
+														</HoverCardTrigger>
+														<HoverCardContent
+															className="w-full max-w-[340px]"
+															align="end"
+															side="left"
+														>
+															<div className="space-y-3">
+																<div className="flex items-center justify-between">
+																	<h4 className="text-sm font-semibold">
+																		Community Voters
+																	</h4>
+																	<Badge variant="outline" className="text-xs">
+																		{
+																			proposal.voteStats.communityVote.voters
+																				.length
+																		}{' '}
+																		total
+																	</Badge>
+																</div>
+
+																<div className="rounded bg-muted/50 p-2 text-xs text-muted-foreground">
+																	Note: OCV votes may take up to 10 minutes to
+																	appear here. Don&apos;t worry if your vote
+																	doesn&apos;t show up immediately after voting.
+																</div>
+
+																{proposal.voteStats.communityVote.voters
+																	.length > 0 ? (
+																	<div className="-mr-2 max-h-[240px] space-y-1.5 overflow-y-auto pr-2">
+																		{proposal.voteStats.communityVote.voters.map(
+																			(voter, i) => (
+																				<div
+																					key={i}
+																					className="flex items-center justify-between rounded-md p-1.5 transition-colors hover:bg-muted"
+																				>
+																					<div className="flex min-w-0 flex-1 items-center gap-2">
+																						<span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs text-primary">
+																							{i + 1}
+																						</span>
+																						<VoterAddress
+																							address={voter.address}
+																						/>
+																					</div>
+																					<div className="flex-shrink-0 pl-2">
+																						<FormattedTimestamp
+																							timestamp={voter.timestamp}
+																						/>
+																					</div>
+																				</div>
+																			),
+																		)}
+																	</div>
+																) : (
+																	<div className="py-4 text-center text-sm text-muted-foreground">
+																		No votes yet
+																	</div>
+																)}
+
+																<div className="border-t pt-2">
+																	<p className="text-xs text-muted-foreground">
+																		Total Stake Weight:{' '}
+																		{
+																			proposal.voteStats.communityVote
+																				.positiveStakeWeight
+																		}
+																	</p>
+																</div>
+															</div>
+														</HoverCardContent>
+													</HoverCard>
+												</VoteStatusCard>
 											</div>
-										)}
-									</div>
-									<CardDescription className="break-all">
-										👤 Submitted by {proposal.submitter}
-									</CardDescription>
-									<div className="mt-4">
-										<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-											{/* Reviewer Votes */}
-											<VoteStatusCard
-												icon="👥"
-												title="Reviewer Votes"
-												eligibilityStatus={
-													proposal.voteStats.reviewerEligible
-														? 'Eligible'
-														: `Need ${proposal.voteStats.requiredReviewerApprovals - proposal.voteStats.approved} more`
-												}
-												isEligible={proposal.voteStats.reviewerEligible}
-												stats={
-													<VoteProgress
-														approved={proposal.voteStats.approved}
-														rejected={proposal.voteStats.rejected}
-														total={proposal.voteStats.total}
-													/>
-												}
-											>
-												<div />
-											</VoteStatusCard>
-
-											{/* Community Votes */}
-											<VoteStatusCard
-												icon="🌍"
-												title="Community Votes"
-												eligibilityStatus={
-													proposal.voteStats.communityVotes.isEligible
-														? 'Eligible'
-														: 'Not Eligible'
-												}
-												isEligible={
-													proposal.voteStats.communityVotes.isEligible
-												}
-											>
-												<HoverCard>
-													<HoverCardTrigger asChild>
-														<div className="flex cursor-help items-center justify-between">
-															<div className="flex items-center gap-2">
-																<span className="text-sm font-medium text-green-600">
-																	{proposal.voteStats.communityVotes.positive}{' '}
-																	votes
-																</span>
-																<span className="text-xs text-muted-foreground">
-																	(
-																	{
-																		proposal.voteStats.communityVotes
-																			.positiveStakeWeight
-																	}{' '}
-																	stake)
-																</span>
-															</div>
-															<Button
-																variant="ghost"
-																size="sm"
-																className="text-xs text-muted-foreground"
-															>
-																View Voters ↗
-															</Button>
-														</div>
-													</HoverCardTrigger>
-													<HoverCardContent
-														className="w-full max-w-[340px]"
-														align="end"
-														side="left"
-													>
-														<div className="space-y-3">
-															<div className="flex items-center justify-between">
-																<h4 className="text-sm font-semibold">
-																	Community Voters
-																</h4>
-																<Badge variant="outline" className="text-xs">
-																	{
-																		proposal.voteStats.communityVotes.voters
-																			.length
-																	}{' '}
-																	total
-																</Badge>
-															</div>
-
-															<div className="rounded bg-muted/50 p-2 text-xs text-muted-foreground">
-																Note: OCV votes may take up to 10 minutes to
-																appear here. Don&apos;t worry if your vote
-																doesn&apos;t show up immediately after voting.
-															</div>
-
-															{proposal.voteStats.communityVotes.voters.length >
-															0 ? (
-																<div className="-mr-2 max-h-[240px] space-y-1.5 overflow-y-auto pr-2">
-																	{proposal.voteStats.communityVotes.voters.map(
-																		(voter, i) => (
-																			<div
-																				key={i}
-																				className="flex items-center justify-between rounded-md p-1.5 transition-colors hover:bg-muted"
-																			>
-																				<div className="flex min-w-0 flex-1 items-center gap-2">
-																					<span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs text-primary">
-																						{i + 1}
-																					</span>
-																					<VoterAddress
-																						address={voter.address}
-																					/>
-																				</div>
-																				<div className="flex-shrink-0 pl-2">
-																					<FormattedTimestamp
-																						timestamp={voter.timestamp}
-																					/>
-																				</div>
-																			</div>
-																		),
-																	)}
-																</div>
-															) : (
-																<div className="py-4 text-center text-sm text-muted-foreground">
-																	No votes yet
-																</div>
-															)}
-
-															<div className="border-t pt-2">
-																<p className="text-xs text-muted-foreground">
-																	Total Stake Weight:{' '}
-																	{
-																		proposal.voteStats.communityVotes
-																			.positiveStakeWeight
-																	}
-																</p>
-															</div>
-														</div>
-													</HoverCardContent>
-												</HoverCard>
-											</VoteStatusCard>
 										</div>
 									</div>
-								</div>
-								{proposal.status !== 'pending' && (
-									<Badge
-										variant={
-											proposal.status === 'approved' ? 'default' : 'destructive'
-										}
-									>
-										{proposal.status === 'approved'
-											? '✅ Approved'
-											: '❌ Rejected'}
-									</Badge>
-								)}
-							</CardHeader>
-							<CardContent className="space-y-4">
-								<div>
-									<h3 className="mb-2 text-xl font-semibold">Summary</h3>
-									{expanded[proposal.id] ? (
-										<>
-											<p className="mb-4 text-muted-foreground">
-												{proposal.proposalSummary}
-											</p>
-											<div className="space-y-4">
-												<div>
-													<h3 className="mb-2 text-xl font-semibold">
-														Key Objectives
-													</h3>
-													<p className="text-muted-foreground">
-														{proposal.keyObjectives}
-													</p>
-												</div>
-												<div>
-													<h3 className="mb-2 text-xl font-semibold">
-														Problem Statement
-													</h3>
-													<p className="text-muted-foreground">
-														{proposal.problemStatement}
-													</p>
-												</div>
-												<div>
-													<h3 className="mb-2 text-xl font-semibold">
-														Problem Importance
-													</h3>
-													<p className="text-muted-foreground">
-														{proposal.problemImportance}
-													</p>
-												</div>
-												<div>
-													<h3 className="mb-2 text-xl font-semibold">
-														Proposed Solution
-													</h3>
-													<p className="text-muted-foreground">
-														{proposal.proposedSolution}
-													</p>
-												</div>
-												<div>
-													<h3 className="mb-2 text-xl font-semibold">
-														Implementation Details
-													</h3>
-													<p className="text-muted-foreground">
-														{proposal.implementationDetails}
-													</p>
-												</div>
-												<div>
-													<h3 className="mb-2 text-xl font-semibold">
-														Total Funding Required
-													</h3>
-													<p className="text-muted-foreground">
-														{proposal.totalFundingRequired.toLocaleString()}{' '}
-														MINA
-													</p>
-												</div>
-												<div>
-													<h3 className="mb-2 text-xl font-semibold">
-														Community Benefits
-													</h3>
-													<p className="text-muted-foreground">
-														{proposal.communityBenefits}
-													</p>
-												</div>
-												<div>
-													<h3 className="mb-2 text-xl font-semibold">
-														Key Performance Indicators
-													</h3>
-													<p className="text-muted-foreground">
-														{proposal.keyPerformanceIndicators}
-													</p>
-												</div>
-												<div>
-													<h3 className="mb-2 text-xl font-semibold">
-														Budget Breakdown
-													</h3>
-													<p className="text-muted-foreground">
-														{proposal.budgetBreakdown}
-													</p>
-												</div>
-												<div>
-													<h3 className="mb-2 text-xl font-semibold">
-														Milestones
-													</h3>
-													<p className="text-muted-foreground">
-														{proposal.milestones}
-													</p>
-												</div>
-												<div>
-													<h3 className="mb-2 text-xl font-semibold">
-														Estimated Completion Date
-													</h3>
-													<p className="text-muted-foreground">
-														{new Date(
-															proposal.estimatedCompletionDate,
-														).toLocaleDateString()}
-													</p>
-												</div>
-												<div>
-													<h3 className="mb-2 text-xl font-semibold">
-														Team Members
-													</h3>
-													<p className="text-muted-foreground">
-														{proposal.teamMembers}
-													</p>
-												</div>
-												<div>
-													<h3 className="mb-2 text-xl font-semibold">
-														Relevant Experience
-													</h3>
-													<p className="text-muted-foreground">
-														{proposal.relevantExperience}
-													</p>
-												</div>
-												<div>
-													<h3 className="mb-2 text-xl font-semibold">
-														Potential Risks
-													</h3>
-													<p className="text-muted-foreground">
-														{proposal.potentialRisks}
-													</p>
-												</div>
-												<div>
-													<h3 className="mb-2 text-xl font-semibold">
-														Mitigation Plans
-													</h3>
-													<p className="text-muted-foreground">
-														{proposal.mitigationPlans}
-													</p>
-												</div>
-												<div>
-													<h3 className="mb-2 text-xl font-semibold">
-														Contact Information
-													</h3>
-													<div className="space-y-2">
+									{proposal.status !== 'PENDING' && (
+										<Badge
+											variant={
+												proposal.status === 'APPROVED'
+													? 'default'
+													: 'destructive'
+											}
+										>
+											{proposal.status === 'APPROVED'
+												? '✅ Approved'
+												: '❌ Rejected'}
+										</Badge>
+									)}
+								</CardHeader>
+								<CardContent className="space-y-4">
+									<div>
+										<h3 className="mb-2 text-xl font-semibold">Summary</h3>
+										{expanded[proposal.id] ? (
+											<>
+												<p className="mb-4 text-muted-foreground">
+													{proposal.summary}
+												</p>
+												<div className="space-y-4">
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Key Objectives
+														</h3>
 														<p className="text-muted-foreground">
-															Discord: {proposal.discordHandle}
+															{proposal.keyObjectives}
 														</p>
+													</div>
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Problem Statement
+														</h3>
 														<p className="text-muted-foreground">
-															Email: {proposal.email}
+															{proposal.problemStatement}
 														</p>
-														{proposal.website && (
+													</div>
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Problem Importance
+														</h3>
+														<p className="text-muted-foreground">
+															{proposal.problemImportance}
+														</p>
+													</div>
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Proposed Solution
+														</h3>
+														<p className="text-muted-foreground">
+															{proposal.proposedSolution}
+														</p>
+													</div>
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Implementation Details
+														</h3>
+														<p className="text-muted-foreground">
+															{proposal.implementationDetails}
+														</p>
+													</div>
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Total Funding Required
+														</h3>
+														<p className="text-muted-foreground">
+															{proposal.totalFundingRequired.toLocaleString()}{' '}
+															MINA
+														</p>
+													</div>
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Community Benefits
+														</h3>
+														<p className="text-muted-foreground">
+															{proposal.communityBenefits}
+														</p>
+													</div>
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Key Performance Indicators
+														</h3>
+														<p className="text-muted-foreground">
+															{proposal.keyPerformanceIndicators}
+														</p>
+													</div>
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Budget Breakdown
+														</h3>
+														<p className="text-muted-foreground">
+															{proposal.budgetBreakdown}
+														</p>
+													</div>
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Milestones
+														</h3>
+														<p className="text-muted-foreground">
+															{proposal.milestones}
+														</p>
+													</div>
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Estimated Completion Date
+														</h3>
+														<p className="text-muted-foreground">
+															{new Date(
+																proposal.estimatedCompletionDate,
+															).toLocaleDateString()}
+														</p>
+													</div>
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Team Members
+														</h3>
+														<p className="text-muted-foreground">
+															{proposal.teamMembers}
+														</p>
+													</div>
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Relevant Experience
+														</h3>
+														<p className="text-muted-foreground">
+															{proposal.relevantExperience}
+														</p>
+													</div>
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Potential Risks
+														</h3>
+														<p className="text-muted-foreground">
+															{proposal.potentialRisks}
+														</p>
+													</div>
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Mitigation Plans
+														</h3>
+														<p className="text-muted-foreground">
+															{proposal.mitigationPlans}
+														</p>
+													</div>
+													<div>
+														<h3 className="mb-2 text-xl font-semibold">
+															Contact Information
+														</h3>
+														<div className="space-y-2">
 															<p className="text-muted-foreground">
-																Website:{' '}
-																<a
-																	href={proposal.website}
-																	target="_blank"
-																	rel="noopener noreferrer"
-																	className="text-primary hover:underline"
-																>
-																	{proposal.website}
-																</a>
+																Discord: {proposal.discordHandle}
 															</p>
-														)}
-														{proposal.githubProfile && (
 															<p className="text-muted-foreground">
-																GitHub:{' '}
-																<a
-																	href={proposal.githubProfile}
-																	target="_blank"
-																	rel="noopener noreferrer"
-																	className="text-primary hover:underline"
-																>
-																	{proposal.githubProfile}
-																</a>
+																Email: {proposal.email}
 															</p>
-														)}
-														{proposal.otherLinks && (
-															<p className="text-muted-foreground">
-																Other Links:{' '}
-																<span className="text-primary">
-																	{proposal.otherLinks}
-																</span>
-															</p>
-														)}
+															{proposal.website && (
+																<p className="text-muted-foreground">
+																	Website:{' '}
+																	<a
+																		href={proposal.website}
+																		target="_blank"
+																		rel="noopener noreferrer"
+																		className="text-primary hover:underline"
+																	>
+																		{proposal.website}
+																	</a>
+																</p>
+															)}
+															{proposal.githubProfile && (
+																<p className="text-muted-foreground">
+																	GitHub:{' '}
+																	<a
+																		href={proposal.githubProfile}
+																		target="_blank"
+																		rel="noopener noreferrer"
+																		className="text-primary hover:underline"
+																	>
+																		{proposal.githubProfile}
+																	</a>
+																</p>
+															)}
+															{proposal.otherLinks && (
+																<p className="text-muted-foreground">
+																	Other Links:{' '}
+																	<span className="text-primary">
+																		{proposal.otherLinks}
+																	</span>
+																</p>
+															)}
+														</div>
 													</div>
 												</div>
-											</div>
-										</>
-									) : (
-										<p className="line-clamp-3 text-muted-foreground">
-											{proposal.proposalSummary}
-										</p>
-									)}
-								</div>
+											</>
+										) : (
+											<p className="line-clamp-3 text-muted-foreground">
+												{proposal.summary}
+											</p>
+										)}
+									</div>
 
-								{renderFeedbackSection(proposal)}
-							</CardContent>
-							<CardFooter className="flex items-center justify-between">
-								<Button
-									variant="ghost"
-									className="gap-2"
-									onClick={() => toggleExpanded(proposal.id)}
-								>
-									{expanded[proposal.id] ? (
-										<>
-											See less
-											<ChevronDown className="h-4 w-4" />
-										</>
-									) : (
-										<>
-											See more
-											<ChevronRight className="h-4 w-4" />
-										</>
-									)}
-								</Button>
+									{renderFeedbackSection(proposal)}
+								</CardContent>
+								<CardFooter className="flex items-center justify-between">
+									<Button
+										variant="ghost"
+										className="gap-2"
+										onClick={() => toggleExpanded(proposal.id)}
+									>
+										{expanded[proposal.id] ? (
+											<>
+												See less
+												<ChevronDown className="h-4 w-4" />
+											</>
+										) : (
+											<>
+												See more
+												<ChevronRight className="h-4 w-4" />
+											</>
+										)}
+									</Button>
 
-								<div className="flex items-center gap-4">
-									{reviewStates[proposal.id] === 'editing' ? (
-										<>
-											<Button
-												variant="outline"
-												onClick={() => cancelEdit(proposal.id)}
-											>
-												❌ Cancel
-											</Button>
-											{renderEditButtons(proposal)}
-										</>
-									) : reviewStates[proposal.id] === 'decided' ? (
-										<>
-											{proposal.isReviewerEligible && (
+									<div className="flex items-center gap-4">
+										{reviewStates[proposal.id] === 'editing' ? (
+											<>
 												<Button
-													variant="ghost"
-													className="underline"
-													onClick={() => startEdit(proposal.id)}
+													variant="outline"
+													onClick={() => cancelEdit(proposal.id)}
 												>
-													✏️ Edit Decision
+													❌ Cancel
 												</Button>
-											)}
-											<Badge
-												variant={
-													proposal.status === 'approved'
-														? 'default'
-														: 'destructive'
-												}
-											>
-												{proposal.status === 'approved'
-													? '✅ Approved'
-													: '❌ Rejected'}{' '}
-												for Deliberation
-											</Badge>
-										</>
-									) : (
-										<>{renderVoteButtons(proposal)}</>
-									)}
-								</div>
-							</CardFooter>
-						</Card>
-					))}
+												{renderEditButtons(proposal)}
+											</>
+										) : reviewStates[proposal.id] === 'decided' ? (
+											<>
+												{proposal.isReviewerEligible && (
+													<Button
+														variant="ghost"
+														className="underline"
+														onClick={() => startEdit(proposal.id)}
+													>
+														✏️ Edit Decision
+													</Button>
+												)}
+												<Badge
+													variant={
+														proposal.status === 'APPROVED'
+															? 'default'
+															: 'destructive'
+													}
+												>
+													{proposal.status === 'APPROVED'
+														? '✅ Approved'
+														: '❌ Rejected'}{' '}
+													for Deliberation
+												</Badge>
+											</>
+										) : (
+											<>{renderVoteButtons(proposal)}</>
+										)}
+									</div>
+								</CardFooter>
+							</Card>
+						))}
+					</div>
 				</div>
-			</div>
+			)}
 		</div>
 	)
 }
 
 function useConsiderationPhaseSearchParams() {
 	const [sortBy, setSortBy] = useQueryState<
-		ConsiderationOptionsSchema['sortBy']
+		GetConsiderationProposalsOptions['sortBy']
 	>('sortBy', {
 		defaultValue: 'createdAt',
-		parse: value => considerationOptionsSchema.shape.sortBy.parse(value),
+		parse: value =>
+			getConsiderationProposalsOptionsSchema.shape.sortBy.parse(value),
 	})
 	const [sortOrder, setSortOrder] = useQueryState<
-		ConsiderationOptionsSchema['sortOrder']
+		GetConsiderationProposalsOptions['sortOrder']
 	>('sortOrder', {
 		defaultValue: 'desc',
-		parse: value => considerationOptionsSchema.shape.sortOrder.parse(value),
+		parse: value =>
+			getConsiderationProposalsOptionsSchema.shape.sortOrder.parse(value),
 	})
 	const [query, setQuery] = useQueryState('query')
 	const [filterBy, setFilterBy] = useQueryState<
-		ConsiderationOptionsSchema['filterBy']
+		GetConsiderationProposalsOptions['filterBy']
 	>('filterBy', {
 		defaultValue: 'all',
 		parse: value =>
@@ -991,14 +1001,14 @@ function ConsiderationPhaseControls({ disabled }: { disabled?: boolean }) {
 	)
 
 	const handleSortByChange = useCallback(
-		(value: NonNullable<ConsiderationOptionsSchema['sortBy']>) => {
+		(value: NonNullable<GetConsiderationProposalsOptions['sortBy']>) => {
 			setSortBy(value)
 		},
 		[setSortBy],
 	)
 
 	const handleSortOrderChange = useCallback(
-		(value: NonNullable<ConsiderationOptionsSchema['sortOrder']>) => {
+		(value: NonNullable<GetConsiderationProposalsOptions['sortOrder']>) => {
 			setSortOrder(value)
 		},
 		[setSortOrder],
@@ -1083,26 +1093,27 @@ function ConsiderationPhaseControls({ disabled }: { disabled?: boolean }) {
 }
 
 function calculateVoteStats(
-	proposal: ConsiderationProposalResponseJson,
+	proposal: ConsiderationProposal,
 	newVote?: { decision: 'APPROVED' | 'REJECTED' },
 ) {
 	const stats = { ...proposal.voteStats }
 
 	// Update vote counts
 	if (proposal.userVote && newVote) {
-		if (proposal.userVote.decision === 'APPROVED') stats.approved--
-		if (proposal.userVote.decision === 'REJECTED') stats.rejected--
-		stats.total--
+		if (proposal.userVote.decision === 'APPROVED') stats.reviewerVote.approved--
+		if (proposal.userVote.decision === 'REJECTED') stats.reviewerVote.rejected--
+		stats.reviewerVote.total--
 	}
 
 	if (newVote) {
-		if (newVote.decision === 'APPROVED') stats.approved++
-		if (newVote.decision === 'REJECTED') stats.rejected++
-		stats.total++
+		if (newVote.decision === 'APPROVED') stats.reviewerVote.approved++
+		if (newVote.decision === 'REJECTED') stats.reviewerVote.rejected++
+		stats.reviewerVote.total++
 	}
 
 	// Recalculate reviewer eligibility based on new vote counts
-	stats.reviewerEligible = stats.approved >= stats.requiredReviewerApprovals
+	stats.reviewerVote.isEligible =
+		stats.reviewerVote.total >= stats.reviewerVote.requiredReviewerApprovals
 
 	return stats
 }
@@ -1151,26 +1162,26 @@ function VoteStatusCard({
 
 // Add this helper component for vote progress
 function VoteProgress({
-	approved,
-	rejected,
+	APPROVED,
+	REJECTED,
 	total,
 }: {
-	approved: number
-	rejected: number
+	APPROVED: number
+	REJECTED: number
 	total: number
 }) {
-	const approvedPercent = total > 0 ? (approved / total) * 100 : 0
-	const rejectedPercent = total > 0 ? (rejected / total) * 100 : 0
+	const APPROVEDPercent = total > 0 ? (APPROVED / total) * 100 : 0
+	const REJECTEDPercent = total > 0 ? (REJECTED / total) * 100 : 0
 
 	return (
 		<div className="space-y-1">
 			<div className="flex justify-between text-xs text-muted-foreground">
 				<div className="flex gap-4">
 					<span className="font-medium text-green-600">
-						{approved} Approved ({Math.round(approvedPercent)}%)
+						{APPROVED} Approved ({Math.round(APPROVEDPercent)}%)
 					</span>
 					<span className="font-medium text-red-600">
-						{rejected} Rejected ({Math.round(rejectedPercent)}%)
+						{REJECTED} Rejected ({Math.round(REJECTEDPercent)}%)
 					</span>
 				</div>
 				<span>&nbsp;{total} total</span>
@@ -1179,11 +1190,11 @@ function VoteProgress({
 				<div className="absolute inset-0 flex w-full">
 					<div
 						className="bg-green-500 transition-all duration-300"
-						style={{ width: `${approvedPercent}%` }}
+						style={{ width: `${APPROVEDPercent}%` }}
 					/>
 					<div
 						className="bg-red-500 transition-all duration-300"
-						style={{ width: `${rejectedPercent}%` }}
+						style={{ width: `${REJECTEDPercent}%` }}
 					/>
 				</div>
 			</div>
@@ -1227,33 +1238,16 @@ function VoterAddress({ address }: { address: string }) {
 	)
 }
 
-function ConsiderationPhaseSkeleton() {
+function ConsiderationProposalsSkeleton() {
 	return (
-		<div className="space-y-8">
-			<header>
-				<h2 className="text-2xl font-bold tracking-tight">
-					Consideration Phase
-				</h2>
-				<p className="text-gray-700">
-					Review submitted proposals and determine which ones you find valuable
-					enough to receive funding.
-				</p>
-				<div className="mt-2 flex gap-2">
-					<Badge className="h-6 w-20 animate-pulse bg-muted" />
-					<Badge className="h-6 w-20 animate-pulse bg-muted" />
-				</div>
-			</header>
-
-			<div className="space-y-6">
-				{/* Consideration Phase Proposals */}
-				<div className="grid gap-4">
-					{new Array(2).fill('').map((_, index) => (
-						<div
-							key={index}
-							className="h-40 w-full animate-pulse rounded-md bg-muted"
-						/>
-					))}
-				</div>
+		<div className="space-y-6">
+			<div className="grid gap-4">
+				{new Array(2).fill('').map((_, index) => (
+					<div
+						key={index}
+						className="h-40 w-full animate-pulse rounded-md bg-muted"
+					/>
+				))}
 			</div>
 		</div>
 	)

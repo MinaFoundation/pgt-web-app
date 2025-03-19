@@ -47,11 +47,11 @@ export function OCVVoteButton({
 
 	const existingVote = useMemo(() => {
 		if (!state.wallet?.address) return null
-		return voteStats.communityVotes.voters.find(
+		return voteStats.communityVote.voters.find(
 			(voter: Voter) =>
 				voter.address.toLowerCase() === state.wallet!.address.toLowerCase(),
 		)
-	}, [voteStats.communityVotes.voters, state.wallet])
+	}, [voteStats.communityVote.voters, state.wallet])
 
 	const handleVoteClick = async () => {
 		if (!isWalletEnabled) {

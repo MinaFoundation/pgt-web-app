@@ -1,12 +1,13 @@
-import {
+import { Prisma, PrismaClient } from '@prisma/client'
+import { z } from 'zod'
+import type {
 	FundingRound,
 	FundingRoundPhase,
 	FundingRoundPhases,
 	FundingRoundStatus,
 	FundingRoundWithPhases,
 } from '@/types/funding-round'
-import { Prisma, PrismaClient } from '@prisma/client'
-import { z } from 'zod'
+import { AppError } from '@/lib/errors'
 
 export const getPublicFundingRoundsOptionsSchema = z.object({
 	query: z.string().optional().nullable(),
@@ -433,5 +434,43 @@ export class FundingRoundService {
 			text: `${minutes}m`,
 			emoji: '⚡',
 		}
+	}
+
+	async isReviewer(
+		user: { id: string; linkId: string },
+		fundingRoundId: string,
+	) {
+		// Get the funding round with topic and reviewer groups
+		const fundingRound = await this.prisma.fundingRound.findUnique({
+			where: { id: fundingRoundId },
+			select: {
+				topic: {
+					include: {
+						reviewerGroups: {
+							include: {
+								reviewerGroup: {
+									include: {
+										members: true,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		})
+
+		if (!fundingRound) {
+			throw AppError.notFound('Funding round not found')
+		}
+
+		// Check if user is a reviewer
+		const isReviewer = fundingRound.topic.reviewerGroups.some(trg =>
+			trg.reviewerGroup.members.some(
+				m => m.userId === user.id || m.userId === user.linkId,
+			),
+		)
+
+		return isReviewer
 	}
 }
