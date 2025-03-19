@@ -418,23 +418,21 @@ export function ConsiderationPhase({
 
 	const tabs: {
 		label: string
-		count: number
+		count?: number
 		icon: React.FC<{ className?: string }>
 		tab: GetConsiderationProposalsOptions['filterBy']
 		description: string
 	}[] = [
 		{
 			label: 'Proposals',
-			count: proposals.length,
+			count: data?.counts.total,
 			icon: NotepadTextIcon,
 			tab: 'all',
 			description: 'All proposals submitted for consideration.',
 		},
 		{
 			label: 'Approved',
-			count: proposals.filter(
-				(p: ConsiderationProposal) => p.status === 'APPROVED',
-			).length,
+			count: data?.counts.approved,
 			icon: ArrowDownNarrowWideIcon,
 			tab: 'approved',
 			description:
@@ -442,9 +440,7 @@ export function ConsiderationPhase({
 		},
 		{
 			label: 'Rejected',
-			count: proposals.filter(
-				(p: ConsiderationProposal) => p.status === 'REJECTED',
-			).length,
+			count: data?.counts.rejected,
 			icon: ArrowDownWideNarrowIcon,
 			tab: 'rejected',
 			description:
@@ -452,9 +448,7 @@ export function ConsiderationPhase({
 		},
 		{
 			label: 'Pending',
-			count: proposals.filter(
-				(p: ConsiderationProposal) => p.status === 'PENDING',
-			).length,
+			count: data?.counts.pending,
 			icon: CircleDashedIcon,
 			tab: 'pending',
 			description:
