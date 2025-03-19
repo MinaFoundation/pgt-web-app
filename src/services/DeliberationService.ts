@@ -349,34 +349,6 @@ export class DeliberationService {
 			}
 		})
 
-		const sortedProposals = filteredProposals.sort((a, b) => {
-			if (options.sortBy === 'createdAt') {
-				return options.sortOrder === 'asc'
-					? a.createdAt.getTime() - b.createdAt.getTime()
-					: b.createdAt.getTime() - a.createdAt.getTime()
-			}
-
-			if (options.sortBy === 'status') {
-				// Define status priority (higher number = higher priority)
-				const getStatusPriority = (proposal: DeliberationProposal) => {
-					if (proposal.isRecommended) return 3
-					if (proposal.isNotRecommended) return 2
-					if (proposal.isPendingRecommendation) return 1
-					return 0 // Fallback for any other status
-				}
-
-				const priorityA = getStatusPriority(a)
-				const priorityB = getStatusPriority(b)
-
-				// Apply sort order
-				return options.sortOrder === 'asc'
-					? priorityA - priorityB
-					: priorityB - priorityA
-			}
-
-			return 0
-		})
-
 		return {
 			proposals: filteredProposals,
 			pendingRecommendationCount: transformedProposals.filter(
