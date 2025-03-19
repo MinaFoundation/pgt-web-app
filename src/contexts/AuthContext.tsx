@@ -68,7 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			})
 			setUser(null)
 		}
-	}, [toast])
+	}, [toast, queryClient])
 
 	useEffect(() => {
 		// Only run initial auth check if we have cookies
