@@ -446,7 +446,7 @@ function DeliberationProposalCard({
 					<div>
 						<CardTitle className="text-2xl">{proposal.title}</CardTitle>
 						<CardDescription className="break-all">
-							👤 Submitted by {proposal.submitter}
+							👤 Submitted by {proposal.user.username}
 						</CardDescription>
 					</div>
 					{renderVoteStatus(proposal)}
@@ -458,9 +458,7 @@ function DeliberationProposalCard({
 					<h3 className="mb-2 text-xl font-semibold">Summary</h3>
 					{expanded[proposal.id] ? (
 						<>
-							<p className="mb-4 text-muted-foreground">
-								{proposal.proposalSummary}
-							</p>
+							<p className="mb-4 text-muted-foreground">{proposal.summary}</p>
 							<div className="space-y-4">
 								<div>
 									<h3 className="mb-2 text-xl font-semibold">Key Objectives</h3>
@@ -627,7 +625,7 @@ function DeliberationProposalCard({
 						</>
 					) : (
 						<p className="line-clamp-3 text-muted-foreground">
-							{proposal.proposalSummary}
+							{proposal.summary}
 						</p>
 					)}
 				</div>
