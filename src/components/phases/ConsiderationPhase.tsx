@@ -513,7 +513,7 @@ export function ConsiderationPhase({
 							<Card
 								key={proposal.id}
 								className={cn(
-									'relative transition-all duration-200',
+									'relative w-full overflow-hidden transition-all duration-200',
 									proposal.status === 'APPROVED' &&
 										'border-green-500/20 bg-green-50/50 dark:bg-green-900/10',
 									proposal.status === 'REJECTED' &&
@@ -691,7 +691,7 @@ export function ConsiderationPhase({
 										</Badge>
 									)}
 								</CardHeader>
-								<CardContent className="space-y-4">
+								<CardContent className="space-y-4 break-words">
 									<div>
 										<h3 className="mb-2 text-xl font-semibold">Summary</h3>
 										{expanded[proposal.id] ? (
