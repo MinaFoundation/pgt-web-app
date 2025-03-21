@@ -524,12 +524,10 @@ export class ConsiderationVotingService {
 					proposal.OCVConsiderationVote?.voteData,
 				)
 
-				// TODO: ensure this logic is right to our business rules
-
 				const communityVoteEligible = ocvVotes.elegible
 				const reviewerVoteEligible = approved >= minReviewerApprovals
 				const isEligible = communityVoteEligible || reviewerVoteEligible
-				const isRejected = rejected >= minReviewerApprovals
+				const isRejected = !isEligible && rejected >= minReviewerApprovals
 
 				if (isEligible) {
 					acc.approved++
@@ -713,14 +711,14 @@ export class ConsiderationVotingService {
 						case 'approved':
 							return proposal.voteStats.isEligible
 						case 'rejected':
-							// TODO: ensure this logic is right to our business rules
 							return (
+								!proposal.voteStats.isEligible &&
 								proposal.voteStats.reviewerVote.rejected >= minReviewerApprovals
 							)
 						case 'pending':
 							return (
 								!proposal.voteStats.isEligible &&
-								!proposal.voteStats.reviewerVote.isEligible
+								proposal.voteStats.reviewerVote.rejected < minReviewerApprovals
 							)
 						default:
 							return true
