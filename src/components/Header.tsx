@@ -14,7 +14,7 @@ import {
 import { useAdminStatus } from '@/hooks/use-admin-status'
 import { useAuth } from '@/contexts/AuthContext'
 import { UserStatus } from './auth/UserStatus'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export default function Header() {
 	const pathname = usePathname()
@@ -35,11 +35,20 @@ export default function Header() {
 	const { isAdmin } = useAdminStatus()
 	const { user, isLoading: isAuthLoading } = useAuth()
 	const [isRedirecting, setIsRedirecting] = useState(false)
+	const [loadingHref, setLoadingHref] = useState<string | null>(null)
+
+	// Reset loading state when route changes
+	useEffect(() => {
+		setLoadingHref(null)
+	}, [pathname])
+
+	const handleNavClick = (href: string) => {
+		setLoadingHref(href)
+	}
 	const handleRedirectClick = (href: string) => {
 		setIsRedirecting(true)
 		window.location.href = href // Redirect manually to ensure state updates
 	}
-
 	const handleOpenMobileNav = () => {
 		setOpenMobileNav(!openMobileNav)
 	}
@@ -66,7 +75,11 @@ export default function Header() {
 								authenticatedOnly ? isAuthenticated : true,
 							)
 							.map(tab => (
-								<Link key={tab.href} href={tab.href}>
+								<Link
+									key={tab.href}
+									href={tab.href}
+									onClick={() => handleNavClick(tab.href)}
+								>
 									<div
 										className={cn(
 											'flex h-14 items-center space-x-2 px-4 transition-colors hover:text-secondary',
@@ -75,7 +88,7 @@ export default function Header() {
 												: 'text-foreground/60',
 										)}
 									>
-										{tab.label}
+										{loadingHref === tab.href ? 'Loading...' : tab.label}
 									</div>
 								</Link>
 							))}
@@ -107,9 +120,9 @@ export default function Header() {
 					{user ? (
 						<UserStatus />
 					) : (
-						<Link href="/auth">
-							<Button className="button-3d" loading={isAuthLoading}>
-								Sign In
+						<Link href="/auth" onClick={() => handleNavClick('/auth')}>
+							<Button className="button-3d">
+								{loadingHref === '/auth' ? 'Signing in...' : 'Sign In'}
 							</Button>
 						</Link>
 					)}
@@ -137,9 +150,9 @@ export default function Header() {
 					{user ? (
 						<UserStatus />
 					) : (
-						<Link href="/auth">
-							<Button className="button-3d w-full" loading={isAuthLoading}>
-								Sign In
+						<Link href="/auth" onClick={() => handleNavClick('/auth')}>
+							<Button className="button-3d w-full">
+								{loadingHref === '/auth' ? 'Signing in...' : 'Sign In'}
 							</Button>
 						</Link>
 					)}
@@ -162,7 +175,11 @@ export default function Header() {
 						</Link>
 					)}
 					{navigation.map(tab => (
-						<Link key={tab.href} href={tab.href}>
+						<Link
+							key={tab.href}
+							href={tab.href}
+							onClick={() => handleNavClick(tab.href)}
+						>
 							<div
 								className={cn(
 									'flex h-14 items-center space-x-2 border-b-4 border-border font-semibold transition-colors hover:text-secondary',
@@ -171,7 +188,7 @@ export default function Header() {
 										: 'text-foreground/60',
 								)}
 							>
-								{tab.label}
+								{loadingHref === tab.href ? 'Loading...' : tab.label}
 							</div>
 						</Link>
 					))}
