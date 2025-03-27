@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { Trash2, Plus } from 'lucide-react'
+import { Trash2, Plus, Loader2Icon } from 'lucide-react'
 import {
 	Table,
 	TableBody,
@@ -39,6 +39,8 @@ interface FundingRound {
 export function ManageFundingRoundsComponent() {
 	const [rounds, setRounds] = useState<FundingRound[]>([])
 	const [loading, setLoading] = useState(true)
+	const [loadingButton, setLoadingButton] = useState(false)
+
 	const { toast } = useToast()
 	const router = useRouter()
 	const [statusDialogOpen, setStatusDialogOpen] = useState(false)
@@ -228,9 +230,20 @@ export function ManageFundingRoundsComponent() {
 				</div>
 
 				<div className="flex flex-wrap gap-4">
-					<Link href="/admin/funding-rounds/new">
-						<Button variant="outline" className="gap-2">
-							<Plus className="h-4 w-4" />
+					<Link
+						href="/admin/funding-rounds/new"
+						onClick={() => setLoadingButton(true)}
+					>
+						<Button
+							variant="outline"
+							className="gap-2"
+							disabled={loadingButton}
+						>
+							{loadingButton ? (
+								<Loader2Icon className="h-4 w-4 animate-spin" />
+							) : (
+								<Plus className="h-4 w-4" />
+							)}
 							Add Funding Round
 						</Button>
 					</Link>
