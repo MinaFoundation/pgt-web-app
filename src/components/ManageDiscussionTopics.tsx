@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { Trash2, Plus } from 'lucide-react'
+import { Trash2, Plus, Loader2Icon } from 'lucide-react'
 import {
 	Table,
 	TableBody,
@@ -35,6 +35,7 @@ interface Topic {
 export function ManageDiscussionTopicsComponent() {
 	const [topics, setTopics] = useState<Topic[]>([])
 	const [loading, setLoading] = useState(true)
+	const [loadingButton, setLoadingButton] = useState(false)
 	const { toast } = useToast()
 	const router = useRouter()
 
@@ -85,14 +86,6 @@ export function ManageDiscussionTopicsComponent() {
 		}
 	}
 
-	if (loading) {
-		return (
-			<div className="flex items-center justify-center p-8">
-				<div className="h-8 w-8 animate-spin rounded-full border-b-2 border-gray-900" />
-			</div>
-		)
-	}
-
 	return (
 		<div className="container mx-auto max-w-7xl px-4 py-8">
 			<div className="space-y-8">
@@ -114,50 +107,58 @@ export function ManageDiscussionTopicsComponent() {
 							</TableRow>
 						</TableHeader>
 						<TableBody>
-							{topics.map(topic => (
-								<TableRow key={topic.id}>
-									<TableCell className="font-medium">
-										<div className="flex items-center gap-2">
-											<Button
-												variant="ghost"
-												size="icon"
-												className="h-8 w-8"
-												onClick={() => handleDelete(topic.id)}
-											>
-												<Trash2 className="h-4 w-4" />
-												<span className="sr-only">Delete topic</span>
-											</Button>
-											<span>{topic.name}</span>
-										</div>
-									</TableCell>
-									<TableCell>
-										<div className="flex flex-wrap gap-1">
-											{topic.reviewerGroups.map(rg => (
-												<Badge key={rg.reviewerGroup.id} variant="outline">
-													{rg.reviewerGroup.name}
-												</Badge>
-											))}
-										</div>
-									</TableCell>
-									<TableCell>
-										<div className="flex flex-wrap gap-1">
-											{topic.fundingRounds.map(round => (
-												<Badge key={round.id} variant="secondary">
-													{round.name}
-												</Badge>
-											))}
-										</div>
-									</TableCell>
-									<TableCell className="text-right">
-										<Link href={`/admin/discussions/topic/${topic.id}`}>
-											<Button variant="ghost" size="sm">
-												Edit
-											</Button>
-										</Link>
+							{loading ? (
+								<TableRow>
+									<TableCell colSpan={6} className="py-4 text-center">
+										Loading discussion topics...
 									</TableCell>
 								</TableRow>
-							))}
-							{topics.length === 0 && (
+							) : (
+								topics.map(topic => (
+									<TableRow key={topic.id}>
+										<TableCell className="font-medium">
+											<div className="flex items-center gap-2">
+												<Button
+													variant="ghost"
+													size="icon"
+													className="h-8 w-8"
+													onClick={() => handleDelete(topic.id)}
+												>
+													<Trash2 className="h-4 w-4" />
+													<span className="sr-only">Delete topic</span>
+												</Button>
+												<span>{topic.name}</span>
+											</div>
+										</TableCell>
+										<TableCell>
+											<div className="flex flex-wrap gap-1">
+												{topic.reviewerGroups.map(rg => (
+													<Badge key={rg.reviewerGroup.id} variant="outline">
+														{rg.reviewerGroup.name}
+													</Badge>
+												))}
+											</div>
+										</TableCell>
+										<TableCell>
+											<div className="flex flex-wrap gap-1">
+												{topic.fundingRounds.map(round => (
+													<Badge key={round.id} variant="secondary">
+														{round.name}
+													</Badge>
+												))}
+											</div>
+										</TableCell>
+										<TableCell className="text-right">
+											<Link href={`/admin/discussions/topic/${topic.id}`}>
+												<Button variant="ghost" size="sm">
+													Edit
+												</Button>
+											</Link>
+										</TableCell>
+									</TableRow>
+								))
+							)}
+							{!loading && topics.length === 0 && (
 								<TableRow>
 									<TableCell colSpan={4} className="py-6 text-center">
 										No topics found. Create your first topic.
@@ -169,9 +170,20 @@ export function ManageDiscussionTopicsComponent() {
 				</div>
 
 				<div className="flex flex-wrap gap-4">
-					<Link href="/admin/discussions/topic/new">
-						<Button variant="outline" className="gap-2">
-							<Plus className="h-4 w-4" />
+					<Link
+						href="/admin/discussions/topic/new"
+						onClick={() => setLoadingButton(true)}
+					>
+						<Button
+							variant="outline"
+							className="gap-2"
+							disabled={loadingButton}
+						>
+							{loadingButton ? (
+								<Loader2Icon className="h-4 w-4 animate-spin" />
+							) : (
+								<Plus className="h-4 w-4" />
+							)}
 							Add Topic
 						</Button>
 					</Link>
