@@ -128,14 +128,6 @@ export function ManageFundingRoundsComponent() {
 		return `${start.toLocaleDateString()} - ${end.toLocaleDateString()}`
 	}
 
-	if (loading) {
-		return (
-			<div className="flex items-center justify-center p-8">
-				<div className="h-8 w-8 animate-spin rounded-full border-b-2 border-gray-900" />
-			</div>
-		)
-	}
-
 	return (
 		<div className="container mx-auto max-w-7xl px-4 py-8">
 			<div className="space-y-8">
@@ -159,66 +151,74 @@ export function ManageFundingRoundsComponent() {
 							</TableRow>
 						</TableHeader>
 						<TableBody>
-							{rounds.map(round => (
-								<TableRow key={round.id}>
-									<TableCell className="font-medium">
-										<div className="flex items-center gap-2">
-											<Button
-												variant="ghost"
-												size="icon"
-												className="h-8 w-8"
-												onClick={() => handleDelete(round.id)}
-												disabled={round.status === 'ACTIVE'}
-											>
-												<Trash2 className="h-4 w-4" />
-												<span className="sr-only">Delete funding round</span>
-											</Button>
-											<span>{round.name}</span>
-										</div>
-									</TableCell>
-									<TableCell>
-										<div className="flex flex-wrap gap-1">
-											{round.topic.reviewerGroups.map(rg => (
-												<Badge key={rg.reviewerGroup.id} variant="outline">
-													{rg.reviewerGroup.name}
-												</Badge>
-											))}
-										</div>
-									</TableCell>
-									<TableCell>
-										<Badge variant="secondary">{round.topic.name}</Badge>
-									</TableCell>
-									<TableCell>
-										{formatPeriod(round.startDate, round.endDate)}
-									</TableCell>
-									<TableCell>
-										<Button
-											variant="ghost"
-											className="h-auto p-0 hover:bg-transparent"
-											onClick={() => {
-												setSelectedRound(round)
-												setStatusDialogOpen(true)
-											}}
-										>
-											<Badge variant={getStatusBadgeVariant(round.status)}>
-												{getStatusIcon(round.status)} {round.status}
-											</Badge>
-										</Button>
-									</TableCell>
-									<TableCell className="text-right">
-										<Link href={`/admin/funding-rounds/${round.id}`}>
-											<Button
-												variant="ghost"
-												size="sm"
-												disabled={round.status === 'ACTIVE'}
-											>
-												Edit
-											</Button>
-										</Link>
+							{loading ? (
+								<TableRow>
+									<TableCell colSpan={6} className="py-4 text-center">
+										Loading funding rounds...
 									</TableCell>
 								</TableRow>
-							))}
-							{rounds.length === 0 && (
+							) : (
+								rounds.map(round => (
+									<TableRow key={round.id}>
+										<TableCell className="font-medium">
+											<div className="flex items-center gap-2">
+												<Button
+													variant="ghost"
+													size="icon"
+													className="h-8 w-8"
+													onClick={() => handleDelete(round.id)}
+													disabled={round.status === 'ACTIVE'}
+												>
+													<Trash2 className="h-4 w-4" />
+													<span className="sr-only">Delete funding round</span>
+												</Button>
+												<span>{round.name}</span>
+											</div>
+										</TableCell>
+										<TableCell>
+											<div className="flex flex-wrap gap-1">
+												{round.topic.reviewerGroups.map(rg => (
+													<Badge key={rg.reviewerGroup.id} variant="outline">
+														{rg.reviewerGroup.name}
+													</Badge>
+												))}
+											</div>
+										</TableCell>
+										<TableCell>
+											<Badge variant="secondary">{round.topic.name}</Badge>
+										</TableCell>
+										<TableCell>
+											{formatPeriod(round.startDate, round.endDate)}
+										</TableCell>
+										<TableCell>
+											<Button
+												variant="ghost"
+												className="h-auto p-0 hover:bg-transparent"
+												onClick={() => {
+													setSelectedRound(round)
+													setStatusDialogOpen(true)
+												}}
+											>
+												<Badge variant={getStatusBadgeVariant(round.status)}>
+													{getStatusIcon(round.status)} {round.status}
+												</Badge>
+											</Button>
+										</TableCell>
+										<TableCell className="text-right">
+											<Link href={`/admin/funding-rounds/${round.id}`}>
+												<Button
+													variant="ghost"
+													size="sm"
+													disabled={round.status === 'ACTIVE'}
+												>
+													Edit
+												</Button>
+											</Link>
+										</TableCell>
+									</TableRow>
+								))
+							)}
+							{!loading && rounds.length === 0 && (
 								<TableRow>
 									<TableCell colSpan={6} className="py-6 text-center">
 										No funding rounds found. Create your first funding round.
