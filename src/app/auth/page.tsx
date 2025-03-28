@@ -105,7 +105,7 @@ function AuthenticationOptions() {
 		if (walletAuthSuccess) {
 			const timer = setTimeout(() => {
 				router.push('/')
-			}, 2000)
+			}, 2500)
 
 			return () => clearTimeout(timer)
 		}
