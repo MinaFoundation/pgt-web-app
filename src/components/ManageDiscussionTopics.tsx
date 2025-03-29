@@ -36,6 +36,8 @@ export function ManageDiscussionTopicsComponent() {
 	const [topics, setTopics] = useState<Topic[]>([])
 	const [loading, setLoading] = useState(true)
 	const [loadingButton, setLoadingButton] = useState(false)
+	const [deleteInProgress, setDeleteInProgress] = useState<string | null>(null)
+	const [editInProgress, setEditInProgress] = useState<string | null>(null)
 	const { toast } = useToast()
 	const router = useRouter()
 
@@ -53,6 +55,7 @@ export function ManageDiscussionTopicsComponent() {
 			})
 		} finally {
 			setLoading(false)
+			setDeleteInProgress(null)
 		}
 	}, [toast])
 
@@ -64,10 +67,11 @@ export function ManageDiscussionTopicsComponent() {
 		if (!confirm('Are you sure you want to delete this topic?')) return
 
 		try {
+			setDeleteInProgress(id)
 			const response = await fetch(`/api/admin/discussion-topics/${id}`, {
 				method: 'DELETE',
 			})
-
+			// setDeleteInProgress(null)
 			if (!response.ok) throw new Error('Failed to delete topic')
 
 			toast({
@@ -123,6 +127,8 @@ export function ManageDiscussionTopicsComponent() {
 													size="icon"
 													className="h-8 w-8"
 													onClick={() => handleDelete(topic.id)}
+													loading={deleteInProgress == topic.id}
+													disabled={deleteInProgress == topic.id}
 												>
 													<Trash2 className="h-4 w-4" />
 													<span className="sr-only">Delete topic</span>
@@ -149,8 +155,16 @@ export function ManageDiscussionTopicsComponent() {
 											</div>
 										</TableCell>
 										<TableCell className="text-right">
-											<Link href={`/admin/discussions/topic/${topic.id}`}>
-												<Button variant="ghost" size="sm">
+											<Link
+												href={`/admin/discussions/topic/${topic.id}`}
+												onClick={() => setEditInProgress(topic.id)}
+											>
+												<Button
+													variant="ghost"
+													size="sm"
+													loading={editInProgress == topic.id}
+													disabled={editInProgress == topic.id}
+												>
 													Edit
 												</Button>
 											</Link>
