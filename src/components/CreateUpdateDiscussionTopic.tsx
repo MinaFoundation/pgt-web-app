@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { X } from 'lucide-react'
+import { Loader2Icon, X } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import {
 	Select,
@@ -171,14 +171,6 @@ export function AddEditDiscussionTopicComponent({
 		}
 	}
 
-	if (dataLoading) {
-		return (
-			<div className="flex items-center justify-center p-8">
-				<div className="h-8 w-8 animate-spin rounded-full border-b-2 border-gray-900" />
-			</div>
-		)
-	}
-
 	return (
 		<div className="container mx-auto max-w-3xl px-4 py-8">
 			<div className="space-y-8">
@@ -219,20 +211,29 @@ export function AddEditDiscussionTopicComponent({
 
 					<div className="space-y-4">
 						<Label>Reviewers Group</Label>
-						<Select onValueChange={handleAddGroup} disabled={loading}>
-							<SelectTrigger className="bg-muted">
-								<SelectValue placeholder="Select a group" />
-							</SelectTrigger>
-							<SelectContent>
-								{availableGroups
-									.filter(group => !selectedGroups.some(g => g.id === group.id))
-									.map(group => (
-										<SelectItem key={group.id} value={group.id}>
-											{group.name}
-										</SelectItem>
-									))}
-							</SelectContent>
-						</Select>
+						{dataLoading ? (
+							<div className="flex items-center gap-2">
+								<Loader2Icon className="h-4 w-4 animate-spin" />
+								<span>Loading groups...</span>
+							</div>
+						) : (
+							<Select onValueChange={handleAddGroup} disabled={loading}>
+								<SelectTrigger className="bg-muted">
+									<SelectValue placeholder="Select a group" />
+								</SelectTrigger>
+								<SelectContent>
+									{availableGroups
+										.filter(
+											group => !selectedGroups.some(g => g.id === group.id),
+										)
+										.map(group => (
+											<SelectItem key={group.id} value={group.id}>
+												{group.name}
+											</SelectItem>
+										))}
+								</SelectContent>
+							</Select>
+						)}
 
 						<div className="space-y-2">
 							{selectedGroups.map(group => (
