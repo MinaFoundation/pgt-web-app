@@ -14,8 +14,10 @@ interface PageProps {
 
 export default async function ManageDiscussionTopicPage({ params }: PageProps) {
 	return (
-		<AddEditDiscussionTopicComponent
-			topicId={(await params).id === 'new' ? null : (await params).id}
-		/>
+		<div className="mx-auto w-full max-w-5xl p-4 sm:px-6 lg:px-8">
+			<AddEditDiscussionTopicComponent
+				topicId={(await params).id === 'new' ? null : (await params).id}
+			/>
+		</div>
 	)
 }
