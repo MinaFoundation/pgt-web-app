@@ -1,21 +1,31 @@
 'use client'
-
-import { useState, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
+import { z } from 'zod'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import {
+	Form,
+	FormField,
+	FormItem,
+	FormLabel,
+	FormControl,
+	FormMessage,
+} from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { Loader2Icon, X } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
 import {
 	Select,
-	SelectContent,
-	SelectItem,
 	SelectTrigger,
 	SelectValue,
+	SelectContent,
+	SelectItem,
 } from '@/components/ui/select'
+import { Loader2Icon, X } from 'lucide-react'
+import Link from 'next/link'
+import { FC, useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { DiscussionTopicInput } from '@/schemas/discussion-topic'
 
 interface ReviewerGroup {
 	id: string
@@ -31,66 +41,46 @@ interface Topic {
 	}>
 }
 
+export const reviewerGroupSchema = z.object({
+	id: z.string(),
+	name: z.string(),
+})
+
+export const reviewRequestSchema = z.object({
+	name: z.string().min(1, 'Name is required'),
+	description: z.string().min(1, 'Description is required'),
+	selectedGroups: z
+		.array(reviewerGroupSchema)
+		.min(1, 'At least one reviewer group is required'),
+})
+
+export type ReviewRequestInput = z.infer<typeof reviewRequestSchema>
+
+interface ReviewRequestFormProps {
+	topicId?: string
+}
+
 export function AddEditDiscussionTopicComponent({
 	topicId,
 }: {
 	topicId: string | null
 }) {
-	const router = useRouter()
 	const { toast } = useToast()
+	const router = useRouter()
 	const [loading, setLoading] = useState(false)
-	const [dataLoading, setDataLoading] = useState(true)
-	const [availableGroups, setAvailableGroups] = useState<ReviewerGroup[]>([])
-	const [topicData, setTopicData] = useState({
-		name: '',
-		description: '',
-	})
 	const [selectedGroups, setSelectedGroups] = useState<ReviewerGroup[]>([])
 
-	useEffect(() => {
-		const fetchData = async () => {
-			setDataLoading(true)
-			try {
-				// Fetch available reviewer groups
-				const groupsResponse = await fetch('/api/admin/reviewer-groups')
-				if (!groupsResponse.ok)
-					throw new Error('Failed to fetch reviewer groups')
-				const groups = await groupsResponse.json()
-				setAvailableGroups(groups)
+	const [availableGroups, setAvailableGroups] = useState<ReviewerGroup[]>([])
+	const [dataLoading, setDataLoading] = useState(true)
 
-				// If editing, fetch topic data
-				if (topicId && topicId !== 'new') {
-					const topicResponse = await fetch(
-						`/api/admin/discussion-topics/${topicId}`,
-					)
-					if (!topicResponse.ok) throw new Error('Failed to fetch topic')
-					const topic: Topic = await topicResponse.json()
-					setTopicData({
-						name: topic.name,
-						description: topic.description,
-					})
-					setSelectedGroups(topic.reviewerGroups.map(rg => rg.reviewerGroup))
-				}
-			} catch (error) {
-				toast({
-					title: 'Error',
-					description: 'Failed to load data',
-					variant: 'destructive',
-				})
-			} finally {
-				setDataLoading(false)
-			}
-		}
-
-		fetchData()
-	}, [topicId, toast])
-
-	const handleInputChange = (
-		e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-	) => {
-		const { name, value } = e.target
-		setTopicData(prev => ({ ...prev, [name]: value }))
-	}
+	const form = useForm<ReviewRequestInput>({
+		resolver: zodResolver(reviewRequestSchema),
+		defaultValues: {
+			name: '',
+			description: '',
+			selectedGroups: [],
+		},
+	})
 
 	const handleAddGroup = (groupId: string) => {
 		const groupToAdd = availableGroups.find(g => g.id === groupId)
@@ -103,7 +93,7 @@ export function AddEditDiscussionTopicComponent({
 		setSelectedGroups(prev => prev.filter(group => group.id !== groupId))
 	}
 
-	const handleSave = async () => {
+	const handleSave = async (values: DiscussionTopicInput) => {
 		try {
 			setLoading(true)
 			const endpoint = topicId
@@ -111,15 +101,16 @@ export function AddEditDiscussionTopicComponent({
 				: '/api/admin/discussion-topics'
 
 			const method = topicId ? 'PUT' : 'POST'
+			const submissionData = {
+				...values,
+				reviewerGroupIds: selectedGroups.map(g => g.id),
+			}
 			const response = await fetch(endpoint, {
 				method,
 				headers: {
 					'Content-Type': 'application/json',
 				},
-				body: JSON.stringify({
-					...topicData,
-					reviewerGroupIds: selectedGroups.map(g => g.id),
-				}),
+				body: JSON.stringify(submissionData),
 			})
 
 			if (!response.ok) throw new Error('Failed to save topic')
@@ -140,7 +131,6 @@ export function AddEditDiscussionTopicComponent({
 			setLoading(false)
 		}
 	}
-
 	const handleDelete = async () => {
 		if (!topicId) return
 
@@ -170,125 +160,175 @@ export function AddEditDiscussionTopicComponent({
 			setLoading(false)
 		}
 	}
+	useEffect(() => {
+		const fetchData = async () => {
+			setDataLoading(true)
+			try {
+				// Fetch available reviewer groups
+				const groupsResponse = await fetch('/api/admin/reviewer-groups')
+				if (!groupsResponse.ok)
+					throw new Error('Failed to fetch reviewer groups')
+				const groups = await groupsResponse.json()
+				setAvailableGroups(groups)
 
+				// If editing, fetch topic data
+				if (topicId && topicId !== 'new') {
+					const topicResponse = await fetch(
+						`/api/admin/discussion-topics/${topicId}`,
+					)
+					if (!topicResponse.ok) throw new Error('Failed to fetch topic')
+					const topic: Topic = await topicResponse.json()
+					form.reset({
+						name: topic.name,
+						description: topic.description,
+						selectedGroups: topic.reviewerGroups.map(rg => rg.reviewerGroup),
+					})
+				}
+			} catch (error) {
+				toast({
+					title: 'Error',
+					description: 'Failed to load data',
+					variant: 'destructive',
+				})
+			} finally {
+				setDataLoading(false)
+			}
+		}
+
+		fetchData()
+	}, [topicId, toast])
 	return (
-		<div className="container mx-auto max-w-3xl px-4 py-8">
-			<div className="space-y-8">
-				<div>
-					<h1 className="text-3xl font-bold">
-						{topicId && topicId !== 'new'
-							? 'Edit Discussion Topic'
-							: 'Create Discussion Topic'}
-					</h1>
-				</div>
+		<Form {...form}>
+			<form onSubmit={form.handleSubmit(handleSave)} className="space-y-6">
+				<FormField
+					control={form.control}
+					name="name"
+					render={({ field }) => (
+						<FormItem>
+							<FormLabel>Topic Name</FormLabel>
+							<FormControl>
+								<Input
+									{...field}
+									placeholder="Enter topic name"
+									className="bg-muted"
+									disabled={loading}
+								/>
+							</FormControl>
+							<FormMessage />
+						</FormItem>
+					)}
+				/>
 
-				<form onSubmit={e => e.preventDefault()} className="space-y-6">
-					<div className="space-y-4">
-						<Label htmlFor="name">Topic Name</Label>
-						<Input
-							id="name"
-							name="name"
-							value={topicData.name}
-							onChange={handleInputChange}
-							placeholder="Enter topic name"
-							className="bg-muted"
-							disabled={loading}
-						/>
-					</div>
+				<FormField
+					control={form.control}
+					name="description"
+					render={({ field }) => (
+						<FormItem>
+							<FormLabel>Topic Description</FormLabel>
+							<FormControl>
+								<Textarea
+									{...field}
+									placeholder="Enter topic description"
+									className="min-h-[150px] bg-muted"
+									disabled={loading}
+								/>
+							</FormControl>
+							<FormMessage />
+						</FormItem>
+					)}
+				/>
 
-					<div className="space-y-4">
-						<Label htmlFor="description">Topic Description</Label>
-						<Textarea
-							id="description"
-							name="description"
-							value={topicData.description}
-							onChange={handleInputChange}
-							placeholder="Enter topic description"
-							className="min-h-[150px] bg-muted"
-							disabled={loading}
-						/>
-					</div>
-
-					<div className="space-y-4">
-						<Label>Reviewers Group</Label>
-						{dataLoading ? (
-							<div className="flex items-center gap-2">
-								<Loader2Icon className="h-4 w-4 animate-spin" />
-								<span>Loading groups...</span>
-							</div>
-						) : (
-							<Select onValueChange={handleAddGroup} disabled={loading}>
-								<SelectTrigger className="bg-muted">
-									<SelectValue placeholder="Select a group" />
-								</SelectTrigger>
-								<SelectContent>
-									{availableGroups
-										.filter(
-											group => !selectedGroups.some(g => g.id === group.id),
-										)
-										.map(group => (
-											<SelectItem key={group.id} value={group.id}>
-												{group.name}
-											</SelectItem>
-										))}
-								</SelectContent>
-							</Select>
-						)}
-
-						<div className="space-y-2">
-							{selectedGroups.map(group => (
-								<div
-									key={group.id}
-									className="flex items-center justify-between rounded-md bg-muted p-3"
-								>
-									<span className="text-muted-foreground">{group.name}</span>
-									<Button
-										type="button"
-										variant="ghost"
-										size="sm"
-										onClick={() => handleRemoveGroup(group.id)}
-										disabled={loading}
-									>
-										<X className="h-4 w-4" />
-										<span className="sr-only">Remove {group.name}</span>
-									</Button>
+				<FormField
+					control={form.control}
+					name="selectedGroups"
+					render={({ field }) => (
+						<FormItem>
+							<FormLabel>Reviewers Group</FormLabel>
+							{dataLoading ? (
+								<div className="flex items-center gap-2">
+									<Loader2Icon className="h-4 w-4 animate-spin" />
+									<span>Loading groups...</span>
 								</div>
-							))}
-						</div>
-					</div>
+							) : (
+								<Select
+									onValueChange={value =>
+										field.onChange([
+											...field.value,
+											availableGroups.find(g => g.id === value),
+										])
+									}
+									disabled={loading}
+								>
+									<SelectTrigger className="bg-muted">
+										<SelectValue placeholder="Select a group" />
+									</SelectTrigger>
+									<SelectContent>
+										{availableGroups
+											.filter(
+												group => !field.value.some(g => g.id === group.id),
+											)
+											.map(group => (
+												<SelectItem key={group.id} value={group.id}>
+													{group.name}
+												</SelectItem>
+											))}
+									</SelectContent>
+								</Select>
+							)}
+							<FormMessage />
+						</FormItem>
+					)}
+				/>
 
-					<div className="flex items-center justify-between pt-6">
-						{topicId && topicId !== 'new' && (
+				<div className="space-y-2">
+					{form.watch('selectedGroups').map(group => (
+						<div
+							key={group.id}
+							className="flex items-center justify-between rounded-md bg-muted p-3"
+						>
+							<span className="text-muted-foreground">{group.name}</span>
 							<Button
 								type="button"
-								variant="destructive"
-								onClick={handleDelete}
+								variant="ghost"
+								size="sm"
+								onClick={() =>
+									form.setValue(
+										'selectedGroups',
+										form.watch('selectedGroups').filter(g => g.id !== group.id),
+									)
+								}
 								disabled={loading}
 							>
-								Remove Topic
-							</Button>
-						)}
-						<div className="ml-auto flex gap-4">
-							<Link href="/admin/discussions">
-								<Button type="button" variant="outline" disabled={loading}>
-									Cancel
-								</Button>
-							</Link>
-							<Button type="button" onClick={handleSave} disabled={loading}>
-								{loading ? 'Saving...' : 'Save Topic'}
+								<X className="h-4 w-4" />
+								<span className="sr-only">Remove {group.name}</span>
 							</Button>
 						</div>
-					</div>
-				</form>
-
-				<div>
-					<Link href="/admin/discussions">
-						<Button variant="secondary">
-							Back to Manage Discussion Topics
-						</Button>
-					</Link>
+					))}
 				</div>
-			</div>
-		</div>
+
+				<div className="flex items-center justify-between pt-6">
+					{topicId && topicId !== 'new' && (
+						<Button
+							type="button"
+							variant="destructive"
+							onClick={handleDelete}
+							disabled={loading}
+						>
+							Remove Topic
+						</Button>
+					)}
+					<div className="ml-auto flex gap-4">
+						<Link href="/admin/discussions">
+							<Button type="button" variant="outline" disabled={loading}>
+								Cancel
+							</Button>
+						</Link>
+						<Button type="submit" disabled={loading}>
+							{loading ? 'Saving...' : 'Save Topic'}
+						</Button>
+					</div>
+				</div>
+			</form>
+		</Form>
 	)
 }
