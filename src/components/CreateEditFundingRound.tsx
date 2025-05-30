@@ -15,24 +15,32 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select'
-import { Calendar } from '@/components/ui/calendar'
-import {
-	Popover,
-	PopoverContent,
-	PopoverTrigger,
-} from '@/components/ui/popover'
-import { format } from 'date-fns'
-import { cn } from '@/lib/utils'
+
 import { validatePhaseDates } from '@/lib/validation'
+import { z } from 'zod'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import {
+	Form,
+	FormControl,
+	FormField,
+	FormItem,
+	FormLabel,
+	FormMessage,
+} from '@/components/ui/form'
+import DatePicker from '@/components/ui/date-picker'
+import { FilePenIcon, FilePlus2Icon } from 'lucide-react'
+
+interface ReviewerGroup {
+	id: string
+	name: string
+}
 
 interface Topic {
 	id: string
 	name: string
 	reviewerGroups: Array<{
-		reviewerGroup: {
-			id: string
-			name: string
-		}
+		reviewerGroup: ReviewerGroup
 	}>
 }
 
@@ -73,27 +81,122 @@ type DatePhase = {
 }
 
 const DATE_PHASES: DatePhase[] = [
-  { key: 'fundingRoundDates', label: "Funding Round Period (UTC)" },
-  { key: 'submissionDates', label: "Submission Phase (UTC)" },
-  { key: 'considerationDates', label: "Consideration Phase (UTC)" },
-  { key: 'deliberationDates', label: "Deliberation Phase (UTC)" },
-  { key: 'votingDates', label: "Voting Phase (UTC)" }
-];
+	{ key: 'fundingRoundDates', label: 'Funding Round Period (UTC)' },
+	{ key: 'submissionDates', label: 'Submission Phase (UTC)' },
+	{ key: 'considerationDates', label: 'Consideration Phase (UTC)' },
+	{ key: 'deliberationDates', label: 'Deliberation Phase (UTC)' },
+	{ key: 'votingDates', label: 'Voting Phase (UTC)' },
+]
 
 // Format dates in UTC without local timezone conversion
 function formatUTC(date: Date): string {
-  const day = date.getUTCDate();
-  const month = date.getUTCMonth() + 1;
-  const year = date.getUTCFullYear();
-  const hours = date.getUTCHours();
-  const minutes = date.getUTCMinutes();
-  return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')} ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} UTC`;
+	const day = date.getUTCDate()
+	const month = date.getUTCMonth() + 1
+	const year = date.getUTCFullYear()
+	const hours = date.getUTCHours()
+	const minutes = date.getUTCMinutes()
+	return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')} ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} UTC`
 }
 
-export function AddEditFundingRoundComponent({ 
-  roundId 
-}: { 
-  roundId: string | null 
+const fundingRoundSchema = z
+	.object({
+		name: z
+			.string()
+			.min(1, 'Name is required')
+			.max(100, 'Name must be less than 100 characters'),
+		description: z
+			.string()
+			.min(1, 'Description is required')
+			.max(1000, 'Description must be less than 1000 characters'),
+		totalBudget: z
+			.string()
+			.min(1, 'Total budget is required')
+			.refine(val => !isNaN(Number(val)) && Number(val) > 0, {
+				message: 'Total budget must be a positive number',
+			}),
+		selectedTopic: z
+			.object({
+				id: z.string(),
+				name: z.string(),
+			})
+			.refine(val => val.id !== '' && val.name !== '', {
+				message: 'Topic is required',
+			}),
+		fundingRoundDates: z.object({
+			from: z.date(),
+			to: z.date(),
+		}).refine(val => val.id !== '' && val.name !== '', {
+			message: 'Topic is required',
+		}),,
+		submissionDates: z.object({
+			from: z.date({ required_error: 'Start date is required' }),
+			to: z.date({ required_error: 'End date is required' }),
+		}),
+		considerationDates: z.object({
+			from: z.date({ required_error: 'Start date is required' }),
+			to: z.date({ required_error: 'End date is required' }),
+		}),
+		deliberationDates: z.object({
+			from: z.date({ required_error: 'Start date is required' }),
+			to: z.date({ required_error: 'End date is required' }),
+		}),
+		votingDates: z.object({
+			from: z.date({ required_error: 'Start date is required' }),
+			to: z.date({ required_error: 'End date is required' }),
+		}),
+	})
+	.refine(
+		data => {
+			// Only run this check if all dates are present
+			const allDatesPresent = [
+				data.fundingRoundDates,
+				data.submissionDates,
+				data.considerationDates,
+				data.deliberationDates,
+				data.votingDates,
+			].every(range => range.from && range.to)
+
+			if (!allDatesPresent) return false
+
+			// Now safe to call validatePhaseDates
+			const datesValid = validatePhaseDates({
+				fundingRound: data.fundingRoundDates,
+				submission: data.submissionDates,
+				consideration: data.considerationDates,
+				deliberation: data.deliberationDates,
+				voting: data.votingDates,
+			})
+			return datesValid.valid
+		},
+		{
+			message:
+				'Invalid phase dates. Please check that all phases are in sequence and within the funding round period.',
+			path: ['fundingRoundDates'],
+		},
+	)
+
+type FundingRoundFormData = z.infer<typeof fundingRoundSchema>
+
+interface FormData extends FundingRoundFormData {
+	applicationPeriod: { from?: Date; to?: Date } | undefined
+	reviewPeriod: { from?: Date; to?: Date } | undefined
+	decisionPeriod: { from?: Date; to?: Date } | undefined
+	implementationPeriod: { from?: Date; to?: Date } | undefined
+}
+
+const defaultValues: Partial<FormData> = {
+	// ... existing code ...
+	applicationPeriod: undefined,
+	reviewPeriod: undefined,
+	decisionPeriod: undefined,
+	implementationPeriod: undefined,
+	// ... existing code ...
+}
+
+export function AddEditFundingRoundComponent({
+	roundId,
+}: {
+	roundId: string | null
 }) {
 	const router = useRouter()
 	const { toast } = useToast()
@@ -101,16 +204,23 @@ export function AddEditFundingRoundComponent({
 	const [dataLoading, setDataLoading] = useState(true)
 	const [topics, setTopics] = useState<Topic[]>([])
 
-	const [formData, setFormData] = useState({
-		name: '',
-		description: '',
-		totalBudget: '',
-		selectedTopic: null as Topic | null,
-		fundingRoundDates: { from: null as Date | null, to: null as Date | null },
-		submissionDates: { from: null as Date | null, to: null as Date | null },
-		considerationDates: { from: null as Date | null, to: null as Date | null },
-		deliberationDates: { from: null as Date | null, to: null as Date | null },
-		votingDates: { from: null as Date | null, to: null as Date | null },
+	const form = useForm<FormData>({
+		resolver: zodResolver(fundingRoundSchema),
+		defaultValues: {
+			name: '',
+			description: '',
+			totalBudget: '',
+			selectedTopic: { id: '', name: '' },
+			fundingRoundDates: undefined,
+			submissionDates: undefined,
+			considerationDates: undefined,
+			deliberationDates: undefined,
+			votingDates: undefined,
+			applicationPeriod: undefined,
+			reviewPeriod: undefined,
+			decisionPeriod: undefined,
+			implementationPeriod: undefined,
+		},
 	})
 
 	useEffect(() => {
@@ -132,54 +242,20 @@ export function AddEditFundingRoundComponent({
 						throw new Error('Failed to fetch funding round')
 					const round: FundingRound = await roundResponse.json()
 
-					// Check for missing phases and show warnings
-					const missingPhases = []
-					if (!round.submissionPhase) missingPhases.push('Submission')
-					if (!round.considerationPhase) missingPhases.push('Consideration')
-					if (!round.deliberationPhase) missingPhases.push('Deliberation')
-					if (!round.votingPhase) missingPhases.push('Voting')
-
-					if (missingPhases.length > 0) {
-						toast({
-							title: '⚠️ Warning',
-							description: `Missing phase data for: ${missingPhases.join(', ')}. Please set the dates manually.`,
-							variant: 'default',
-						})
-					}
-
-					setFormData({
+					form.reset({
 						name: round.name,
 						description: round.description,
 						totalBudget: round.totalBudget.toString(),
 						selectedTopic: round.topic,
-						fundingRoundDates: {
-							from: new Date(round.startDate),
-							to: new Date(round.endDate),
-						},
-						submissionDates: round.submissionPhase
-							? {
-									from: new Date(round.submissionPhase.startDate),
-									to: new Date(round.submissionPhase.endDate),
-								}
-							: { from: null, to: null },
-						considerationDates: round.considerationPhase
-							? {
-									from: new Date(round.considerationPhase.startDate),
-									to: new Date(round.considerationPhase.endDate),
-								}
-							: { from: null, to: null },
-						deliberationDates: round.deliberationPhase
-							? {
-									from: new Date(round.deliberationPhase.startDate),
-									to: new Date(round.deliberationPhase.endDate),
-								}
-							: { from: null, to: null },
-						votingDates: round.votingPhase
-							? {
-									from: new Date(round.votingPhase.startDate),
-									to: new Date(round.votingPhase.endDate),
-								}
-							: { from: null, to: null },
+						fundingRoundDates: undefined,
+						submissionDates: undefined,
+						considerationDates: undefined,
+						deliberationDates: undefined,
+						votingDates: undefined,
+						applicationPeriod: undefined,
+						reviewPeriod: undefined,
+						decisionPeriod: undefined,
+						implementationPeriod: undefined,
 					})
 				}
 			} catch (error) {
@@ -195,146 +271,9 @@ export function AddEditFundingRoundComponent({
 		}
 
 		fetchData()
-	}, [roundId, toast])
+	}, [roundId, toast, form])
 
-	const handleInputChange = (
-		e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-	) => {
-		const { name, value } = e.target
-		setFormData(prev => ({ ...prev, [name]: value }))
-	}
-
-	const handleTopicSelect = (topicId: string) => {
-		const topic = topics.find(t => t.id === topicId)
-		setFormData(prev => ({ ...prev, selectedTopic: topic || null }))
-	}
-
-	const handleDateChange = (
-		phase: DatePhase['key'],
-		type: 'from' | 'to',
-		date: Date | null,
-	) => {
-		setFormData(prev => {
-			const dates = prev[phase]
-			if (
-				!dates ||
-				typeof dates !== 'object' ||
-				!('from' in dates) ||
-				!('to' in dates)
-			) {
-				return prev
-			}
-
-			return {
-				...prev,
-				[phase]: {
-					...dates,
-					[type]: date,
-				},
-			}
-		})
-	}
-
-	const validateForm = () => {
-		if (!formData.selectedTopic) {
-			toast({
-				title: 'Error',
-				description: 'Please select a topic',
-				variant: 'destructive',
-			})
-			return false
-		}
-
-		if (!formData.name || !formData.description || !formData.totalBudget) {
-			toast({
-				title: 'Error',
-				description: 'Please fill in all required fields',
-				variant: 'destructive',
-			})
-			return false
-		}
-
-		// Check if all dates are set
-		const dateFields = [
-			'fundingRoundDates',
-			'submissionDates',
-			'considerationDates',
-			'deliberationDates',
-			'votingDates',
-		] as const
-
-		for (const field of dateFields) {
-			if (!formData[field].from || !formData[field].to) {
-				toast({
-					title: 'Error',
-					description: `Please set both dates for ${field.replace('Dates', '')}`,
-					variant: 'destructive',
-				})
-				return false
-			}
-		}
-
-		// Type guard to ensure all dates are non-null
-		const allDatesPresent =
-			formData.fundingRoundDates.from &&
-			formData.fundingRoundDates.to &&
-			formData.submissionDates.from &&
-			formData.submissionDates.to &&
-			formData.considerationDates.from &&
-			formData.considerationDates.to &&
-			formData.deliberationDates.from &&
-			formData.deliberationDates.to &&
-			formData.votingDates.from &&
-			formData.votingDates.to
-
-		if (!allDatesPresent) {
-			toast({
-				title: 'Error',
-				description: 'All dates must be set',
-				variant: 'destructive',
-			})
-			return false
-		}
-
-		// Now we can safely validate the dates
-		const datesValid = validatePhaseDates({
-			fundingRound: {
-				from: formData.fundingRoundDates.from as Date,
-				to: formData.fundingRoundDates.to as Date,
-			},
-			submission: {
-				from: formData.submissionDates.from as Date,
-				to: formData.submissionDates.to as Date,
-			},
-			consideration: {
-				from: formData.considerationDates.from as Date,
-				to: formData.considerationDates.to as Date,
-			},
-			deliberation: {
-				from: formData.deliberationDates.from as Date,
-				to: formData.deliberationDates.to as Date,
-			},
-			voting: {
-				from: formData.votingDates.from as Date,
-				to: formData.votingDates.to as Date,
-			},
-		})
-
-		if (!datesValid.valid) {
-			toast({
-				title: 'Error',
-				description: datesValid.error,
-				variant: 'destructive',
-			})
-			return false
-		}
-
-		return true
-	}
-
-	const handleSave = async () => {
-		if (!validateForm()) return
-
+	const handleSave = async (data: FormData) => {
 		try {
 			setLoading(true)
 			const endpoint = roundId
@@ -342,35 +281,68 @@ export function AddEditFundingRoundComponent({
 				: '/api/admin/funding-rounds'
 
 			const method = roundId ? 'PUT' : 'POST'
+
+			// Validate phase dates before submitting
+			const datesValid = validatePhaseDates({
+				fundingRound: data.fundingRoundDates,
+				submission: data.submissionDates,
+				consideration: data.considerationDates,
+				deliberation: data.deliberationDates,
+				voting: data.votingDates,
+			})
+
+			if (!datesValid.valid) {
+				toast({
+					title: 'Error',
+					description: datesValid.error || 'Invalid phase dates',
+					variant: 'destructive',
+				})
+				return
+			}
+
 			const response = await fetch(endpoint, {
 				method,
 				headers: {
 					'Content-Type': 'application/json',
 				},
 				body: JSON.stringify({
-					name: formData.name,
-					description: formData.description,
-					topicId: formData.selectedTopic!.id,
-					totalBudget: parseFloat(formData.totalBudget),
-					fundingRoundDates: {
-						from: formData.fundingRoundDates.from!.toISOString(),
-						to: formData.fundingRoundDates.to!.toISOString(),
+					name: data.name,
+					description: data.description,
+					totalBudget: Number(data.totalBudget),
+					topicId: data.selectedTopic.id,
+					startDate: data.fundingRoundDates?.from?.toISOString(),
+					endDate: data.fundingRoundDates?.to?.toISOString(),
+					submissionPhase: {
+						startDate: data.submissionDates?.from?.toISOString(),
+						endDate: data.submissionDates?.to?.toISOString(),
 					},
-					submissionDates: {
-						from: formData.submissionDates.from!.toISOString(),
-						to: formData.submissionDates.to!.toISOString(),
+					considerationPhase: {
+						startDate: data.considerationDates?.from?.toISOString(),
+						endDate: data.considerationDates?.to?.toISOString(),
 					},
-					considerationDates: {
-						from: formData.considerationDates.from!.toISOString(),
-						to: formData.considerationDates.to!.toISOString(),
+					deliberationPhase: {
+						startDate: data.deliberationDates?.from?.toISOString(),
+						endDate: data.deliberationDates?.to?.toISOString(),
 					},
-					deliberationDates: {
-						from: formData.deliberationDates.from!.toISOString(),
-						to: formData.deliberationDates.to!.toISOString(),
+					votingPhase: {
+						startDate: data.votingDates?.from?.toISOString(),
+						endDate: data.votingDates?.to?.toISOString(),
 					},
-					votingDates: {
-						from: formData.votingDates.from!.toISOString(),
-						to: formData.votingDates.to!.toISOString(),
+					applicationPeriod: {
+						from: data.applicationPeriod?.from?.toISOString(),
+						to: data.applicationPeriod?.to?.toISOString(),
+					},
+					reviewPeriod: {
+						from: data.reviewPeriod?.from?.toISOString(),
+						to: data.reviewPeriod?.to?.toISOString(),
+					},
+					decisionPeriod: {
+						from: data.decisionPeriod?.from?.toISOString(),
+						to: data.decisionPeriod?.to?.toISOString(),
+					},
+					implementationPeriod: {
+						from: data.implementationPeriod?.from?.toISOString(),
+						to: data.implementationPeriod?.to?.toISOString(),
 					},
 				}),
 			})
@@ -433,200 +405,221 @@ export function AddEditFundingRoundComponent({
 	}
 
 	return (
-		<div className="container mx-auto max-w-4xl px-4 py-8">
-			<div className="space-y-8">
-				<div>
-					<h1 className="text-3xl font-bold">
-						{roundId && roundId !== 'new'
-							? 'Edit Funding Round'
-							: 'Create Funding Round'}
-					</h1>
-				</div>
+		<div className="w-full">
+			<h1 className="mb-6 flex items-center gap-2 text-3xl font-bold">
+				{roundId ? (
+					<>
+						<FilePenIcon className="h-6 w-6" />
+						Edit Funding Round
+					</>
+				) : (
+					<>
+						<FilePlus2Icon className="h-6 w-6" />
+						Create Funding Round
+					</>
+				)}
+			</h1>
 
-				<form onSubmit={e => e.preventDefault()} className="space-y-6">
-					{/* Basic Information */}
-					<div className="space-y-4">
-						<Label htmlFor="name">Funding Round Name</Label>
-						<Input
-							id="name"
-							name="name"
-							value={formData.name}
-							onChange={handleInputChange}
-							placeholder="Enter funding round name"
-							className="bg-muted"
-							disabled={loading}
+			<Form {...form}>
+				<form onSubmit={form.handleSubmit(handleSave)} className="space-y-4">
+					<FormField
+						control={form.control}
+						name="name"
+						render={({ field }) => (
+							<FormItem>
+								<FormLabel>Name</FormLabel>
+								<FormControl>
+									<Input
+										{...field}
+										placeholder="Enter funding round name"
+										className="bg-muted"
+										disabled={loading}
+									/>
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
+
+					<FormField
+						control={form.control}
+						name="description"
+						render={({ field }) => (
+							<FormItem>
+								<FormLabel>Description</FormLabel>
+								<FormControl>
+									<Textarea
+										{...field}
+										placeholder="Enter funding round description"
+										className="min-h-[100px] bg-muted"
+										disabled={loading}
+									/>
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
+
+					<FormField
+						control={form.control}
+						name="totalBudget"
+						render={({ field }) => (
+							<FormItem>
+								<FormLabel>Total Budget (MINA)</FormLabel>
+								<FormControl>
+									<Input
+										{...field}
+										type="number"
+										placeholder="Enter total budget"
+										className="bg-muted"
+										disabled={loading}
+									/>
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
+
+					<FormField
+						control={form.control}
+						name="selectedTopic"
+						render={({ field }) => (
+							<FormItem>
+								<FormLabel>Topic</FormLabel>
+								<FormControl>
+									<Select
+										value={field.value?.id}
+										onValueChange={value => {
+											const topic = topics.find(t => t.id === value)
+											field.onChange(topic)
+										}}
+										disabled={loading}
+									>
+										<SelectTrigger className="bg-muted">
+											<SelectValue placeholder="Select a topic" />
+										</SelectTrigger>
+										<SelectContent>
+											{topics.map(topic => (
+												<SelectItem key={topic.id} value={topic.id}>
+													{topic.name}
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
+
+					{DATE_PHASES.map(phase => (
+						<FormField
+							key={phase.key}
+							control={form.control}
+							name={phase.key}
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>{phase.label}</FormLabel>
+									<FormControl>
+										<DatePicker
+											date={field.value}
+											setDate={(
+												date: { from?: Date; to?: Date } | undefined,
+											) => {
+												if (date?.from && date?.to) {
+													field.onChange({ from: date.from, to: date.to })
+												}
+											}}
+										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
 						/>
-					</div>
+					))}
 
-					<div className="space-y-4">
-						<Label htmlFor="description">Description</Label>
-						<Textarea
-							id="description"
-							name="description"
-							value={formData.description}
-							onChange={handleInputChange}
-							placeholder="Enter funding round description"
-							className="min-h-[100px] bg-muted"
-							disabled={loading}
-						/>
-					</div>
+					<FormField
+						control={form.control}
+						name="applicationPeriod"
+						render={({ field }) => (
+							<FormItem>
+								<FormLabel>Application Period</FormLabel>
+								<FormControl>
+									<DatePicker
+										date={field.value}
+										setDate={(date: { from?: Date; to?: Date } | undefined) => {
+											field.onChange(date)
+										}}
+									/>
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
 
-					<div className="space-y-4">
-						<Label htmlFor="totalBudget">Total Budget</Label>
-						<Input
-							id="totalBudget"
-							name="totalBudget"
-							type="number"
-							value={formData.totalBudget}
-							onChange={handleInputChange}
-							placeholder="Enter total budget"
-							className="bg-muted"
-							disabled={loading}
-						/>
-					</div>
+					<FormField
+						control={form.control}
+						name="reviewPeriod"
+						render={({ field }) => (
+							<FormItem>
+								<FormLabel>Review Period</FormLabel>
+								<FormControl>
+									<DatePicker
+										date={field.value}
+										setDate={(date: { from?: Date; to?: Date } | undefined) => {
+											field.onChange(date)
+										}}
+									/>
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
 
-					{/* Topic Selection */}
-					<div className="space-y-4">
-						<Label>Discussion Topic</Label>
-						<Select
-							value={formData.selectedTopic?.id}
-							onValueChange={handleTopicSelect}
-							disabled={loading}
-						>
-							<SelectTrigger className="bg-muted">
-								<SelectValue placeholder="Select a topic" />
-							</SelectTrigger>
-							<SelectContent>
-								{topics.map(topic => (
-									<SelectItem key={topic.id} value={topic.id}>
-										{topic.name}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-					</div>
+					<FormField
+						control={form.control}
+						name="decisionPeriod"
+						render={({ field }) => (
+							<FormItem>
+								<FormLabel>Decision Period</FormLabel>
+								<FormControl>
+									<DatePicker
+										date={field.value}
+										setDate={(date: { from?: Date; to?: Date } | undefined) => {
+											field.onChange(date)
+										}}
+									/>
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
 
-					{/* Date Selections */}
-					{DATE_PHASES.map(phase => {
-						const dates = formData[phase.key]
-						if (
-							!dates ||
-							typeof dates !== 'object' ||
-							!('from' in dates) ||
-							!('to' in dates)
-						) {
-							return null
-						}
+					<FormField
+						control={form.control}
+						name="implementationPeriod"
+						render={({ field }) => (
+							<FormItem>
+								<FormLabel>Implementation Period</FormLabel>
+								<FormControl>
+									<DatePicker
+										date={field.value}
+										setDate={(date: { from?: Date; to?: Date } | undefined) => {
+											field.onChange(date)
+										}}
+									/>
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
 
-						return (
-							<div key={phase.key} className="grid gap-4">
-								<Label>{phase.label}</Label>
-								<div className="grid grid-cols-2 gap-4">
-									<div className="space-y-2">
-										<Label>From</Label>
-										<Popover>
-											<PopoverTrigger asChild>
-												<Button
-													variant="outline"
-													className={cn(
-														'w-full justify-start bg-muted text-left font-normal',
-														!dates.from && 'text-muted-foreground',
-													)}
-												>
-													{dates.from ? (
-														format(dates.from, "PPP HH:mm 'UTC'")
-													) : (
-														<span>Pick a date</span>
-													)}
-												</Button>
-											</PopoverTrigger>
-											<PopoverContent className="w-auto p-0" align="start">
-												<Calendar
-													mode="single"
-													selected={dates.from || undefined} // Convert null to undefined
-													onSelect={date =>
-														handleDateChange(phase.key, 'from', date || null)
-													} // Handle undefined
-													disabled={loading}
-													initialFocus
-												/>
-												<div className="border-t p-3">
-													<Input
-														type="time"
-														onChange={e => {
-															if (dates.from) {
-																const [hours, minutes] =
-																	e.target.value.split(':')
-																const newDate = new Date(dates.from)
-																newDate.setUTCHours(
-																	parseInt(hours),
-																	parseInt(minutes),
-																)
-																handleDateChange(phase.key, 'from', newDate)
-															}
-														}}
-														disabled={loading}
-													/>
-												</div>
-											</PopoverContent>
-										</Popover>
-									</div>
-									<div className="space-y-2">
-										<Label>To</Label>
-										<Popover>
-											<PopoverTrigger asChild>
-												<Button
-													variant="outline"
-													className={cn(
-														'w-full justify-start bg-muted text-left font-normal',
-														!dates.to && 'text-muted-foreground',
-													)}
-												>
-													{dates.to ? (
-														format(dates.to, "PPP HH:mm 'UTC'")
-													) : (
-														<span>Pick a date</span>
-													)}
-												</Button>
-											</PopoverTrigger>
-											<PopoverContent className="w-auto p-0" align="start">
-												<Calendar
-													mode="single"
-													selected={dates.to || undefined} // Convert null to undefined
-													onSelect={date =>
-														handleDateChange(phase.key, 'to', date || null)
-													} // Handle undefined
-													disabled={loading}
-													initialFocus
-												/>
-												<div className="border-t p-3">
-													<Input
-														type="time"
-														onChange={e => {
-															if (dates.to) {
-																const [hours, minutes] =
-																	e.target.value.split(':')
-																const newDate = new Date(dates.to)
-																newDate.setUTCHours(
-																	parseInt(hours),
-																	parseInt(minutes),
-																)
-																handleDateChange(phase.key, 'to', newDate)
-															}
-														}}
-														disabled={loading}
-													/>
-												</div>
-											</PopoverContent>
-										</Popover>
-									</div>
-								</div>
-							</div>
-						)
-					})}
-
-					{/* Actions */}
-					<div className="flex items-center justify-between pt-6">
+					<div className="flex justify-end gap-4">
+						<Link href="/admin/funding-rounds">
+							<Button type="button" variant="outline" disabled={loading}>
+								Cancel
+							</Button>
+						</Link>
 						{roundId && roundId !== 'new' && (
 							<Button
 								type="button"
@@ -634,22 +627,15 @@ export function AddEditFundingRoundComponent({
 								onClick={handleDelete}
 								disabled={loading}
 							>
-								Delete Funding Round
+								Delete
 							</Button>
 						)}
-						<div className="ml-auto flex gap-4">
-							<Link href="/admin/funding-rounds">
-								<Button type="button" variant="outline" disabled={loading}>
-									Cancel
-								</Button>
-							</Link>
-							<Button type="submit" onClick={handleSave} disabled={loading}>
-								{loading ? 'Saving...' : 'Save Funding Round'}
-							</Button>
-						</div>
+						<Button type="submit" disabled={loading}>
+							{loading ? 'Saving...' : 'Save'}
+						</Button>
 					</div>
 				</form>
-			</div>
+			</Form>
 		</div>
 	)
 }

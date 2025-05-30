@@ -14,5 +14,10 @@ interface PageProps {
 
 export default async function ManageFundingRoundPage({ params }: PageProps) {
 	const { id } = await params
-	return <AddEditFundingRoundComponent roundId={id === 'new' ? null : id} />
+
+	return (
+		<div className="mx-auto w-full max-w-5xl p-4 sm:px-6 lg:px-8">
+			<AddEditFundingRoundComponent roundId={id === 'new' ? null : id} />
+		</div>
+	)
 }
